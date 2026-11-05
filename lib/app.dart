@@ -13,7 +13,13 @@ class PatrimoineApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => PortfolioController(db)..load(),
+      create: (_) {
+        final controller = PortfolioController(db);
+        controller
+            .load()
+            .then((_) => controller.refreshPrices(missingOnly: true));
+        return controller;
+      },
       child: MaterialApp(
         title: 'Patrimoine',
         debugShowCheckedModeBanner: false,

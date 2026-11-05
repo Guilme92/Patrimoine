@@ -6,6 +6,13 @@ import '../data/market_data.dart';
 import '../domain/portfolio.dart';
 import '../models/asset_type.dart';
 
+/// Résultat d'un rafraîchissement des prix.
+class PriceRefreshResult {
+  final int updated;
+  final int failed;
+  const PriceRefreshResult({required this.updated, required this.failed});
+}
+
 /// État central du patrimoine : charge les données, calcule la synthèse,
 /// expose les mutations.
 class PortfolioController extends ChangeNotifier {
@@ -15,6 +22,7 @@ class PortfolioController extends ChangeNotifier {
   List<Asset> _assets = [];
   Map<int, List<Position>> _positions = {};
   Map<String, double> _prices = {};
+  DateTime? _lastPriceUpdate;
   bool _loading = true;
   String? _error;
 
@@ -24,6 +32,7 @@ class PortfolioController extends ChangeNotifier {
   List<Asset> get assets => _assets;
   bool get loading => _loading;
   String? get error => _error;
+  DateTime? get lastPriceUpdate => _lastPriceUpdate;
 
   PortfolioSummary get summary => summarize(
         assets: _assets,
@@ -59,6 +68,7 @@ class PortfolioController extends ChangeNotifier {
     }
     _positions = pos;
     _prices = await db.cachedPricesFor(symbols);
+    _lastPriceUpdate = await db.latestPriceUpdate();
   }
 
   // ---- Mutations ----
@@ -121,17 +131,47 @@ class PortfolioController extends ChangeNotifier {
     await load();
   }
 
-  /// Rafraîchit les prix de marché de toutes les positions.
-  Future<void> refreshPrices() async {
-    final symbols =
+  /// Rafraîchit les prix de marché des positions.
+  /// [missingOnly] : ne récupère que les symboles sans prix en cache.
+  Future<PriceRefreshResult> refreshPrices({bool missingOnly = false}) async {
+    final all =
         _positions.values.expand((l) => l).map((p) => p.symbol).toSet();
-    if (symbols.isEmpty) return;
-    final quotes = await market.fetchQuotes(symbols);
-    for (final q in quotes.values) {
-      await db.upsertPrice(q.symbol, q.price, q.currency);
+    final targets =
+        missingOnly ? all.where((s) => !_prices.containsKey(s)).toSet() : all;
+    if (targets.isEmpty) {
+      return const PriceRefreshResult(updated: 0, failed: 0);
     }
+    return _fetchAndStore(targets);
+  }
+
+  Future<PriceRefreshResult> _fetchAndStore(Set<String> symbols) async {
+    final quotes = await market.fetchQuotes(symbols);
+
+    // Devises à convertir vers EUR.
+    final currencies =
+        quotes.values.map((q) => q.currency).where((c) => c != 'EUR').toSet();
+    final eurRates = <String, double>{};
+    for (final c in currencies) {
+      final rate = await market.eurRateFor(c);
+      if (rate != null) eurRates[c] = rate;
+    }
+
+    var updated = 0;
+    for (final q in quotes.values) {
+      var price = q.price;
+      if (q.currency != 'EUR' && eurRates.containsKey(q.currency)) {
+        price = q.price * eurRates[q.currency]!;
+      }
+      await db.upsertPrice(q.symbol, price, 'EUR');
+      updated++;
+    }
+
     await _reload();
     notifyListeners();
+    return PriceRefreshResult(
+      updated: updated,
+      failed: symbols.length - updated,
+    );
   }
 
   /// Sauvegarde un point d'historique du patrimoine net.

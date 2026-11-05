@@ -20,3 +20,8 @@ String formatPct(double v) => '${v >= 0 ? '+' : ''}${v.toStringAsFixed(1)} %';
 
 /// Pourcentage simple (part de répartition).
 String formatShare(double v) => '${v.toStringAsFixed(1)} %';
+
+/// Heure/date courte pour l'affichage (« 05/11 20:15 »).
+String formatTime(DateTime d) =>
+    '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')} '
+    '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';

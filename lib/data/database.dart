@@ -108,6 +108,12 @@ class AppDatabase extends _$AppDatabase {
     return {for (final r in rows) r.symbol: r.price};
   }
 
+  Future<DateTime?> latestPriceUpdate() async {
+    final rows = await select(priceCache).get();
+    if (rows.isEmpty) return null;
+    return rows.map((r) => r.updatedAt).reduce((a, b) => a.isAfter(b) ? a : b);
+  }
+
   // ---- Snapshots ----
   Future<void> saveSnapshot(double netWorth) => into(snapshots).insert(
         SnapshotsCompanion.insert(

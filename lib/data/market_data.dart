@@ -56,4 +56,13 @@ class MarketDataService {
     }
     return map;
   }
+
+  /// Taux de conversion « 1 `currency` = X EUR ». Retourne null si indisponible.
+  /// `EURUSD=X` donne le nombre de USD pour 1 EUR, donc 1 USD = 1 / prix.
+  Future<double?> eurRateFor(String currency) async {
+    if (currency == 'EUR') return 1.0;
+    final q = await fetchQuote('EUR$currency=X');
+    if (q == null || q.price <= 0) return null;
+    return 1.0 / q.price;
+  }
 }

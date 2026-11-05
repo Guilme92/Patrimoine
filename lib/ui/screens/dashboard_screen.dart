@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/portfolio_controller.dart';
+import '../../utils/format.dart';
 import '../widgets/allocation_donut.dart';
 import '../widgets/asset_tile.dart';
 import '../widgets/net_worth_card.dart';
@@ -16,32 +17,39 @@ class DashboardScreen extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
     final summary = controller.summary;
-    return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-        children: [
-          NetWorthCard(summary: summary),
-          const SizedBox(height: 16),
-          if (summary.totalAssets > 0)
-            AllocationDonut(
-              allocation: summary.allocation,
-              total: summary.totalAssets,
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+      children: [
+        NetWorthCard(summary: summary),
+        if (controller.lastPriceUpdate != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              'Prix actualisés le ${formatTime(controller.lastPriceUpdate!)}',
+              style: Theme.of(context).textTheme.bodySmall,
+              textAlign: TextAlign.right,
             ),
-          const SizedBox(height: 24),
-          Text('Mes actifs', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
-          if (controller.assets.isEmpty)
-            const _EmptyState()
-          else
-            ...controller.assets.map(
-              (a) => AssetTile(
-                asset: a,
-                positions: controller.positionsOf(a.id),
-                prices: controller.prices,
-              ),
+          ),
+        const SizedBox(height: 16),
+        if (summary.totalAssets > 0)
+          AllocationDonut(
+            allocation: summary.allocation,
+            total: summary.totalAssets,
+          ),
+        const SizedBox(height: 24),
+        Text('Mes actifs', style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 8),
+        if (controller.assets.isEmpty)
+          const _EmptyState()
+        else
+          ...controller.assets.map(
+            (a) => AssetTile(
+              asset: a,
+              positions: controller.positionsOf(a.id),
+              prices: controller.prices,
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
