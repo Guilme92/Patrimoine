@@ -31,6 +31,22 @@ String formatShare(double v) => '${v.toStringAsFixed(1)} %';
 String formatDate(DateTime d) =>
     '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 
+/// Date courte sans heure (« 05/11 »), pour les axes de graphique.
+String formatShortDate(DateTime d) =>
+    '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}';
+
+/// Montant compact pour un axe de graphique (« 1,2 M€ », « 500 k€ »).
+String formatCompactEuro(double v) {
+  final abs = v.abs();
+  if (abs >= 1000000) return '${_compactNumber(v / 1000000)} M€';
+  if (abs >= 1000) return '${_compactNumber(v / 1000)} k€';
+  return '${_compactNumber(v)} €';
+}
+
+final NumberFormat _compact = NumberFormat('0.#', 'fr_FR');
+
+String _compactNumber(double v) => _compact.format(v);
+
 /// Heure/date courte pour l'affichage (« 05/11 20:15 »).
 String formatTime(DateTime d) =>
     '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')} '

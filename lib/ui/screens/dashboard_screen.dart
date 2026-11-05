@@ -6,6 +6,7 @@ import '../../utils/format.dart';
 import '../widgets/allocation_donut.dart';
 import '../widgets/asset_tile.dart';
 import '../widgets/net_worth_card.dart';
+import '../widgets/net_worth_chart.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -31,6 +32,10 @@ class DashboardScreen extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 16),
+        if (controller.snapshots.isNotEmpty) ...[
+          NetWorthChart(snapshots: controller.snapshots),
+          const SizedBox(height: 16),
+        ],
         if (summary.totalAssets > 0)
           AllocationDonut(
             allocation: summary.allocation,

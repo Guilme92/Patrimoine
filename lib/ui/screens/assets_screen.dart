@@ -1,7 +1,13 @@
+import 'dart:convert';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 
 import '../../controllers/portfolio_controller.dart';
+import '../../data/csv_import.dart';
+import '../../data/csv_templates.dart';
 import '../../data/database.dart';
 import '../../models/asset_type.dart';
 import '../../theme/palette.dart';
@@ -23,6 +29,79 @@ class _AssetsScreenState extends State<AssetsScreen> {
   bool _matches(Asset a) =>
       _selectedTypes.isEmpty ||
       _selectedTypes.contains(assetTypeFrom(a.type));
+
+  void _snack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  /// Choisit un CSV, détecte son type (immobilier ou startups) et l'importe.
+  Future<void> _importCsv() async {
+    final controller = context.read<PortfolioController>();
+    PlatformFile? picked;
+    try {
+      picked = await FilePicker.pickFile(
+        dialogTitle: 'Choisir un fichier CSV',
+        type: FileType.custom,
+        allowedExtensions: const ['csv'],
+      );
+    } catch (e) {
+      _snack('Sélection impossible : $e');
+      return;
+    }
+    if (picked == null) return;
+
+    final String content;
+    try {
+      final bytes = await picked.readAsBytes();
+      content = utf8.decode(bytes, allowMalformed: true);
+    } catch (e) {
+      _snack('Lecture impossible : $e');
+      return;
+    }
+    if (!mounted) return;
+
+    final type = detectCsvAssetType(content);
+    if (type == null) {
+      _snack(
+        'Colonnes non reconnues : utilisez un modèle CSV de l\'application.',
+      );
+      return;
+    }
+
+    final CsvImportResult result;
+    try {
+      result = await controller.importCsv(csv: content, type: type);
+    } catch (e) {
+      _snack('Import impossible : $e');
+      return;
+    }
+
+    final imported = result.imported == 1
+        ? '1 actif importé'
+        : '${result.imported} actifs importés';
+    final skipped = result.skipped == 1
+        ? '1 ligne ignorée'
+        : '${result.skipped} lignes ignorées';
+    _snack('$imported · $skipped');
+  }
+
+  /// Écrit les deux modèles CSV dans le dossier documents de l'application.
+  Future<void> _saveTemplates() async {
+    final List<String> paths;
+    try {
+      paths = await writeCsvTemplates();
+    } catch (e) {
+      _snack('Écriture impossible : $e');
+      return;
+    }
+    _snack(
+      'Modèles enregistrés dans ${p.dirname(paths.first)} '
+      '($realEstateTemplateName, $startupTemplateName)',
+    );
+  }
 
   Future<void> _reorder(
     PortfolioController controller,
@@ -74,23 +153,60 @@ class _AssetsScreenState extends State<AssetsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SegmentedButton<bool>(
-                  segments: const [
-                    ButtonSegment(
-                      value: false,
-                      label: Text('Par type'),
-                      icon: Icon(Icons.category_outlined, size: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SegmentedButton<bool>(
+                        segments: const [
+                          ButtonSegment(
+                            value: false,
+                            label: Text('Par type'),
+                            icon: Icon(Icons.category_outlined, size: 18),
+                          ),
+                          ButtonSegment(
+                            value: true,
+                            label: Text('Ordre manuel'),
+                            icon: Icon(Icons.drag_indicator, size: 18),
+                          ),
+                        ],
+                        selected: {_manualOrder},
+                        showSelectedIcon: false,
+                        onSelectionChanged: (selection) =>
+                            setState(() => _manualOrder = selection.first),
+                      ),
                     ),
-                    ButtonSegment(
-                      value: true,
-                      label: Text('Ordre manuel'),
-                      icon: Icon(Icons.drag_indicator, size: 18),
+                    PopupMenuButton<String>(
+                      tooltip: 'Import et modèles CSV',
+                      icon: const Icon(Icons.more_vert),
+                      onSelected: (value) {
+                        if (value == 'import') {
+                          _importCsv();
+                        } else {
+                          _saveTemplates();
+                        }
+                      },
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(
+                          value: 'import',
+                          child: ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(Icons.upload_file_outlined),
+                            title: Text('Importer CSV'),
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'templates',
+                          child: ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(Icons.description_outlined),
+                            title: Text('Modèle CSV'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
-                  selected: {_manualOrder},
-                  showSelectedIcon: false,
-                  onSelectionChanged: (selection) =>
-                      setState(() => _manualOrder = selection.first),
                 ),
                 const SizedBox(height: 8),
                 SizedBox(

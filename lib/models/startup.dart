@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart' show Value;
 
 import '../data/database.dart';
+import '../utils/choice.dart';
 
 /// Valeurs de `StartupDetails.typeTitre`.
 const List<String> startupInstruments = [
@@ -107,6 +108,23 @@ String startupExitModeLabel(String? s) {
       return 'Non renseigné';
   }
 }
+
+/// Normalise l'instrument détenu (« actions de préférence » ->
+/// `actions_preference`).
+String? normalizeStartupInstrument(String? raw) =>
+    matchChoice(raw, startupInstruments, startupInstrumentLabel);
+
+/// Normalise le stade (« Série A » -> `serie_a`).
+String? normalizeStartupStage(String? raw) =>
+    matchChoice(raw, startupStages, startupStageLabel);
+
+/// Normalise le statut (« Sorti » -> `sorti`).
+String? normalizeStartupStatus(String? raw) =>
+    matchChoice(raw, startupStatuses, startupStatusLabel);
+
+/// Normalise le mode de sortie (« IPO » -> `ipo`).
+String? normalizeStartupExitMode(String? raw) =>
+    matchChoice(raw, startupExitModes, startupExitModeLabel);
 
 String? _blankToNull(String? v) {
   final t = v?.trim();

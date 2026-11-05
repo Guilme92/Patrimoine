@@ -38,7 +38,6 @@ class NetWorthCard extends StatelessWidget {
               Expanded(
                 child: _Stat(
                   label: 'Actifs',
-                  hint: 'Somme des valeurs de tous les actifs',
                   value: formatEuro(summary.totalAssets),
                   color: AppColors.positive,
                 ),
@@ -46,7 +45,6 @@ class NetWorthCard extends StatelessWidget {
               Expanded(
                 child: _Stat(
                   label: 'Passifs',
-                  hint: 'Somme des emprunts',
                   value: formatEuro(summary.totalLiabilities),
                   color: AppColors.negative,
                 ),
@@ -105,12 +103,10 @@ class NetWorthCard extends StatelessWidget {
 
 class _Stat extends StatelessWidget {
   final String label;
-  final String hint;
   final String value;
   final Color color;
   const _Stat({
     required this.label,
-    required this.hint,
     required this.value,
     required this.color,
   });
@@ -129,7 +125,6 @@ class _Stat extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(label, style: Theme.of(context).textTheme.bodySmall),
-            InfoHint(hint),
           ],
         ),
         const SizedBox(height: 4),

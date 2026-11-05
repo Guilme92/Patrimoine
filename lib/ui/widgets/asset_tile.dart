@@ -71,16 +71,9 @@ class AssetTile extends StatelessWidget {
                 ],
               ),
             ),
-            Tooltip(
-              message: startup != null
-                  ? 'Quantité × prix actuel (saisi manuellement)'
-                  : positions.isNotEmpty
-                  ? 'Somme des quantités × dernier prix connu'
-                  : 'Valeur saisie manuellement',
-              child: Text(
-                formatEuro(value),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+            Text(
+              formatEuro(value),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
           ],
         ),

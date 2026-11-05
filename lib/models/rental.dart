@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart' show Value;
 
 import '../data/database.dart';
+import '../utils/choice.dart';
 
 /// Valeurs de `Rentals.statut`.
 const List<String> rentalStatuses = ['loue', 'vacant', 'autre'];
@@ -62,6 +63,18 @@ String rentalManagementModeLabel(String? s) {
       return 'Non renseigné';
   }
 }
+
+/// Normalise le statut d'un bien (« Loué » -> `loue`).
+String? normalizeRentalStatus(String? raw) =>
+    matchChoice(raw, rentalStatuses, rentalStatusLabel);
+
+/// Normalise le type de bail (« bail meublé » -> `meuble`).
+String? normalizeRentalLeaseType(String? raw) =>
+    matchChoice(raw, rentalLeaseTypes, rentalLeaseTypeLabel);
+
+/// Normalise le mode de gestion (« Gestion directe » -> `direct`).
+String? normalizeRentalManagementMode(String? raw) =>
+    matchChoice(raw, rentalManagementModes, rentalManagementModeLabel);
 
 String? _blankToNull(String? v) {
   final t = v?.trim();

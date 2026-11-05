@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 import '../data/database.dart';
+import '../data/csv_import.dart';
 import '../data/document_store.dart';
 import '../data/market_data.dart';
 import '../domain/portfolio.dart';
@@ -34,6 +35,7 @@ class PortfolioController extends ChangeNotifier {
   Map<int, List<AssetDocument>> _documents = {};
   Map<String, double> _prices = {};
   DateTime? _lastPriceUpdate;
+  List<NetWorthSnapshot> _snapshots = [];
   bool _loading = true;
   String? _error;
 
@@ -48,6 +50,9 @@ class PortfolioController extends ChangeNotifier {
   bool get loading => _loading;
   String? get error => _error;
   DateTime? get lastPriceUpdate => _lastPriceUpdate;
+
+  /// Historique du patrimoine net, un point par jour (ordre chronologique).
+  List<NetWorthSnapshot> get snapshots => _snapshots;
 
   PortfolioSummary get summary => summarize(
     assets: _assets,
@@ -92,6 +97,7 @@ class PortfolioController extends ChangeNotifier {
     notifyListeners();
     try {
       await _reload();
+      await _maybeSnapshot();
     } catch (e) {
       _error = e.toString();
     }
@@ -149,6 +155,26 @@ class PortfolioController extends ChangeNotifier {
 
     _prices = await db.cachedPricesFor(symbols);
     _lastPriceUpdate = await db.latestPriceUpdate();
+    _snapshots = await db.allSnapshots();
+  }
+
+  /// Enregistre un point du jour si l'historique n'en a pas encore :
+  /// un seul snapshot par jour, capturé à la première ouverture ou
+  /// modification de la journée.
+  Future<void> _maybeSnapshot() async {
+    // Rien à historiser tant qu'aucun actif n'existe (évite un point à 0 €).
+    if (_assets.isEmpty) return;
+    final now = DateTime.now();
+    if (_snapshots.isNotEmpty) {
+      final last = _snapshots.last.date;
+      if (last.year == now.year &&
+          last.month == now.month &&
+          last.day == now.day) {
+        return;
+      }
+    }
+    await db.saveSnapshot(summary.netWorth);
+    _snapshots = await db.allSnapshots();
   }
 
   // ---- Mutations ----
@@ -382,6 +408,62 @@ class PortfolioController extends ChangeNotifier {
   /// Sauvegarde un point d'historique du patrimoine net.
   Future<void> snapshot() async {
     await db.saveSnapshot(summary.netWorth);
+    _snapshots = await db.allSnapshots();
+    notifyListeners();
+  }
+
+  // ---- Import CSV ----
+
+  /// Importe un lot d'actifs (immobilier ou startups) depuis un contenu CSV.
+  ///
+  /// Les lignes sont insérées directement via `db.*` puis un unique [load()]
+  /// recharge l'état : les méthodes publiques (`addAsset`, `saveRental`,
+  /// `saveStartupDetails`) déclenchent chacune un rechargement complet, ce qui
+  /// serait bien trop lent pour N lignes.
+  Future<CsvImportResult> importCsv({
+    required String csv,
+    required AssetType type,
+  }) async {
+    final parsed = type == AssetType.startup
+        ? parseStartupCsv(csv)
+        : parseRealEstateCsv(csv);
+    if (parsed.rows.isEmpty) {
+      return CsvImportResult(imported: 0, skipped: parsed.skipped);
+    }
+
+    var sortOrder = await db.nextAssetSortOrder();
+    await db.transaction(() async {
+      for (final row in parsed.rows) {
+        final assetId = await db.addAsset(
+          AssetsCompanion.insert(
+            name: row.name,
+            type: type.name,
+            value: Value(row.value),
+            currency: Value(row.currency),
+            institution: Value(row.institution),
+            note: Value(row.note),
+            sortOrder: Value(sortOrder++),
+          ),
+        );
+        final rental = row.rental;
+        if (rental != null) {
+          await db.saveRental(rental.toCompanion(assetId));
+        }
+        final startup = row.startup;
+        if (startup != null) {
+          await db.saveStartupDetails(startup.toCompanion(assetId));
+        }
+        for (final round in row.rounds) {
+          await db.addFundingRound(round.toCompanion(assetId));
+        }
+      }
+    });
+
+    await load();
+    return CsvImportResult(
+      imported: parsed.rows.length,
+      skipped: parsed.skipped,
+    );
   }
 }
 

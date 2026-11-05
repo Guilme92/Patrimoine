@@ -69,11 +69,6 @@ class AssetDetailScreen extends StatelessWidget {
             asset: current,
             value: value,
             type: type,
-            hint: startup != null
-                ? 'Quantité × prix actuel (ou produit de sortie après une sortie)'
-                : positions.isNotEmpty
-                ? 'Somme des quantités × dernier prix connu'
-                : 'Valeur saisie manuellement pour cet actif',
           ),
           const SizedBox(height: 20),
           Row(
@@ -393,12 +388,10 @@ class _HeaderCard extends StatelessWidget {
   final Asset asset;
   final double value;
   final AssetType type;
-  final String hint;
   const _HeaderCard({
     required this.asset,
     required this.value,
     required this.type,
-    required this.hint,
   });
 
   @override
@@ -420,17 +413,10 @@ class _HeaderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Flexible(
-                child: Text(
-                  formatEuro(value),
-                  style: Theme.of(context).textTheme.headlineMedium,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              InfoHint(hint),
-            ],
+          Text(
+            formatEuro(value),
+            style: Theme.of(context).textTheme.headlineMedium,
+            overflow: TextOverflow.ellipsis,
           ),
           if (asset.institution != null) ...[
             const SizedBox(height: 4),
@@ -555,7 +541,6 @@ class _RentalCard extends StatelessWidget {
                   Expanded(
                     child: _Metric(
                       label: 'Loyer HC / mois',
-                      hint: 'Loyer hors charges saisi dans le bail',
                       value: formatEuro(r.loyerHc),
                     ),
                   ),
