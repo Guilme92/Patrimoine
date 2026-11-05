@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../theme/app_theme.dart';
+import '../../utils/format.dart';
 
 /// Parse un montant saisi en français (« 1 200,50 ») ; 0 si vide/invalide.
 double parseAmount(String? raw) {
@@ -92,6 +93,45 @@ class InfoRow extends StatelessWidget {
   }
 }
 
+/// Champ de date avec sélection via calendrier.
+class DateField extends StatelessWidget {
+  final String label;
+  final DateTime? date;
+  final VoidCallback onTap;
+  final VoidCallback onClear;
+
+  const DateField({
+    super.key,
+    required this.label,
+    required this.date,
+    required this.onTap,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          suffixIcon: date == null
+              ? const Icon(Icons.calendar_today_outlined, size: 18)
+              : IconButton(
+                  icon: const Icon(Icons.close, size: 18),
+                  onPressed: onClear,
+                ),
+        ),
+        child: Text(
+          date == null ? '—' : formatDate(date!),
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ),
+    );
+  }
+}
+
 /// Titre de section avec action facultative.
 class SectionHeader extends StatelessWidget {
   final String title;
@@ -104,8 +144,13 @@ class SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
-          const Spacer(),
+          Expanded(
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.titleLarge,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           ?action,
         ],
       ),

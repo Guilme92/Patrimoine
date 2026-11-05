@@ -10,6 +10,7 @@ const Map<AssetType, Color> assetTypeColors = {
   AssetType.realEstate: Color(0xFF8B5CF6),
   AssetType.preciousMetals: Color(0xFFFACC15),
   AssetType.collectible: Color(0xFFEC4899),
+  AssetType.startup: Color(0xFFF97316),
   AssetType.other: Color(0xFF6B7280),
   AssetType.loan: Color(0xFFEA3943),
 };
@@ -28,6 +29,8 @@ IconData assetTypeIcon(AssetType t) {
       return Icons.monetization_on;
     case AssetType.collectible:
       return Icons.watch;
+    case AssetType.startup:
+      return Icons.rocket_launch_outlined;
     case AssetType.other:
       return Icons.category_outlined;
     case AssetType.loan:

@@ -6,6 +6,7 @@ import '../../models/asset_type.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/palette.dart';
 import '../../utils/format.dart';
+import '../widgets/info_hint.dart';
 
 class AnalyticsScreen extends StatelessWidget {
   const AnalyticsScreen({super.key});
@@ -46,6 +47,7 @@ class AnalyticsScreen extends StatelessWidget {
           const SizedBox(height: 12),
           _PerfRow(
             label: 'Plus-value latente',
+            hint: 'Valeur actuelle − coût d\'achat, pour les positions',
             value: summary.totalPnl,
             pct: summary.totalPnlPct,
           ),
@@ -92,6 +94,10 @@ class _AllocationBar extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
+              const InfoHint(
+                'Valeur de la catégorie ÷ total des actifs',
+                size: 13,
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -112,9 +118,15 @@ class _AllocationBar extends StatelessWidget {
 
 class _PerfRow extends StatelessWidget {
   final String label;
+  final String hint;
   final double value;
   final double pct;
-  const _PerfRow({required this.label, required this.value, required this.pct});
+  const _PerfRow({
+    required this.label,
+    required this.hint,
+    required this.value,
+    required this.pct,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -128,12 +140,17 @@ class _PerfRow extends StatelessWidget {
           Expanded(
             child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
           ),
+          InfoHint(hint, size: 13),
           Text(
             formatSignedEuro(value),
             style: TextStyle(color: color, fontWeight: FontWeight.w700),
           ),
           const SizedBox(width: 8),
           Text(formatPct(pct), style: TextStyle(color: color)),
+          const InfoHint(
+            'Plus-value ÷ coût d\'achat des positions',
+            size: 13,
+          ),
         ],
       ),
     );

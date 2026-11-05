@@ -10,6 +10,7 @@ import '../data/market_data.dart';
 import '../domain/portfolio.dart';
 import '../models/asset_type.dart';
 import '../models/rental.dart';
+import '../models/startup.dart';
 
 /// Résultat d'un rafraîchissement des prix.
 class PriceRefreshResult {
@@ -28,6 +29,8 @@ class PortfolioController extends ChangeNotifier {
   List<Asset> _assets = [];
   Map<int, List<Position>> _positions = {};
   Map<int, Rental> _rentals = {};
+  Map<int, StartupDetail> _startups = {};
+  Map<int, List<FundingRound>> _fundingRounds = {};
   Map<int, List<AssetDocument>> _documents = {};
   Map<String, double> _prices = {};
   DateTime? _lastPriceUpdate;
@@ -46,8 +49,12 @@ class PortfolioController extends ChangeNotifier {
   String? get error => _error;
   DateTime? get lastPriceUpdate => _lastPriceUpdate;
 
-  PortfolioSummary get summary =>
-      summarize(assets: _assets, positionsByAsset: _positions, prices: _prices);
+  PortfolioSummary get summary => summarize(
+    assets: _assets,
+    positionsByAsset: _positions,
+    prices: _prices,
+    startupsByAsset: _startups,
+  );
 
   List<Position> positionsOf(int assetId) => _positions[assetId] ?? const [];
 
@@ -60,6 +67,19 @@ class PortfolioController extends ChangeNotifier {
   }
 
   Rental? rentalOf(int assetId) => _rentals[assetId];
+
+  StartupDetail? startupOf(int assetId) => _startups[assetId];
+
+  List<FundingRound> fundingRoundsOf(int assetId) =>
+      _fundingRounds[assetId] ?? const [];
+
+  /// Valeur d'un actif (positions × prix, fiche startup, ou valeur manuelle).
+  double valueOf(Asset asset) => assetValue(
+    asset: asset,
+    positions: positionsOf(asset.id),
+    prices: _prices,
+    startup: _startups[asset.id],
+  );
 
   List<AssetDocument> documentsOf(int assetId) =>
       _documents[assetId] ?? const [];
@@ -96,6 +116,28 @@ class PortfolioController extends ChangeNotifier {
     }
     _rentals = rentals;
 
+    final startups = <int, StartupDetail>{};
+    for (final s in await db.allStartupDetails()) {
+      startups[s.assetId] = s;
+    }
+    _startups = startups;
+
+    final rounds = <int, List<FundingRound>>{};
+    for (final r in await db.allFundingRounds()) {
+      rounds.putIfAbsent(r.assetId, () => []).add(r);
+    }
+    for (final entry in rounds.entries) {
+      entry.value.sort((a, b) {
+        final da = a.date;
+        final db2 = b.date;
+        if (da == null && db2 == null) return a.id.compareTo(b.id);
+        if (da == null) return 1;
+        if (db2 == null) return -1;
+        return db2.compareTo(da);
+      });
+    }
+    _fundingRounds = rounds;
+
     final docs = <int, List<AssetDocument>>{};
     for (final d in await db.allDocuments()) {
       docs.putIfAbsent(d.assetId, () => []).add(d);
@@ -127,8 +169,15 @@ class PortfolioController extends ChangeNotifier {
         currency: Value(currency),
         institution: Value(institution),
         note: Value(note),
+        sortOrder: Value(await db.nextAssetSortOrder()),
       ),
     );
+    await load();
+  }
+
+  /// Réordonne les actifs (drag & drop) : `sortOrder` = index de la liste.
+  Future<void> reorderAssets(List<int> orderedIds) async {
+    await db.reorderAssets(orderedIds);
     await load();
   }
 
@@ -216,6 +265,35 @@ class PortfolioController extends ChangeNotifier {
 
   Future<void> deleteRental(int assetId) async {
     await db.deleteRental(assetId);
+    await load();
+  }
+
+  // ---- Startups ----
+
+  /// Crée ou met à jour la fiche startup de l'actif.
+  Future<void> saveStartupDetails({
+    required int assetId,
+    required StartupDraft draft,
+  }) async {
+    await db.saveStartupDetails(draft.toCompanion(assetId));
+    await load();
+  }
+
+  Future<void> deleteStartupDetails(int assetId) async {
+    await db.deleteStartupDetails(assetId);
+    await load();
+  }
+
+  Future<void> addFundingRound({
+    required int assetId,
+    required FundingRoundDraft draft,
+  }) async {
+    await db.addFundingRound(draft.toCompanion(assetId));
+    await load();
+  }
+
+  Future<void> deleteFundingRound(int id) async {
+    await db.deleteFundingRound(id);
     await load();
   }
 

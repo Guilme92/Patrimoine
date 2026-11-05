@@ -10,15 +10,19 @@ import '../../controllers/portfolio_controller.dart';
 import '../../data/database.dart';
 import '../../domain/portfolio.dart';
 import '../../domain/rental.dart';
+import '../../domain/startup.dart';
 import '../../models/asset_type.dart';
 import '../../models/rental.dart';
+import '../../models/startup.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/palette.dart';
 import '../../utils/format.dart';
 import '../widgets/form_widgets.dart';
+import '../widgets/info_hint.dart';
 import 'add_position_screen.dart';
 import 'edit_asset_screen.dart';
 import 'rental_form_screen.dart';
+import 'startup_form_screen.dart';
 
 class AssetDetailScreen extends StatelessWidget {
   final Asset asset;
@@ -36,10 +40,13 @@ class AssetDetailScreen extends StatelessWidget {
     }
     final positions = controller.positionsOf(current.id);
     final type = assetTypeFrom(current.type);
+    final startup = controller.startupOf(current.id);
+    final rounds = controller.fundingRoundsOf(current.id);
     final value = assetValue(
       asset: current,
       positions: positions,
       prices: controller.prices,
+      startup: startup,
     );
     final rental = controller.rentalOf(current.id);
     final documents = controller.documentsOf(current.id);
@@ -58,7 +65,16 @@ class AssetDetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          _HeaderCard(asset: current, value: value, type: type),
+          _HeaderCard(
+            asset: current,
+            value: value,
+            type: type,
+            hint: startup != null
+                ? 'Quantité × prix actuel (ou produit de sortie après une sortie)'
+                : positions.isNotEmpty
+                ? 'Somme des quantités × dernier prix connu'
+                : 'Valeur saisie manuellement pour cet actif',
+          ),
           const SizedBox(height: 20),
           Row(
             children: [
@@ -95,6 +111,63 @@ class AssetDetailScreen extends StatelessWidget {
               ),
             ),
             _RentalCard(rental: rental, assetValue: value),
+          ],
+          if (type == AssetType.startup) ...[
+            const SizedBox(height: 24),
+            SectionHeader(
+              title: 'Startup',
+              action: TextButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => StartupDetailsFormScreen(asset: current),
+                  ),
+                ),
+                icon: Icon(
+                  startup == null ? Icons.add : Icons.edit_outlined,
+                  size: 18,
+                ),
+                label: Text(startup == null ? 'Renseigner' : 'Modifier'),
+              ),
+            ),
+            _StartupCard(startup: startup),
+            const SizedBox(height: 20),
+            SectionHeader(
+              title: 'Levées de fonds',
+              action: TextButton.icon(
+                onPressed: startup == null
+                    ? null
+                    : () => _addFundingRound(context, current),
+                icon: const Icon(Icons.add),
+                label: const Text('Ajouter'),
+              ),
+            ),
+            if (startup == null)
+              Container(
+                decoration: cardDecoration(),
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Renseignez d\'abord la fiche startup pour suivre ses '
+                  'levées de fonds.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              )
+            else if (rounds.isEmpty)
+              Container(
+                decoration: cardDecoration(),
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Aucune levée enregistrée.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              )
+            else
+              ...rounds.map(
+                (r) => _FundingRoundTile(
+                  round: r,
+                  onDelete: () => _confirmDeleteRound(context, r),
+                ),
+              ),
           ],
           if (supportsPositions(type)) ...[
             const SizedBox(height: 24),
@@ -276,16 +349,56 @@ class AssetDetailScreen extends StatelessWidget {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
   }
+
+  Future<void> _addFundingRound(BuildContext context, Asset asset) async {
+    final controller = context.read<PortfolioController>();
+    final draft = await showDialog<FundingRoundDraft>(
+      context: context,
+      builder: (_) => const FundingRoundDialog(),
+    );
+    if (draft == null || !context.mounted) return;
+    await controller.addFundingRound(assetId: asset.id, draft: draft);
+    if (context.mounted) _snack(context, 'Levée de fonds ajoutée.');
+  }
+
+  Future<void> _confirmDeleteRound(
+    BuildContext context,
+    FundingRound round,
+  ) async {
+    final controller = context.read<PortfolioController>();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Supprimer la levée ?'),
+        content: const Text('Cette levée sera retirée de la fiche startup.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await controller.deleteFundingRound(round.id);
+    if (context.mounted) _snack(context, 'Levée supprimée.');
+  }
 }
 
 class _HeaderCard extends StatelessWidget {
   final Asset asset;
   final double value;
   final AssetType type;
+  final String hint;
   const _HeaderCard({
     required this.asset,
     required this.value,
     required this.type,
+    required this.hint,
   });
 
   @override
@@ -307,9 +420,17 @@ class _HeaderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            formatEuro(value),
-            style: Theme.of(context).textTheme.headlineMedium,
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  formatEuro(value),
+                  style: Theme.of(context).textTheme.headlineMedium,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              InfoHint(hint),
+            ],
           ),
           if (asset.institution != null) ...[
             const SizedBox(height: 4),
@@ -403,6 +524,7 @@ class _RentalCard extends StatelessWidget {
                   Expanded(
                     child: _Metric(
                       label: 'Rendement brut',
+                      hint: 'Loyer annuel hors charges ÷ valeur du bien',
                       value: formatShare(grossYieldPct(r, assetValue)),
                     ),
                   ),
@@ -410,6 +532,8 @@ class _RentalCard extends StatelessWidget {
                   Expanded(
                     child: _Metric(
                       label: 'Cashflow / mois',
+                      hint: 'Loyer − charges du propriétaire − mensualité '
+                          'de crédit',
                       value: formatSignedEuro(cashflow),
                       color: cashflowColor,
                     ),
@@ -422,6 +546,8 @@ class _RentalCard extends StatelessWidget {
                   Expanded(
                     child: _Metric(
                       label: 'Rendement net',
+                      hint: '(Loyer annuel − charges annuelles) ÷ valeur '
+                          'du bien',
                       value: formatShare(netYieldPct(r, assetValue)),
                     ),
                   ),
@@ -429,6 +555,7 @@ class _RentalCard extends StatelessWidget {
                   Expanded(
                     child: _Metric(
                       label: 'Loyer HC / mois',
+                      hint: 'Loyer hors charges saisi dans le bail',
                       value: formatEuro(r.loyerHc),
                     ),
                   ),
@@ -560,8 +687,14 @@ class _RentalCard extends StatelessWidget {
 class _Metric extends StatelessWidget {
   final String label;
   final String value;
+  final String? hint;
   final Color? color;
-  const _Metric({required this.label, required this.value, this.color});
+  const _Metric({
+    required this.label,
+    required this.value,
+    this.hint,
+    this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -574,7 +707,19 @@ class _Metric extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: Theme.of(context).textTheme.bodySmall),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodySmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (hint != null) InfoHint(hint!, size: 13),
+            ],
+          ),
           const SizedBox(height: 4),
           Text(
             value,
@@ -807,9 +952,15 @@ class _PositionTile extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 2),
-              Text(
-                '${formatSignedEuro(pnl)} (${formatPct(pnlPct)})',
-                style: TextStyle(color: color, fontSize: 12),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${formatSignedEuro(pnl)} (${formatPct(pnlPct)})',
+                    style: TextStyle(color: color, fontSize: 12),
+                  ),
+                  const InfoHint('Quantité × (prix − PRU)', size: 12),
+                ],
               ),
             ],
           ),
@@ -821,5 +972,263 @@ class _PositionTile extends StatelessWidget {
   String _fmtQty(double q) {
     final s = q.toStringAsFixed(6);
     return s.replaceFirst(RegExp(r'\.?0+$'), '');
+  }
+}
+
+/// Fiche startup + indicateurs (KPIs) calculés.
+class _StartupCard extends StatelessWidget {
+  final StartupDetail? startup;
+  const _StartupCard({required this.startup});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = startup;
+    if (s == null) {
+      return Container(
+        decoration: cardDecoration(),
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          'Renseignez l\'instrument, la quantité, le prix d\'entrée puis le prix '
+          'actuel (saisi à la main) pour suivre la valorisation, la plus-value, '
+          'le multiple et le TRI de cette startup.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      );
+    }
+
+    final invested = investedCapital(s);
+    final value = lineValue(s);
+    final gain = unrealizedGain(s);
+    final gainPct = unrealizedGainPct(s);
+    final exited = s.statut == 'sorti';
+    final gainColor = gain >= 0 ? AppColors.positive : AppColors.negative;
+    final statusColor = switch (s.statut) {
+      'sorti' => AppColors.primary,
+      'radie' => AppColors.negative,
+      _ => AppColors.textSecondary,
+    };
+
+    return Container(
+      decoration: cardDecoration(),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  startupStatusLabel(s.statut),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: statusColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  startupInstrumentLabel(s.typeTitre),
+                  style: Theme.of(context).textTheme.bodySmall,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _Metric(
+                  label: 'Capital investi',
+                  hint: 'Quantité × prix d\'entrée + frais',
+                  value: formatEuro(invested),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _Metric(
+                  label: 'Valorisation',
+                  hint: 'Quantité × prix actuel (ou produit de sortie '
+                      'si sortie)',
+                  value: formatEuro(value),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: _Metric(
+                  label: exited ? 'Plus-value réalisée' : 'PV latente',
+                  hint: exited
+                      ? 'Produit de sortie − capital investi'
+                      : 'Valorisation − capital investi',
+                  value: exited
+                      ? formatSignedEuro(realizedGain(s))
+                      : '${formatSignedEuro(gain)} (${formatPct(gainPct)})',
+                  color: gainColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _Metric(
+                  label: 'Multiple (MOIC)',
+                  hint: 'Valorisation ÷ capital investi '
+                      '(1× = capital remboursé)',
+                  value: '${moic(s).toStringAsFixed(2)}×',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: _Metric(
+                  label: 'TRI annualisé',
+                  hint: 'Rendement annualisé : '
+                      '(Valorisation ÷ capital investi)^(1/années) − 1',
+                  value: formatPct(triAnnualizedPct(s)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _Metric(
+                  label: 'Stade',
+                  value: startupStageLabel(s.stade),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 28, color: AppColors.divider),
+          InfoRow(label: 'Quantité', value: _qty(s.quantite)),
+          InfoRow(
+            label: 'Prix d\'entrée',
+            value: formatEuro(s.prixEntree, cents: true),
+          ),
+          InfoRow(label: 'Frais', value: formatEuro(s.frais, cents: true)),
+          if (s.dateInvestissement != null)
+            InfoRow(
+              label: 'Date d\'investissement',
+              value: formatDate(s.dateInvestissement!),
+            ),
+          InfoRow(
+            label: 'Prix actuel (manuel)',
+            value: formatEuro(s.prixActuel, cents: true),
+          ),
+          if (s.dateValorisation != null)
+            InfoRow(
+              label: 'Date de valorisation',
+              value: formatDate(s.dateValorisation!),
+            ),
+          if (s.valorisationEntreprise > 0)
+            InfoRow(
+              label: 'Valorisation de l\'entreprise',
+              value: formatEuro(s.valorisationEntreprise),
+            ),
+          if (exited) ...[
+            InfoRow(
+              label: 'Mode de sortie',
+              value: startupExitModeLabel(s.exitMode),
+            ),
+            if (s.exitDate != null)
+              InfoRow(
+                label: 'Date de sortie',
+                value: formatDate(s.exitDate!),
+              ),
+            InfoRow(
+              label: 'Produit de sortie',
+              value: formatEuro(s.exitProduit),
+            ),
+          ],
+          if (s.note != null && s.note!.isNotEmpty) ...[
+            const Divider(height: 24, color: AppColors.divider),
+            Text(s.note!, style: Theme.of(context).textTheme.bodySmall),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _qty(double q) {
+    final txt = q.toStringAsFixed(6);
+    return txt.replaceFirst(RegExp(r'\.?0+$'), '');
+  }
+}
+
+/// Une levée de fonds de la startup.
+class _FundingRoundTile extends StatelessWidget {
+  final FundingRound round;
+  final VoidCallback onDelete;
+  const _FundingRoundTile({required this.round, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: cardDecoration(),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(14, 6, 6, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  round.date == null
+                      ? 'Levée non datée'
+                      : 'Levée du ${formatDate(round.date!)}',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              IconButton(
+                tooltip: 'Supprimer',
+                icon: const Icon(Icons.delete_outline, size: 20),
+                onPressed: onDelete,
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Column(
+              children: [
+                InfoRow(
+                  label: 'Montant levé',
+                  value: formatEuro(round.montantLeve),
+                ),
+                InfoRow(
+                  label: 'Valorisation post-money',
+                  value: round.valorisationPostMoney > 0
+                      ? formatEuro(round.valorisationPostMoney)
+                      : '—',
+                ),
+                InfoRow(
+                  label: 'Prix par action',
+                  value: round.prixParAction > 0
+                      ? formatEuro(round.prixParAction, cents: true)
+                      : '—',
+                ),
+                if (round.note != null && round.note!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      round.note!,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

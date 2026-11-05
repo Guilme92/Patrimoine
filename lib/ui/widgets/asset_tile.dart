@@ -12,17 +12,24 @@ class AssetTile extends StatelessWidget {
   final Asset asset;
   final List<Position> positions;
   final Map<String, double> prices;
+  final StartupDetail? startup;
   const AssetTile({
     super.key,
     required this.asset,
     required this.positions,
     required this.prices,
+    this.startup,
   });
 
   @override
   Widget build(BuildContext context) {
     final type = assetTypeFrom(asset.type);
-    final value = assetValue(asset: asset, positions: positions, prices: prices);
+    final value = assetValue(
+      asset: asset,
+      positions: positions,
+      prices: prices,
+      startup: startup,
+    );
     final color = assetTypeColors[type] ?? AppColors.primary;
     final subtitle = positions.isEmpty
         ? assetTypeLabel(type)
@@ -64,9 +71,16 @@ class AssetTile extends StatelessWidget {
                 ],
               ),
             ),
-            Text(
-              formatEuro(value),
-              style: Theme.of(context).textTheme.titleMedium,
+            Tooltip(
+              message: startup != null
+                  ? 'Quantité × prix actuel (saisi manuellement)'
+                  : positions.isNotEmpty
+                  ? 'Somme des quantités × dernier prix connu'
+                  : 'Valeur saisie manuellement',
+              child: Text(
+                formatEuro(value),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             ),
           ],
         ),

@@ -6,6 +6,7 @@ enum AssetType {
   realEstate,
   preciousMetals,
   collectible,
+  startup,
   other,
   loan,
 }
@@ -29,6 +30,8 @@ String assetTypeLabel(AssetType t) {
       return 'Métaux précieux';
     case AssetType.collectible:
       return 'Collections';
+    case AssetType.startup:
+      return 'Startups';
     case AssetType.other:
       return 'Autres';
     case AssetType.loan:
@@ -39,3 +42,6 @@ String assetTypeLabel(AssetType t) {
 /// Types d'actifs qui peuvent porter des positions (titres, cryptos).
 bool supportsPositions(AssetType t) =>
     t == AssetType.investment || t == AssetType.crypto;
+
+/// L'actif est-il valorisé par une fiche startup saisie manuellement ?
+bool isStartupType(AssetType t) => t == AssetType.startup;

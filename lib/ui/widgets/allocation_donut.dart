@@ -6,6 +6,7 @@ import '../../models/asset_type.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/palette.dart';
 import '../../utils/format.dart';
+import 'info_hint.dart';
 
 class AllocationDonut extends StatelessWidget {
   final Map<AssetType, double> allocation;
@@ -62,6 +63,10 @@ class AllocationDonut extends StatelessWidget {
                           Text(
                             formatShare(pct),
                             style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          const InfoHint(
+                            'Valeur de la catégorie ÷ total des actifs',
+                            size: 13,
                           ),
                         ],
                       ),

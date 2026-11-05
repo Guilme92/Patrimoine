@@ -47,6 +47,7 @@ class DashboardScreen extends StatelessWidget {
               asset: a,
               positions: controller.positionsOf(a.id),
               prices: controller.prices,
+              startup: controller.startupOf(a.id),
             ),
           ),
       ],

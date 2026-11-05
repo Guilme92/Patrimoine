@@ -12,6 +12,7 @@ Asset _asset(int id, String name, String type, double value) => Asset(
       currency: 'EUR',
       institution: null,
       note: null,
+      sortOrder: 0,
       createdAt: DateTime(2026),
     );
 

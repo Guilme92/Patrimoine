@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../domain/portfolio.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/format.dart';
+import 'info_hint.dart';
 
 class NetWorthCard extends StatelessWidget {
   final PortfolioSummary summary;
@@ -18,7 +19,11 @@ class NetWorthCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Patrimoine net', style: Theme.of(context).textTheme.bodySmall),
+          LabelWithHint(
+            'Patrimoine net',
+            message: 'Actifs − passifs',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
           const SizedBox(height: 6),
           Text(
             formatEuro(summary.netWorth),
@@ -33,6 +38,7 @@ class NetWorthCard extends StatelessWidget {
               Expanded(
                 child: _Stat(
                   label: 'Actifs',
+                  hint: 'Somme des valeurs de tous les actifs',
                   value: formatEuro(summary.totalAssets),
                   color: AppColors.positive,
                 ),
@@ -40,6 +46,7 @@ class NetWorthCard extends StatelessWidget {
               Expanded(
                 child: _Stat(
                   label: 'Passifs',
+                  hint: 'Somme des emprunts',
                   value: formatEuro(summary.totalLiabilities),
                   color: AppColors.negative,
                 ),
@@ -56,9 +63,24 @@ class NetWorthCard extends StatelessWidget {
                   color: pnlColor,
                 ),
                 const SizedBox(width: 4),
-                Text('Plus-value latente',
-                    style: Theme.of(context).textTheme.bodySmall),
-                const Spacer(),
+                Expanded(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          'Plus-value latente',
+                          style: Theme.of(context).textTheme.bodySmall,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      InfoHint(
+                        'Valeur actuelle − coût d\'achat, pour les positions',
+                      ),
+                    ],
+                  ),
+                ),
                 Text(
                   formatSignedEuro(summary.totalPnl),
                   style: TextStyle(color: pnlColor, fontWeight: FontWeight.w700),
@@ -67,6 +89,10 @@ class NetWorthCard extends StatelessWidget {
                 Text(
                   formatPct(summary.totalPnlPct),
                   style: TextStyle(color: pnlColor),
+                ),
+                InfoHint(
+                  'Plus-value ÷ coût d\'achat des positions',
+                  size: 13,
                 ),
               ],
             ),
@@ -79,9 +105,15 @@ class NetWorthCard extends StatelessWidget {
 
 class _Stat extends StatelessWidget {
   final String label;
+  final String hint;
   final String value;
   final Color color;
-  const _Stat({required this.label, required this.value, required this.color});
+  const _Stat({
+    required this.label,
+    required this.hint,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -97,6 +129,7 @@ class _Stat extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(label, style: Theme.of(context).textTheme.bodySmall),
+            InfoHint(hint),
           ],
         ),
         const SizedBox(height: 4),

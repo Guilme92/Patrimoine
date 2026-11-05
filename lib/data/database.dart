@@ -17,6 +17,9 @@ class Assets extends Table {
   TextColumn get currency => text().withDefault(const Constant('EUR'))();
   TextColumn get institution => text().nullable()();
   TextColumn get note => text().nullable()();
+
+  /// Position dans l'ordre manuel choisi par l'utilisateur (drag & drop).
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
@@ -116,8 +119,72 @@ class Documents extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
+/// Détails d'une startup non cotée.
+/// Une seule fiche par startup (`assetId` unique).
+@DataClassName('StartupDetail')
+class StartupDetails extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get assetId =>
+      integer().references(Assets, #id, onDelete: KeyAction.cascade).unique()();
+
+  /// actions | actions_preference | bsa | bsa_air | bspce |
+  /// obligations_convertibles | safe | autre
+  TextColumn get typeTitre => text().nullable()();
+
+  RealColumn get quantite => real().withDefault(const Constant(0))();
+  RealColumn get prixEntree => real().withDefault(const Constant(0))();
+  RealColumn get frais => real().withDefault(const Constant(0))();
+  DateTimeColumn get dateInvestissement => dateTime().nullable()();
+
+  /// seed | serie_a | serie_b | serie_c | late_stage | autre
+  TextColumn get stade => text().nullable()();
+
+  /// Mise à jour MANUELLE (pas de cotation pour une startup).
+  RealColumn get prixActuel => real().withDefault(const Constant(0))();
+  DateTimeColumn get dateValorisation => dateTime().nullable()();
+  RealColumn get valorisationEntreprise =>
+      real().withDefault(const Constant(0))();
+
+  /// en_portefeuille | sorti | radie
+  TextColumn get statut =>
+      text().withDefault(const Constant('en_portefeuille'))();
+
+  DateTimeColumn get exitDate => dateTime().nullable()();
+  RealColumn get exitProduit => real().withDefault(const Constant(0))();
+
+  /// acquisition | ipo | secondaire | liquidation | autre
+  TextColumn get exitMode => text().nullable()();
+
+  TextColumn get note => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// Levée de fonds d'une startup (une ligne par tour).
+@DataClassName('FundingRound')
+class FundingRounds extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get assetId =>
+      integer().references(Assets, #id, onDelete: KeyAction.cascade)();
+
+  DateTimeColumn get date => dateTime().nullable()();
+  RealColumn get montantLeve => real().withDefault(const Constant(0))();
+  RealColumn get valorisationPostMoney =>
+      real().withDefault(const Constant(0))();
+  RealColumn get prixParAction => real().withDefault(const Constant(0))();
+  TextColumn get note => text().nullable()();
+}
+
 @DriftDatabase(
-  tables: [Assets, Positions, PriceCache, Snapshots, Rentals, Documents],
+  tables: [
+    Assets,
+    Positions,
+    PriceCache,
+    Snapshots,
+    Rentals,
+    Documents,
+    StartupDetails,
+    FundingRounds,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -126,7 +193,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -136,12 +203,20 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(rentals);
         await m.createTable(documents);
       }
+      if (from < 3) {
+        await m.addColumn(assets, assets.sortOrder);
+        await m.createTable(startupDetails);
+        await m.createTable(fundingRounds);
+      }
     },
   );
 
   // ---- Assets ----
-  Future<List<Asset>> allAssets() =>
-      (select(assets)..orderBy([(t) => OrderingTerm.asc(t.createdAt)])).get();
+  /// Ordre manuel (`sortOrder`), puis date de création.
+  Future<List<Asset>> allAssets() => (select(assets)..orderBy([
+    (t) => OrderingTerm.asc(t.sortOrder),
+    (t) => OrderingTerm.asc(t.createdAt),
+  ])).get();
 
   Future<int> addAsset(AssetsCompanion entry) => into(assets).insert(entry);
 
@@ -149,6 +224,23 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> deleteAsset(int id) =>
       (delete(assets)..where((t) => t.id.equals(id))).go();
+
+  /// Prochaine position libre de l'ordre manuel (max + 1).
+  Future<int> nextAssetSortOrder() async {
+    final maxOrder = assets.sortOrder.max();
+    final row = await (selectOnly(assets)..addColumns([maxOrder])).getSingle();
+    return (row.read(maxOrder) ?? 0) + 1;
+  }
+
+  /// Réécrit `sortOrder` selon l'ordre fourni (index 0, 1, 2…).
+  Future<void> reorderAssets(List<int> orderedIds) async {
+    await transaction(() async {
+      for (var i = 0; i < orderedIds.length; i++) {
+        await (update(assets)..where((t) => t.id.equals(orderedIds[i])))
+            .write(AssetsCompanion(sortOrder: Value(i)));
+      }
+    });
+  }
 
   // ---- Positions ----
   Future<List<Position>> positionsFor(int assetId) =>
@@ -242,6 +334,55 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> deleteDocument(int id) =>
       (delete(documents)..where((t) => t.id.equals(id))).go();
+
+  // ---- Startups ----
+  Future<StartupDetail?> startupDetailsFor(int assetId) => (select(
+    startupDetails,
+  )..where((t) => t.assetId.equals(assetId))).getSingleOrNull();
+
+  Future<List<StartupDetail>> allStartupDetails() => select(startupDetails).get();
+
+  /// Crée ou met à jour la fiche startup de l'actif.
+  Future<void> saveStartupDetails(StartupDetailsCompanion entry) async {
+    final existing = await startupDetailsFor(entry.assetId.value);
+    if (existing == null) {
+      await into(startupDetails).insert(entry);
+    } else {
+      await (update(
+        startupDetails,
+      )..where((t) => t.id.equals(existing.id))).write(
+        entry.copyWith(id: Value(existing.id)),
+      );
+    }
+  }
+
+  Future<void> deleteStartupDetails(int assetId) =>
+      (delete(startupDetails)..where((t) => t.assetId.equals(assetId))).go();
+
+  /// Levées de fonds de la startup, de la plus récente à la plus ancienne
+  /// (les dates inconnues passent en dernier).
+  Future<List<FundingRound>> fundingRoundsFor(int assetId) async {
+    final rows = await (select(
+      fundingRounds,
+    )..where((t) => t.assetId.equals(assetId))).get();
+    rows.sort((a, b) {
+      final da = a.date;
+      final db = b.date;
+      if (da == null && db == null) return a.id.compareTo(b.id);
+      if (da == null) return 1;
+      if (db == null) return -1;
+      return db.compareTo(da);
+    });
+    return rows;
+  }
+
+  Future<List<FundingRound>> allFundingRounds() => select(fundingRounds).get();
+
+  Future<int> addFundingRound(FundingRoundsCompanion entry) =>
+      into(fundingRounds).insert(entry);
+
+  Future<void> deleteFundingRound(int id) =>
+      (delete(fundingRounds)..where((t) => t.id.equals(id))).go();
 }
 
 LazyDatabase _openConnection() {

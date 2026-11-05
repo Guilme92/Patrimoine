@@ -81,6 +81,18 @@ class $AssetsTable extends Assets with TableInfo<$AssetsTable, Asset> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -102,6 +114,7 @@ class $AssetsTable extends Assets with TableInfo<$AssetsTable, Asset> {
     currency,
     institution,
     note,
+    sortOrder,
     createdAt,
   ];
   @override
@@ -162,6 +175,12 @@ class $AssetsTable extends Assets with TableInfo<$AssetsTable, Asset> {
         note.isAcceptableOrUnknown(data['note']!, _noteMeta),
       );
     }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -205,6 +224,10 @@ class $AssetsTable extends Assets with TableInfo<$AssetsTable, Asset> {
         DriftSqlType.string,
         data['${effectivePrefix}note'],
       ),
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -226,6 +249,9 @@ class Asset extends DataClass implements Insertable<Asset> {
   final String currency;
   final String? institution;
   final String? note;
+
+  /// Position dans l'ordre manuel choisi par l'utilisateur (drag & drop).
+  final int sortOrder;
   final DateTime createdAt;
   const Asset({
     required this.id,
@@ -235,6 +261,7 @@ class Asset extends DataClass implements Insertable<Asset> {
     required this.currency,
     this.institution,
     this.note,
+    required this.sortOrder,
     required this.createdAt,
   });
   @override
@@ -251,6 +278,7 @@ class Asset extends DataClass implements Insertable<Asset> {
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
     }
+    map['sort_order'] = Variable<int>(sortOrder);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -266,6 +294,7 @@ class Asset extends DataClass implements Insertable<Asset> {
           ? const Value.absent()
           : Value(institution),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      sortOrder: Value(sortOrder),
       createdAt: Value(createdAt),
     );
   }
@@ -283,6 +312,7 @@ class Asset extends DataClass implements Insertable<Asset> {
       currency: serializer.fromJson<String>(json['currency']),
       institution: serializer.fromJson<String?>(json['institution']),
       note: serializer.fromJson<String?>(json['note']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -297,6 +327,7 @@ class Asset extends DataClass implements Insertable<Asset> {
       'currency': serializer.toJson<String>(currency),
       'institution': serializer.toJson<String?>(institution),
       'note': serializer.toJson<String?>(note),
+      'sortOrder': serializer.toJson<int>(sortOrder),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -309,6 +340,7 @@ class Asset extends DataClass implements Insertable<Asset> {
     String? currency,
     Value<String?> institution = const Value.absent(),
     Value<String?> note = const Value.absent(),
+    int? sortOrder,
     DateTime? createdAt,
   }) => Asset(
     id: id ?? this.id,
@@ -318,6 +350,7 @@ class Asset extends DataClass implements Insertable<Asset> {
     currency: currency ?? this.currency,
     institution: institution.present ? institution.value : this.institution,
     note: note.present ? note.value : this.note,
+    sortOrder: sortOrder ?? this.sortOrder,
     createdAt: createdAt ?? this.createdAt,
   );
   Asset copyWithCompanion(AssetsCompanion data) {
@@ -331,6 +364,7 @@ class Asset extends DataClass implements Insertable<Asset> {
           ? data.institution.value
           : this.institution,
       note: data.note.present ? data.note.value : this.note,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -345,6 +379,7 @@ class Asset extends DataClass implements Insertable<Asset> {
           ..write('currency: $currency, ')
           ..write('institution: $institution, ')
           ..write('note: $note, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -359,6 +394,7 @@ class Asset extends DataClass implements Insertable<Asset> {
     currency,
     institution,
     note,
+    sortOrder,
     createdAt,
   );
   @override
@@ -372,6 +408,7 @@ class Asset extends DataClass implements Insertable<Asset> {
           other.currency == this.currency &&
           other.institution == this.institution &&
           other.note == this.note &&
+          other.sortOrder == this.sortOrder &&
           other.createdAt == this.createdAt);
 }
 
@@ -383,6 +420,7 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
   final Value<String> currency;
   final Value<String?> institution;
   final Value<String?> note;
+  final Value<int> sortOrder;
   final Value<DateTime> createdAt;
   const AssetsCompanion({
     this.id = const Value.absent(),
@@ -392,6 +430,7 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
     this.currency = const Value.absent(),
     this.institution = const Value.absent(),
     this.note = const Value.absent(),
+    this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   AssetsCompanion.insert({
@@ -402,6 +441,7 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
     this.currency = const Value.absent(),
     this.institution = const Value.absent(),
     this.note = const Value.absent(),
+    this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
   }) : name = Value(name),
        type = Value(type);
@@ -413,6 +453,7 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
     Expression<String>? currency,
     Expression<String>? institution,
     Expression<String>? note,
+    Expression<int>? sortOrder,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -423,6 +464,7 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
       if (currency != null) 'currency': currency,
       if (institution != null) 'institution': institution,
       if (note != null) 'note': note,
+      if (sortOrder != null) 'sort_order': sortOrder,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -435,6 +477,7 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
     Value<String>? currency,
     Value<String?>? institution,
     Value<String?>? note,
+    Value<int>? sortOrder,
     Value<DateTime>? createdAt,
   }) {
     return AssetsCompanion(
@@ -445,6 +488,7 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
       currency: currency ?? this.currency,
       institution: institution ?? this.institution,
       note: note ?? this.note,
+      sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -473,6 +517,9 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
     if (note.present) {
       map['note'] = Variable<String>(note.value);
     }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -489,6 +536,7 @@ class AssetsCompanion extends UpdateCompanion<Asset> {
           ..write('currency: $currency, ')
           ..write('institution: $institution, ')
           ..write('note: $note, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -3573,6 +3621,1443 @@ class DocumentsCompanion extends UpdateCompanion<AssetDocument> {
   }
 }
 
+class $StartupDetailsTable extends StartupDetails
+    with TableInfo<$StartupDetailsTable, StartupDetail> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $StartupDetailsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _assetIdMeta = const VerificationMeta(
+    'assetId',
+  );
+  @override
+  late final GeneratedColumn<int> assetId = GeneratedColumn<int>(
+    'asset_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'UNIQUE REFERENCES assets (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _typeTitreMeta = const VerificationMeta(
+    'typeTitre',
+  );
+  @override
+  late final GeneratedColumn<String> typeTitre = GeneratedColumn<String>(
+    'type_titre',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _quantiteMeta = const VerificationMeta(
+    'quantite',
+  );
+  @override
+  late final GeneratedColumn<double> quantite = GeneratedColumn<double>(
+    'quantite',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _prixEntreeMeta = const VerificationMeta(
+    'prixEntree',
+  );
+  @override
+  late final GeneratedColumn<double> prixEntree = GeneratedColumn<double>(
+    'prix_entree',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _fraisMeta = const VerificationMeta('frais');
+  @override
+  late final GeneratedColumn<double> frais = GeneratedColumn<double>(
+    'frais',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _dateInvestissementMeta =
+      const VerificationMeta('dateInvestissement');
+  @override
+  late final GeneratedColumn<DateTime> dateInvestissement =
+      GeneratedColumn<DateTime>(
+        'date_investissement',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _stadeMeta = const VerificationMeta('stade');
+  @override
+  late final GeneratedColumn<String> stade = GeneratedColumn<String>(
+    'stade',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _prixActuelMeta = const VerificationMeta(
+    'prixActuel',
+  );
+  @override
+  late final GeneratedColumn<double> prixActuel = GeneratedColumn<double>(
+    'prix_actuel',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _dateValorisationMeta = const VerificationMeta(
+    'dateValorisation',
+  );
+  @override
+  late final GeneratedColumn<DateTime> dateValorisation =
+      GeneratedColumn<DateTime>(
+        'date_valorisation',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _valorisationEntrepriseMeta =
+      const VerificationMeta('valorisationEntreprise');
+  @override
+  late final GeneratedColumn<double> valorisationEntreprise =
+      GeneratedColumn<double>(
+        'valorisation_entreprise',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
+  static const VerificationMeta _statutMeta = const VerificationMeta('statut');
+  @override
+  late final GeneratedColumn<String> statut = GeneratedColumn<String>(
+    'statut',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('en_portefeuille'),
+  );
+  static const VerificationMeta _exitDateMeta = const VerificationMeta(
+    'exitDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> exitDate = GeneratedColumn<DateTime>(
+    'exit_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _exitProduitMeta = const VerificationMeta(
+    'exitProduit',
+  );
+  @override
+  late final GeneratedColumn<double> exitProduit = GeneratedColumn<double>(
+    'exit_produit',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _exitModeMeta = const VerificationMeta(
+    'exitMode',
+  );
+  @override
+  late final GeneratedColumn<String> exitMode = GeneratedColumn<String>(
+    'exit_mode',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    assetId,
+    typeTitre,
+    quantite,
+    prixEntree,
+    frais,
+    dateInvestissement,
+    stade,
+    prixActuel,
+    dateValorisation,
+    valorisationEntreprise,
+    statut,
+    exitDate,
+    exitProduit,
+    exitMode,
+    note,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'startup_details';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<StartupDetail> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('asset_id')) {
+      context.handle(
+        _assetIdMeta,
+        assetId.isAcceptableOrUnknown(data['asset_id']!, _assetIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_assetIdMeta);
+    }
+    if (data.containsKey('type_titre')) {
+      context.handle(
+        _typeTitreMeta,
+        typeTitre.isAcceptableOrUnknown(data['type_titre']!, _typeTitreMeta),
+      );
+    }
+    if (data.containsKey('quantite')) {
+      context.handle(
+        _quantiteMeta,
+        quantite.isAcceptableOrUnknown(data['quantite']!, _quantiteMeta),
+      );
+    }
+    if (data.containsKey('prix_entree')) {
+      context.handle(
+        _prixEntreeMeta,
+        prixEntree.isAcceptableOrUnknown(data['prix_entree']!, _prixEntreeMeta),
+      );
+    }
+    if (data.containsKey('frais')) {
+      context.handle(
+        _fraisMeta,
+        frais.isAcceptableOrUnknown(data['frais']!, _fraisMeta),
+      );
+    }
+    if (data.containsKey('date_investissement')) {
+      context.handle(
+        _dateInvestissementMeta,
+        dateInvestissement.isAcceptableOrUnknown(
+          data['date_investissement']!,
+          _dateInvestissementMeta,
+        ),
+      );
+    }
+    if (data.containsKey('stade')) {
+      context.handle(
+        _stadeMeta,
+        stade.isAcceptableOrUnknown(data['stade']!, _stadeMeta),
+      );
+    }
+    if (data.containsKey('prix_actuel')) {
+      context.handle(
+        _prixActuelMeta,
+        prixActuel.isAcceptableOrUnknown(data['prix_actuel']!, _prixActuelMeta),
+      );
+    }
+    if (data.containsKey('date_valorisation')) {
+      context.handle(
+        _dateValorisationMeta,
+        dateValorisation.isAcceptableOrUnknown(
+          data['date_valorisation']!,
+          _dateValorisationMeta,
+        ),
+      );
+    }
+    if (data.containsKey('valorisation_entreprise')) {
+      context.handle(
+        _valorisationEntrepriseMeta,
+        valorisationEntreprise.isAcceptableOrUnknown(
+          data['valorisation_entreprise']!,
+          _valorisationEntrepriseMeta,
+        ),
+      );
+    }
+    if (data.containsKey('statut')) {
+      context.handle(
+        _statutMeta,
+        statut.isAcceptableOrUnknown(data['statut']!, _statutMeta),
+      );
+    }
+    if (data.containsKey('exit_date')) {
+      context.handle(
+        _exitDateMeta,
+        exitDate.isAcceptableOrUnknown(data['exit_date']!, _exitDateMeta),
+      );
+    }
+    if (data.containsKey('exit_produit')) {
+      context.handle(
+        _exitProduitMeta,
+        exitProduit.isAcceptableOrUnknown(
+          data['exit_produit']!,
+          _exitProduitMeta,
+        ),
+      );
+    }
+    if (data.containsKey('exit_mode')) {
+      context.handle(
+        _exitModeMeta,
+        exitMode.isAcceptableOrUnknown(data['exit_mode']!, _exitModeMeta),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  StartupDetail map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return StartupDetail(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      assetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}asset_id'],
+      )!,
+      typeTitre: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type_titre'],
+      ),
+      quantite: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}quantite'],
+      )!,
+      prixEntree: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}prix_entree'],
+      )!,
+      frais: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}frais'],
+      )!,
+      dateInvestissement: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}date_investissement'],
+      ),
+      stade: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}stade'],
+      ),
+      prixActuel: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}prix_actuel'],
+      )!,
+      dateValorisation: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}date_valorisation'],
+      ),
+      valorisationEntreprise: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}valorisation_entreprise'],
+      )!,
+      statut: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}statut'],
+      )!,
+      exitDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}exit_date'],
+      ),
+      exitProduit: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}exit_produit'],
+      )!,
+      exitMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}exit_mode'],
+      ),
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $StartupDetailsTable createAlias(String alias) {
+    return $StartupDetailsTable(attachedDatabase, alias);
+  }
+}
+
+class StartupDetail extends DataClass implements Insertable<StartupDetail> {
+  final int id;
+  final int assetId;
+
+  /// actions | actions_preference | bsa | bsa_air | bspce |
+  /// obligations_convertibles | safe | autre
+  final String? typeTitre;
+  final double quantite;
+  final double prixEntree;
+  final double frais;
+  final DateTime? dateInvestissement;
+
+  /// seed | serie_a | serie_b | serie_c | late_stage | autre
+  final String? stade;
+
+  /// Mise à jour MANUELLE (pas de cotation pour une startup).
+  final double prixActuel;
+  final DateTime? dateValorisation;
+  final double valorisationEntreprise;
+
+  /// en_portefeuille | sorti | radie
+  final String statut;
+  final DateTime? exitDate;
+  final double exitProduit;
+
+  /// acquisition | ipo | secondaire | liquidation | autre
+  final String? exitMode;
+  final String? note;
+  final DateTime createdAt;
+  const StartupDetail({
+    required this.id,
+    required this.assetId,
+    this.typeTitre,
+    required this.quantite,
+    required this.prixEntree,
+    required this.frais,
+    this.dateInvestissement,
+    this.stade,
+    required this.prixActuel,
+    this.dateValorisation,
+    required this.valorisationEntreprise,
+    required this.statut,
+    this.exitDate,
+    required this.exitProduit,
+    this.exitMode,
+    this.note,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['asset_id'] = Variable<int>(assetId);
+    if (!nullToAbsent || typeTitre != null) {
+      map['type_titre'] = Variable<String>(typeTitre);
+    }
+    map['quantite'] = Variable<double>(quantite);
+    map['prix_entree'] = Variable<double>(prixEntree);
+    map['frais'] = Variable<double>(frais);
+    if (!nullToAbsent || dateInvestissement != null) {
+      map['date_investissement'] = Variable<DateTime>(dateInvestissement);
+    }
+    if (!nullToAbsent || stade != null) {
+      map['stade'] = Variable<String>(stade);
+    }
+    map['prix_actuel'] = Variable<double>(prixActuel);
+    if (!nullToAbsent || dateValorisation != null) {
+      map['date_valorisation'] = Variable<DateTime>(dateValorisation);
+    }
+    map['valorisation_entreprise'] = Variable<double>(valorisationEntreprise);
+    map['statut'] = Variable<String>(statut);
+    if (!nullToAbsent || exitDate != null) {
+      map['exit_date'] = Variable<DateTime>(exitDate);
+    }
+    map['exit_produit'] = Variable<double>(exitProduit);
+    if (!nullToAbsent || exitMode != null) {
+      map['exit_mode'] = Variable<String>(exitMode);
+    }
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  StartupDetailsCompanion toCompanion(bool nullToAbsent) {
+    return StartupDetailsCompanion(
+      id: Value(id),
+      assetId: Value(assetId),
+      typeTitre: typeTitre == null && nullToAbsent
+          ? const Value.absent()
+          : Value(typeTitre),
+      quantite: Value(quantite),
+      prixEntree: Value(prixEntree),
+      frais: Value(frais),
+      dateInvestissement: dateInvestissement == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dateInvestissement),
+      stade: stade == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stade),
+      prixActuel: Value(prixActuel),
+      dateValorisation: dateValorisation == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dateValorisation),
+      valorisationEntreprise: Value(valorisationEntreprise),
+      statut: Value(statut),
+      exitDate: exitDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exitDate),
+      exitProduit: Value(exitProduit),
+      exitMode: exitMode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exitMode),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory StartupDetail.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return StartupDetail(
+      id: serializer.fromJson<int>(json['id']),
+      assetId: serializer.fromJson<int>(json['assetId']),
+      typeTitre: serializer.fromJson<String?>(json['typeTitre']),
+      quantite: serializer.fromJson<double>(json['quantite']),
+      prixEntree: serializer.fromJson<double>(json['prixEntree']),
+      frais: serializer.fromJson<double>(json['frais']),
+      dateInvestissement: serializer.fromJson<DateTime?>(
+        json['dateInvestissement'],
+      ),
+      stade: serializer.fromJson<String?>(json['stade']),
+      prixActuel: serializer.fromJson<double>(json['prixActuel']),
+      dateValorisation: serializer.fromJson<DateTime?>(
+        json['dateValorisation'],
+      ),
+      valorisationEntreprise: serializer.fromJson<double>(
+        json['valorisationEntreprise'],
+      ),
+      statut: serializer.fromJson<String>(json['statut']),
+      exitDate: serializer.fromJson<DateTime?>(json['exitDate']),
+      exitProduit: serializer.fromJson<double>(json['exitProduit']),
+      exitMode: serializer.fromJson<String?>(json['exitMode']),
+      note: serializer.fromJson<String?>(json['note']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'assetId': serializer.toJson<int>(assetId),
+      'typeTitre': serializer.toJson<String?>(typeTitre),
+      'quantite': serializer.toJson<double>(quantite),
+      'prixEntree': serializer.toJson<double>(prixEntree),
+      'frais': serializer.toJson<double>(frais),
+      'dateInvestissement': serializer.toJson<DateTime?>(dateInvestissement),
+      'stade': serializer.toJson<String?>(stade),
+      'prixActuel': serializer.toJson<double>(prixActuel),
+      'dateValorisation': serializer.toJson<DateTime?>(dateValorisation),
+      'valorisationEntreprise': serializer.toJson<double>(
+        valorisationEntreprise,
+      ),
+      'statut': serializer.toJson<String>(statut),
+      'exitDate': serializer.toJson<DateTime?>(exitDate),
+      'exitProduit': serializer.toJson<double>(exitProduit),
+      'exitMode': serializer.toJson<String?>(exitMode),
+      'note': serializer.toJson<String?>(note),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  StartupDetail copyWith({
+    int? id,
+    int? assetId,
+    Value<String?> typeTitre = const Value.absent(),
+    double? quantite,
+    double? prixEntree,
+    double? frais,
+    Value<DateTime?> dateInvestissement = const Value.absent(),
+    Value<String?> stade = const Value.absent(),
+    double? prixActuel,
+    Value<DateTime?> dateValorisation = const Value.absent(),
+    double? valorisationEntreprise,
+    String? statut,
+    Value<DateTime?> exitDate = const Value.absent(),
+    double? exitProduit,
+    Value<String?> exitMode = const Value.absent(),
+    Value<String?> note = const Value.absent(),
+    DateTime? createdAt,
+  }) => StartupDetail(
+    id: id ?? this.id,
+    assetId: assetId ?? this.assetId,
+    typeTitre: typeTitre.present ? typeTitre.value : this.typeTitre,
+    quantite: quantite ?? this.quantite,
+    prixEntree: prixEntree ?? this.prixEntree,
+    frais: frais ?? this.frais,
+    dateInvestissement: dateInvestissement.present
+        ? dateInvestissement.value
+        : this.dateInvestissement,
+    stade: stade.present ? stade.value : this.stade,
+    prixActuel: prixActuel ?? this.prixActuel,
+    dateValorisation: dateValorisation.present
+        ? dateValorisation.value
+        : this.dateValorisation,
+    valorisationEntreprise:
+        valorisationEntreprise ?? this.valorisationEntreprise,
+    statut: statut ?? this.statut,
+    exitDate: exitDate.present ? exitDate.value : this.exitDate,
+    exitProduit: exitProduit ?? this.exitProduit,
+    exitMode: exitMode.present ? exitMode.value : this.exitMode,
+    note: note.present ? note.value : this.note,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  StartupDetail copyWithCompanion(StartupDetailsCompanion data) {
+    return StartupDetail(
+      id: data.id.present ? data.id.value : this.id,
+      assetId: data.assetId.present ? data.assetId.value : this.assetId,
+      typeTitre: data.typeTitre.present ? data.typeTitre.value : this.typeTitre,
+      quantite: data.quantite.present ? data.quantite.value : this.quantite,
+      prixEntree: data.prixEntree.present
+          ? data.prixEntree.value
+          : this.prixEntree,
+      frais: data.frais.present ? data.frais.value : this.frais,
+      dateInvestissement: data.dateInvestissement.present
+          ? data.dateInvestissement.value
+          : this.dateInvestissement,
+      stade: data.stade.present ? data.stade.value : this.stade,
+      prixActuel: data.prixActuel.present
+          ? data.prixActuel.value
+          : this.prixActuel,
+      dateValorisation: data.dateValorisation.present
+          ? data.dateValorisation.value
+          : this.dateValorisation,
+      valorisationEntreprise: data.valorisationEntreprise.present
+          ? data.valorisationEntreprise.value
+          : this.valorisationEntreprise,
+      statut: data.statut.present ? data.statut.value : this.statut,
+      exitDate: data.exitDate.present ? data.exitDate.value : this.exitDate,
+      exitProduit: data.exitProduit.present
+          ? data.exitProduit.value
+          : this.exitProduit,
+      exitMode: data.exitMode.present ? data.exitMode.value : this.exitMode,
+      note: data.note.present ? data.note.value : this.note,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StartupDetail(')
+          ..write('id: $id, ')
+          ..write('assetId: $assetId, ')
+          ..write('typeTitre: $typeTitre, ')
+          ..write('quantite: $quantite, ')
+          ..write('prixEntree: $prixEntree, ')
+          ..write('frais: $frais, ')
+          ..write('dateInvestissement: $dateInvestissement, ')
+          ..write('stade: $stade, ')
+          ..write('prixActuel: $prixActuel, ')
+          ..write('dateValorisation: $dateValorisation, ')
+          ..write('valorisationEntreprise: $valorisationEntreprise, ')
+          ..write('statut: $statut, ')
+          ..write('exitDate: $exitDate, ')
+          ..write('exitProduit: $exitProduit, ')
+          ..write('exitMode: $exitMode, ')
+          ..write('note: $note, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    assetId,
+    typeTitre,
+    quantite,
+    prixEntree,
+    frais,
+    dateInvestissement,
+    stade,
+    prixActuel,
+    dateValorisation,
+    valorisationEntreprise,
+    statut,
+    exitDate,
+    exitProduit,
+    exitMode,
+    note,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is StartupDetail &&
+          other.id == this.id &&
+          other.assetId == this.assetId &&
+          other.typeTitre == this.typeTitre &&
+          other.quantite == this.quantite &&
+          other.prixEntree == this.prixEntree &&
+          other.frais == this.frais &&
+          other.dateInvestissement == this.dateInvestissement &&
+          other.stade == this.stade &&
+          other.prixActuel == this.prixActuel &&
+          other.dateValorisation == this.dateValorisation &&
+          other.valorisationEntreprise == this.valorisationEntreprise &&
+          other.statut == this.statut &&
+          other.exitDate == this.exitDate &&
+          other.exitProduit == this.exitProduit &&
+          other.exitMode == this.exitMode &&
+          other.note == this.note &&
+          other.createdAt == this.createdAt);
+}
+
+class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
+  final Value<int> id;
+  final Value<int> assetId;
+  final Value<String?> typeTitre;
+  final Value<double> quantite;
+  final Value<double> prixEntree;
+  final Value<double> frais;
+  final Value<DateTime?> dateInvestissement;
+  final Value<String?> stade;
+  final Value<double> prixActuel;
+  final Value<DateTime?> dateValorisation;
+  final Value<double> valorisationEntreprise;
+  final Value<String> statut;
+  final Value<DateTime?> exitDate;
+  final Value<double> exitProduit;
+  final Value<String?> exitMode;
+  final Value<String?> note;
+  final Value<DateTime> createdAt;
+  const StartupDetailsCompanion({
+    this.id = const Value.absent(),
+    this.assetId = const Value.absent(),
+    this.typeTitre = const Value.absent(),
+    this.quantite = const Value.absent(),
+    this.prixEntree = const Value.absent(),
+    this.frais = const Value.absent(),
+    this.dateInvestissement = const Value.absent(),
+    this.stade = const Value.absent(),
+    this.prixActuel = const Value.absent(),
+    this.dateValorisation = const Value.absent(),
+    this.valorisationEntreprise = const Value.absent(),
+    this.statut = const Value.absent(),
+    this.exitDate = const Value.absent(),
+    this.exitProduit = const Value.absent(),
+    this.exitMode = const Value.absent(),
+    this.note = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  StartupDetailsCompanion.insert({
+    this.id = const Value.absent(),
+    required int assetId,
+    this.typeTitre = const Value.absent(),
+    this.quantite = const Value.absent(),
+    this.prixEntree = const Value.absent(),
+    this.frais = const Value.absent(),
+    this.dateInvestissement = const Value.absent(),
+    this.stade = const Value.absent(),
+    this.prixActuel = const Value.absent(),
+    this.dateValorisation = const Value.absent(),
+    this.valorisationEntreprise = const Value.absent(),
+    this.statut = const Value.absent(),
+    this.exitDate = const Value.absent(),
+    this.exitProduit = const Value.absent(),
+    this.exitMode = const Value.absent(),
+    this.note = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : assetId = Value(assetId);
+  static Insertable<StartupDetail> custom({
+    Expression<int>? id,
+    Expression<int>? assetId,
+    Expression<String>? typeTitre,
+    Expression<double>? quantite,
+    Expression<double>? prixEntree,
+    Expression<double>? frais,
+    Expression<DateTime>? dateInvestissement,
+    Expression<String>? stade,
+    Expression<double>? prixActuel,
+    Expression<DateTime>? dateValorisation,
+    Expression<double>? valorisationEntreprise,
+    Expression<String>? statut,
+    Expression<DateTime>? exitDate,
+    Expression<double>? exitProduit,
+    Expression<String>? exitMode,
+    Expression<String>? note,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (assetId != null) 'asset_id': assetId,
+      if (typeTitre != null) 'type_titre': typeTitre,
+      if (quantite != null) 'quantite': quantite,
+      if (prixEntree != null) 'prix_entree': prixEntree,
+      if (frais != null) 'frais': frais,
+      if (dateInvestissement != null) 'date_investissement': dateInvestissement,
+      if (stade != null) 'stade': stade,
+      if (prixActuel != null) 'prix_actuel': prixActuel,
+      if (dateValorisation != null) 'date_valorisation': dateValorisation,
+      if (valorisationEntreprise != null)
+        'valorisation_entreprise': valorisationEntreprise,
+      if (statut != null) 'statut': statut,
+      if (exitDate != null) 'exit_date': exitDate,
+      if (exitProduit != null) 'exit_produit': exitProduit,
+      if (exitMode != null) 'exit_mode': exitMode,
+      if (note != null) 'note': note,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  StartupDetailsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? assetId,
+    Value<String?>? typeTitre,
+    Value<double>? quantite,
+    Value<double>? prixEntree,
+    Value<double>? frais,
+    Value<DateTime?>? dateInvestissement,
+    Value<String?>? stade,
+    Value<double>? prixActuel,
+    Value<DateTime?>? dateValorisation,
+    Value<double>? valorisationEntreprise,
+    Value<String>? statut,
+    Value<DateTime?>? exitDate,
+    Value<double>? exitProduit,
+    Value<String?>? exitMode,
+    Value<String?>? note,
+    Value<DateTime>? createdAt,
+  }) {
+    return StartupDetailsCompanion(
+      id: id ?? this.id,
+      assetId: assetId ?? this.assetId,
+      typeTitre: typeTitre ?? this.typeTitre,
+      quantite: quantite ?? this.quantite,
+      prixEntree: prixEntree ?? this.prixEntree,
+      frais: frais ?? this.frais,
+      dateInvestissement: dateInvestissement ?? this.dateInvestissement,
+      stade: stade ?? this.stade,
+      prixActuel: prixActuel ?? this.prixActuel,
+      dateValorisation: dateValorisation ?? this.dateValorisation,
+      valorisationEntreprise:
+          valorisationEntreprise ?? this.valorisationEntreprise,
+      statut: statut ?? this.statut,
+      exitDate: exitDate ?? this.exitDate,
+      exitProduit: exitProduit ?? this.exitProduit,
+      exitMode: exitMode ?? this.exitMode,
+      note: note ?? this.note,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (assetId.present) {
+      map['asset_id'] = Variable<int>(assetId.value);
+    }
+    if (typeTitre.present) {
+      map['type_titre'] = Variable<String>(typeTitre.value);
+    }
+    if (quantite.present) {
+      map['quantite'] = Variable<double>(quantite.value);
+    }
+    if (prixEntree.present) {
+      map['prix_entree'] = Variable<double>(prixEntree.value);
+    }
+    if (frais.present) {
+      map['frais'] = Variable<double>(frais.value);
+    }
+    if (dateInvestissement.present) {
+      map['date_investissement'] = Variable<DateTime>(dateInvestissement.value);
+    }
+    if (stade.present) {
+      map['stade'] = Variable<String>(stade.value);
+    }
+    if (prixActuel.present) {
+      map['prix_actuel'] = Variable<double>(prixActuel.value);
+    }
+    if (dateValorisation.present) {
+      map['date_valorisation'] = Variable<DateTime>(dateValorisation.value);
+    }
+    if (valorisationEntreprise.present) {
+      map['valorisation_entreprise'] = Variable<double>(
+        valorisationEntreprise.value,
+      );
+    }
+    if (statut.present) {
+      map['statut'] = Variable<String>(statut.value);
+    }
+    if (exitDate.present) {
+      map['exit_date'] = Variable<DateTime>(exitDate.value);
+    }
+    if (exitProduit.present) {
+      map['exit_produit'] = Variable<double>(exitProduit.value);
+    }
+    if (exitMode.present) {
+      map['exit_mode'] = Variable<String>(exitMode.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StartupDetailsCompanion(')
+          ..write('id: $id, ')
+          ..write('assetId: $assetId, ')
+          ..write('typeTitre: $typeTitre, ')
+          ..write('quantite: $quantite, ')
+          ..write('prixEntree: $prixEntree, ')
+          ..write('frais: $frais, ')
+          ..write('dateInvestissement: $dateInvestissement, ')
+          ..write('stade: $stade, ')
+          ..write('prixActuel: $prixActuel, ')
+          ..write('dateValorisation: $dateValorisation, ')
+          ..write('valorisationEntreprise: $valorisationEntreprise, ')
+          ..write('statut: $statut, ')
+          ..write('exitDate: $exitDate, ')
+          ..write('exitProduit: $exitProduit, ')
+          ..write('exitMode: $exitMode, ')
+          ..write('note: $note, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $FundingRoundsTable extends FundingRounds
+    with TableInfo<$FundingRoundsTable, FundingRound> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FundingRoundsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _assetIdMeta = const VerificationMeta(
+    'assetId',
+  );
+  @override
+  late final GeneratedColumn<int> assetId = GeneratedColumn<int>(
+    'asset_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES assets (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _dateMeta = const VerificationMeta('date');
+  @override
+  late final GeneratedColumn<DateTime> date = GeneratedColumn<DateTime>(
+    'date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _montantLeveMeta = const VerificationMeta(
+    'montantLeve',
+  );
+  @override
+  late final GeneratedColumn<double> montantLeve = GeneratedColumn<double>(
+    'montant_leve',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _valorisationPostMoneyMeta =
+      const VerificationMeta('valorisationPostMoney');
+  @override
+  late final GeneratedColumn<double> valorisationPostMoney =
+      GeneratedColumn<double>(
+        'valorisation_post_money',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
+  static const VerificationMeta _prixParActionMeta = const VerificationMeta(
+    'prixParAction',
+  );
+  @override
+  late final GeneratedColumn<double> prixParAction = GeneratedColumn<double>(
+    'prix_par_action',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    assetId,
+    date,
+    montantLeve,
+    valorisationPostMoney,
+    prixParAction,
+    note,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'funding_rounds';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FundingRound> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('asset_id')) {
+      context.handle(
+        _assetIdMeta,
+        assetId.isAcceptableOrUnknown(data['asset_id']!, _assetIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_assetIdMeta);
+    }
+    if (data.containsKey('date')) {
+      context.handle(
+        _dateMeta,
+        date.isAcceptableOrUnknown(data['date']!, _dateMeta),
+      );
+    }
+    if (data.containsKey('montant_leve')) {
+      context.handle(
+        _montantLeveMeta,
+        montantLeve.isAcceptableOrUnknown(
+          data['montant_leve']!,
+          _montantLeveMeta,
+        ),
+      );
+    }
+    if (data.containsKey('valorisation_post_money')) {
+      context.handle(
+        _valorisationPostMoneyMeta,
+        valorisationPostMoney.isAcceptableOrUnknown(
+          data['valorisation_post_money']!,
+          _valorisationPostMoneyMeta,
+        ),
+      );
+    }
+    if (data.containsKey('prix_par_action')) {
+      context.handle(
+        _prixParActionMeta,
+        prixParAction.isAcceptableOrUnknown(
+          data['prix_par_action']!,
+          _prixParActionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FundingRound map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FundingRound(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      assetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}asset_id'],
+      )!,
+      date: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}date'],
+      ),
+      montantLeve: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}montant_leve'],
+      )!,
+      valorisationPostMoney: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}valorisation_post_money'],
+      )!,
+      prixParAction: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}prix_par_action'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+    );
+  }
+
+  @override
+  $FundingRoundsTable createAlias(String alias) {
+    return $FundingRoundsTable(attachedDatabase, alias);
+  }
+}
+
+class FundingRound extends DataClass implements Insertable<FundingRound> {
+  final int id;
+  final int assetId;
+  final DateTime? date;
+  final double montantLeve;
+  final double valorisationPostMoney;
+  final double prixParAction;
+  final String? note;
+  const FundingRound({
+    required this.id,
+    required this.assetId,
+    this.date,
+    required this.montantLeve,
+    required this.valorisationPostMoney,
+    required this.prixParAction,
+    this.note,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['asset_id'] = Variable<int>(assetId);
+    if (!nullToAbsent || date != null) {
+      map['date'] = Variable<DateTime>(date);
+    }
+    map['montant_leve'] = Variable<double>(montantLeve);
+    map['valorisation_post_money'] = Variable<double>(valorisationPostMoney);
+    map['prix_par_action'] = Variable<double>(prixParAction);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    return map;
+  }
+
+  FundingRoundsCompanion toCompanion(bool nullToAbsent) {
+    return FundingRoundsCompanion(
+      id: Value(id),
+      assetId: Value(assetId),
+      date: date == null && nullToAbsent ? const Value.absent() : Value(date),
+      montantLeve: Value(montantLeve),
+      valorisationPostMoney: Value(valorisationPostMoney),
+      prixParAction: Value(prixParAction),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+    );
+  }
+
+  factory FundingRound.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FundingRound(
+      id: serializer.fromJson<int>(json['id']),
+      assetId: serializer.fromJson<int>(json['assetId']),
+      date: serializer.fromJson<DateTime?>(json['date']),
+      montantLeve: serializer.fromJson<double>(json['montantLeve']),
+      valorisationPostMoney: serializer.fromJson<double>(
+        json['valorisationPostMoney'],
+      ),
+      prixParAction: serializer.fromJson<double>(json['prixParAction']),
+      note: serializer.fromJson<String?>(json['note']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'assetId': serializer.toJson<int>(assetId),
+      'date': serializer.toJson<DateTime?>(date),
+      'montantLeve': serializer.toJson<double>(montantLeve),
+      'valorisationPostMoney': serializer.toJson<double>(valorisationPostMoney),
+      'prixParAction': serializer.toJson<double>(prixParAction),
+      'note': serializer.toJson<String?>(note),
+    };
+  }
+
+  FundingRound copyWith({
+    int? id,
+    int? assetId,
+    Value<DateTime?> date = const Value.absent(),
+    double? montantLeve,
+    double? valorisationPostMoney,
+    double? prixParAction,
+    Value<String?> note = const Value.absent(),
+  }) => FundingRound(
+    id: id ?? this.id,
+    assetId: assetId ?? this.assetId,
+    date: date.present ? date.value : this.date,
+    montantLeve: montantLeve ?? this.montantLeve,
+    valorisationPostMoney: valorisationPostMoney ?? this.valorisationPostMoney,
+    prixParAction: prixParAction ?? this.prixParAction,
+    note: note.present ? note.value : this.note,
+  );
+  FundingRound copyWithCompanion(FundingRoundsCompanion data) {
+    return FundingRound(
+      id: data.id.present ? data.id.value : this.id,
+      assetId: data.assetId.present ? data.assetId.value : this.assetId,
+      date: data.date.present ? data.date.value : this.date,
+      montantLeve: data.montantLeve.present
+          ? data.montantLeve.value
+          : this.montantLeve,
+      valorisationPostMoney: data.valorisationPostMoney.present
+          ? data.valorisationPostMoney.value
+          : this.valorisationPostMoney,
+      prixParAction: data.prixParAction.present
+          ? data.prixParAction.value
+          : this.prixParAction,
+      note: data.note.present ? data.note.value : this.note,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FundingRound(')
+          ..write('id: $id, ')
+          ..write('assetId: $assetId, ')
+          ..write('date: $date, ')
+          ..write('montantLeve: $montantLeve, ')
+          ..write('valorisationPostMoney: $valorisationPostMoney, ')
+          ..write('prixParAction: $prixParAction, ')
+          ..write('note: $note')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    assetId,
+    date,
+    montantLeve,
+    valorisationPostMoney,
+    prixParAction,
+    note,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FundingRound &&
+          other.id == this.id &&
+          other.assetId == this.assetId &&
+          other.date == this.date &&
+          other.montantLeve == this.montantLeve &&
+          other.valorisationPostMoney == this.valorisationPostMoney &&
+          other.prixParAction == this.prixParAction &&
+          other.note == this.note);
+}
+
+class FundingRoundsCompanion extends UpdateCompanion<FundingRound> {
+  final Value<int> id;
+  final Value<int> assetId;
+  final Value<DateTime?> date;
+  final Value<double> montantLeve;
+  final Value<double> valorisationPostMoney;
+  final Value<double> prixParAction;
+  final Value<String?> note;
+  const FundingRoundsCompanion({
+    this.id = const Value.absent(),
+    this.assetId = const Value.absent(),
+    this.date = const Value.absent(),
+    this.montantLeve = const Value.absent(),
+    this.valorisationPostMoney = const Value.absent(),
+    this.prixParAction = const Value.absent(),
+    this.note = const Value.absent(),
+  });
+  FundingRoundsCompanion.insert({
+    this.id = const Value.absent(),
+    required int assetId,
+    this.date = const Value.absent(),
+    this.montantLeve = const Value.absent(),
+    this.valorisationPostMoney = const Value.absent(),
+    this.prixParAction = const Value.absent(),
+    this.note = const Value.absent(),
+  }) : assetId = Value(assetId);
+  static Insertable<FundingRound> custom({
+    Expression<int>? id,
+    Expression<int>? assetId,
+    Expression<DateTime>? date,
+    Expression<double>? montantLeve,
+    Expression<double>? valorisationPostMoney,
+    Expression<double>? prixParAction,
+    Expression<String>? note,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (assetId != null) 'asset_id': assetId,
+      if (date != null) 'date': date,
+      if (montantLeve != null) 'montant_leve': montantLeve,
+      if (valorisationPostMoney != null)
+        'valorisation_post_money': valorisationPostMoney,
+      if (prixParAction != null) 'prix_par_action': prixParAction,
+      if (note != null) 'note': note,
+    });
+  }
+
+  FundingRoundsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? assetId,
+    Value<DateTime?>? date,
+    Value<double>? montantLeve,
+    Value<double>? valorisationPostMoney,
+    Value<double>? prixParAction,
+    Value<String?>? note,
+  }) {
+    return FundingRoundsCompanion(
+      id: id ?? this.id,
+      assetId: assetId ?? this.assetId,
+      date: date ?? this.date,
+      montantLeve: montantLeve ?? this.montantLeve,
+      valorisationPostMoney:
+          valorisationPostMoney ?? this.valorisationPostMoney,
+      prixParAction: prixParAction ?? this.prixParAction,
+      note: note ?? this.note,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (assetId.present) {
+      map['asset_id'] = Variable<int>(assetId.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<DateTime>(date.value);
+    }
+    if (montantLeve.present) {
+      map['montant_leve'] = Variable<double>(montantLeve.value);
+    }
+    if (valorisationPostMoney.present) {
+      map['valorisation_post_money'] = Variable<double>(
+        valorisationPostMoney.value,
+      );
+    }
+    if (prixParAction.present) {
+      map['prix_par_action'] = Variable<double>(prixParAction.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FundingRoundsCompanion(')
+          ..write('id: $id, ')
+          ..write('assetId: $assetId, ')
+          ..write('date: $date, ')
+          ..write('montantLeve: $montantLeve, ')
+          ..write('valorisationPostMoney: $valorisationPostMoney, ')
+          ..write('prixParAction: $prixParAction, ')
+          ..write('note: $note')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3582,6 +5067,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SnapshotsTable snapshots = $SnapshotsTable(this);
   late final $RentalsTable rentals = $RentalsTable(this);
   late final $DocumentsTable documents = $DocumentsTable(this);
+  late final $StartupDetailsTable startupDetails = $StartupDetailsTable(this);
+  late final $FundingRoundsTable fundingRounds = $FundingRoundsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3593,6 +5080,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     snapshots,
     rentals,
     documents,
+    startupDetails,
+    fundingRounds,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -3617,6 +5106,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       ),
       result: [TableUpdate('documents', kind: UpdateKind.delete)],
     ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'assets',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('startup_details', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'assets',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('funding_rounds', kind: UpdateKind.delete)],
+    ),
   ]);
 }
 
@@ -3628,6 +5131,7 @@ typedef $$AssetsTableCreateCompanionBuilder = AssetsCompanion Function({
   Value<String> currency,
   Value<String?> institution,
   Value<String?> note,
+  Value<int> sortOrder,
   Value<DateTime> createdAt,
 });
 typedef $$AssetsTableUpdateCompanionBuilder = AssetsCompanion Function({
@@ -3638,6 +5142,7 @@ typedef $$AssetsTableUpdateCompanionBuilder = AssetsCompanion Function({
   Value<String> currency,
   Value<String?> institution,
   Value<String?> note,
+  Value<int> sortOrder,
   Value<DateTime> createdAt,
 });
 
@@ -3699,6 +5204,42 @@ final class $$AssetsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$StartupDetailsTable, List<StartupDetail>>
+  _startupDetailsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.startupDetails,
+    aliasName: 'assets__id__startup_details__asset_id',
+  );
+
+  $$StartupDetailsTableProcessedTableManager get startupDetailsRefs {
+    final manager = $$StartupDetailsTableTableManager(
+      $_db,
+      $_db.startupDetails,
+    ).filter((f) => f.assetId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_startupDetailsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$FundingRoundsTable, List<FundingRound>>
+  _fundingRoundsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.fundingRounds,
+    aliasName: 'assets__id__funding_rounds__asset_id',
+  );
+
+  $$FundingRoundsTableProcessedTableManager get fundingRoundsRefs {
+    final manager = $$FundingRoundsTableTableManager(
+      $_db,
+      $_db.fundingRounds,
+    ).filter((f) => f.assetId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_fundingRoundsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$AssetsTableFilterComposer
@@ -3742,6 +5283,11 @@ class $$AssetsTableFilterComposer
 
   ColumnFilters<String> get note => $composableBuilder(
     column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3824,6 +5370,56 @@ class $$AssetsTableFilterComposer
     );
     return f(composer);
   }
+
+  Expression<bool> startupDetailsRefs(
+    Expression<bool> Function($$StartupDetailsTableFilterComposer f) f,
+  ) {
+    final $$StartupDetailsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.startupDetails,
+      getReferencedColumn: (t) => t.assetId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$StartupDetailsTableFilterComposer(
+            $db: $db,
+            $table: $db.startupDetails,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> fundingRoundsRefs(
+    Expression<bool> Function($$FundingRoundsTableFilterComposer f) f,
+  ) {
+    final $$FundingRoundsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.fundingRounds,
+      getReferencedColumn: (t) => t.assetId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FundingRoundsTableFilterComposer(
+            $db: $db,
+            $table: $db.fundingRounds,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$AssetsTableOrderingComposer
@@ -3870,6 +5466,11 @@ class $$AssetsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -3907,6 +5508,9 @@ class $$AssetsTableAnnotationComposer
 
   GeneratedColumn<String> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -3985,6 +5589,56 @@ class $$AssetsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> startupDetailsRefs<T extends Object>(
+    Expression<T> Function($$StartupDetailsTableAnnotationComposer a) f,
+  ) {
+    final $$StartupDetailsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.startupDetails,
+      getReferencedColumn: (t) => t.assetId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$StartupDetailsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.startupDetails,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> fundingRoundsRefs<T extends Object>(
+    Expression<T> Function($$FundingRoundsTableAnnotationComposer a) f,
+  ) {
+    final $$FundingRoundsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.fundingRounds,
+      getReferencedColumn: (t) => t.assetId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FundingRoundsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.fundingRounds,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$AssetsTableTableManager
@@ -4004,6 +5658,8 @@ class $$AssetsTableTableManager
             bool positionsRefs,
             bool rentalsRefs,
             bool documentsRefs,
+            bool startupDetailsRefs,
+            bool fundingRoundsRefs,
           })
         > {
   $$AssetsTableTableManager(_$AppDatabase db, $AssetsTable table)
@@ -4026,6 +5682,7 @@ class $$AssetsTableTableManager
                 Value<String> currency = const Value.absent(),
                 Value<String?> institution = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => AssetsCompanion(
                 id: id,
@@ -4035,6 +5692,7 @@ class $$AssetsTableTableManager
                 currency: currency,
                 institution: institution,
                 note: note,
+                sortOrder: sortOrder,
                 createdAt: createdAt,
               ),
           createCompanionCallback:
@@ -4046,6 +5704,7 @@ class $$AssetsTableTableManager
                 Value<String> currency = const Value.absent(),
                 Value<String?> institution = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => AssetsCompanion.insert(
                 id: id,
@@ -4055,6 +5714,7 @@ class $$AssetsTableTableManager
                 currency: currency,
                 institution: institution,
                 note: note,
+                sortOrder: sortOrder,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
@@ -4070,6 +5730,8 @@ class $$AssetsTableTableManager
                 positionsRefs = false,
                 rentalsRefs = false,
                 documentsRefs = false,
+                startupDetailsRefs = false,
+                fundingRoundsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -4077,6 +5739,8 @@ class $$AssetsTableTableManager
                     if (positionsRefs) db.positions,
                     if (rentalsRefs) db.rentals,
                     if (documentsRefs) db.documents,
+                    if (startupDetailsRefs) db.startupDetails,
+                    if (fundingRoundsRefs) db.fundingRounds,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -4141,6 +5805,46 @@ class $$AssetsTableTableManager
                           referencedColumn: 'asset_id',
                           typedResults: items,
                         ),
+                      if (startupDetailsRefs)
+                        await $_getPrefetchedDataByColumns<
+                          Asset,
+                          $AssetsTable,
+                          StartupDetail,
+                          $StartupDetailsTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AssetsTableReferences
+                              ._startupDetailsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AssetsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).startupDetailsRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'asset_id',
+                          typedResults: items,
+                        ),
+                      if (fundingRoundsRefs)
+                        await $_getPrefetchedDataByColumns<
+                          Asset,
+                          $AssetsTable,
+                          FundingRound,
+                          $FundingRoundsTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AssetsTableReferences
+                              ._fundingRoundsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AssetsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).fundingRoundsRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'asset_id',
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -4165,6 +5869,8 @@ typedef $$AssetsTableProcessedTableManager =
         bool positionsRefs,
         bool rentalsRefs,
         bool documentsRefs,
+        bool startupDetailsRefs,
+        bool fundingRoundsRefs,
       })
     >;
 typedef $$PositionsTableCreateCompanionBuilder = PositionsCompanion Function({
@@ -6022,6 +7728,918 @@ typedef $$DocumentsTableProcessedTableManager =
       AssetDocument,
       PrefetchHooks Function({bool assetId})
     >;
+typedef $$StartupDetailsTableCreateCompanionBuilder =
+    StartupDetailsCompanion Function({
+      Value<int> id,
+      required int assetId,
+      Value<String?> typeTitre,
+      Value<double> quantite,
+      Value<double> prixEntree,
+      Value<double> frais,
+      Value<DateTime?> dateInvestissement,
+      Value<String?> stade,
+      Value<double> prixActuel,
+      Value<DateTime?> dateValorisation,
+      Value<double> valorisationEntreprise,
+      Value<String> statut,
+      Value<DateTime?> exitDate,
+      Value<double> exitProduit,
+      Value<String?> exitMode,
+      Value<String?> note,
+      Value<DateTime> createdAt,
+    });
+typedef $$StartupDetailsTableUpdateCompanionBuilder =
+    StartupDetailsCompanion Function({
+      Value<int> id,
+      Value<int> assetId,
+      Value<String?> typeTitre,
+      Value<double> quantite,
+      Value<double> prixEntree,
+      Value<double> frais,
+      Value<DateTime?> dateInvestissement,
+      Value<String?> stade,
+      Value<double> prixActuel,
+      Value<DateTime?> dateValorisation,
+      Value<double> valorisationEntreprise,
+      Value<String> statut,
+      Value<DateTime?> exitDate,
+      Value<double> exitProduit,
+      Value<String?> exitMode,
+      Value<String?> note,
+      Value<DateTime> createdAt,
+    });
+
+final class $$StartupDetailsTableReferences
+    extends BaseReferences<_$AppDatabase, $StartupDetailsTable, StartupDetail> {
+  $$StartupDetailsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $AssetsTable _assetIdTable(_$AppDatabase db) =>
+      db.assets.createAlias('startup_details__asset_id__assets__id');
+
+  $$AssetsTableProcessedTableManager get assetId {
+    final $_column = $_itemColumn<int>('asset_id')!;
+
+    final manager = $$AssetsTableTableManager(
+      $_db,
+      $_db.assets,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_assetIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$StartupDetailsTableFilterComposer
+    extends Composer<_$AppDatabase, $StartupDetailsTable> {
+  $$StartupDetailsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get typeTitre => $composableBuilder(
+    column: $table.typeTitre,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get quantite => $composableBuilder(
+    column: $table.quantite,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get prixEntree => $composableBuilder(
+    column: $table.prixEntree,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get frais => $composableBuilder(
+    column: $table.frais,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dateInvestissement => $composableBuilder(
+    column: $table.dateInvestissement,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get stade => $composableBuilder(
+    column: $table.stade,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get prixActuel => $composableBuilder(
+    column: $table.prixActuel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dateValorisation => $composableBuilder(
+    column: $table.dateValorisation,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get valorisationEntreprise => $composableBuilder(
+    column: $table.valorisationEntreprise,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get statut => $composableBuilder(
+    column: $table.statut,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get exitDate => $composableBuilder(
+    column: $table.exitDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get exitProduit => $composableBuilder(
+    column: $table.exitProduit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get exitMode => $composableBuilder(
+    column: $table.exitMode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$AssetsTableFilterComposer get assetId {
+    final $$AssetsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.assetId,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableFilterComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$StartupDetailsTableOrderingComposer
+    extends Composer<_$AppDatabase, $StartupDetailsTable> {
+  $$StartupDetailsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get typeTitre => $composableBuilder(
+    column: $table.typeTitre,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get quantite => $composableBuilder(
+    column: $table.quantite,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get prixEntree => $composableBuilder(
+    column: $table.prixEntree,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get frais => $composableBuilder(
+    column: $table.frais,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get dateInvestissement => $composableBuilder(
+    column: $table.dateInvestissement,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get stade => $composableBuilder(
+    column: $table.stade,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get prixActuel => $composableBuilder(
+    column: $table.prixActuel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get dateValorisation => $composableBuilder(
+    column: $table.dateValorisation,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get valorisationEntreprise => $composableBuilder(
+    column: $table.valorisationEntreprise,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get statut => $composableBuilder(
+    column: $table.statut,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get exitDate => $composableBuilder(
+    column: $table.exitDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get exitProduit => $composableBuilder(
+    column: $table.exitProduit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get exitMode => $composableBuilder(
+    column: $table.exitMode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$AssetsTableOrderingComposer get assetId {
+    final $$AssetsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.assetId,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableOrderingComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$StartupDetailsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $StartupDetailsTable> {
+  $$StartupDetailsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get typeTitre =>
+      $composableBuilder(column: $table.typeTitre, builder: (column) => column);
+
+  GeneratedColumn<double> get quantite =>
+      $composableBuilder(column: $table.quantite, builder: (column) => column);
+
+  GeneratedColumn<double> get prixEntree => $composableBuilder(
+    column: $table.prixEntree,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get frais =>
+      $composableBuilder(column: $table.frais, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get dateInvestissement => $composableBuilder(
+    column: $table.dateInvestissement,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get stade =>
+      $composableBuilder(column: $table.stade, builder: (column) => column);
+
+  GeneratedColumn<double> get prixActuel => $composableBuilder(
+    column: $table.prixActuel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get dateValorisation => $composableBuilder(
+    column: $table.dateValorisation,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get valorisationEntreprise => $composableBuilder(
+    column: $table.valorisationEntreprise,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get statut =>
+      $composableBuilder(column: $table.statut, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get exitDate =>
+      $composableBuilder(column: $table.exitDate, builder: (column) => column);
+
+  GeneratedColumn<double> get exitProduit => $composableBuilder(
+    column: $table.exitProduit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get exitMode =>
+      $composableBuilder(column: $table.exitMode, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$AssetsTableAnnotationComposer get assetId {
+    final $$AssetsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.assetId,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$StartupDetailsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $StartupDetailsTable,
+          StartupDetail,
+          $$StartupDetailsTableFilterComposer,
+          $$StartupDetailsTableOrderingComposer,
+          $$StartupDetailsTableAnnotationComposer,
+          $$StartupDetailsTableCreateCompanionBuilder,
+          $$StartupDetailsTableUpdateCompanionBuilder,
+          (StartupDetail, $$StartupDetailsTableReferences),
+          StartupDetail,
+          PrefetchHooks Function({bool assetId})
+        > {
+  $$StartupDetailsTableTableManager(
+    _$AppDatabase db,
+    $StartupDetailsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$StartupDetailsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$StartupDetailsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$StartupDetailsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> assetId = const Value.absent(),
+                Value<String?> typeTitre = const Value.absent(),
+                Value<double> quantite = const Value.absent(),
+                Value<double> prixEntree = const Value.absent(),
+                Value<double> frais = const Value.absent(),
+                Value<DateTime?> dateInvestissement = const Value.absent(),
+                Value<String?> stade = const Value.absent(),
+                Value<double> prixActuel = const Value.absent(),
+                Value<DateTime?> dateValorisation = const Value.absent(),
+                Value<double> valorisationEntreprise = const Value.absent(),
+                Value<String> statut = const Value.absent(),
+                Value<DateTime?> exitDate = const Value.absent(),
+                Value<double> exitProduit = const Value.absent(),
+                Value<String?> exitMode = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => StartupDetailsCompanion(
+                id: id,
+                assetId: assetId,
+                typeTitre: typeTitre,
+                quantite: quantite,
+                prixEntree: prixEntree,
+                frais: frais,
+                dateInvestissement: dateInvestissement,
+                stade: stade,
+                prixActuel: prixActuel,
+                dateValorisation: dateValorisation,
+                valorisationEntreprise: valorisationEntreprise,
+                statut: statut,
+                exitDate: exitDate,
+                exitProduit: exitProduit,
+                exitMode: exitMode,
+                note: note,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int assetId,
+                Value<String?> typeTitre = const Value.absent(),
+                Value<double> quantite = const Value.absent(),
+                Value<double> prixEntree = const Value.absent(),
+                Value<double> frais = const Value.absent(),
+                Value<DateTime?> dateInvestissement = const Value.absent(),
+                Value<String?> stade = const Value.absent(),
+                Value<double> prixActuel = const Value.absent(),
+                Value<DateTime?> dateValorisation = const Value.absent(),
+                Value<double> valorisationEntreprise = const Value.absent(),
+                Value<String> statut = const Value.absent(),
+                Value<DateTime?> exitDate = const Value.absent(),
+                Value<double> exitProduit = const Value.absent(),
+                Value<String?> exitMode = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => StartupDetailsCompanion.insert(
+                id: id,
+                assetId: assetId,
+                typeTitre: typeTitre,
+                quantite: quantite,
+                prixEntree: prixEntree,
+                frais: frais,
+                dateInvestissement: dateInvestissement,
+                stade: stade,
+                prixActuel: prixActuel,
+                dateValorisation: dateValorisation,
+                valorisationEntreprise: valorisationEntreprise,
+                statut: statut,
+                exitDate: exitDate,
+                exitProduit: exitProduit,
+                exitMode: exitMode,
+                note: note,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$StartupDetailsTable, StartupDetail>(table),
+                  $$StartupDetailsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({assetId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (assetId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.assetId,
+                        referencedTable: $$StartupDetailsTableReferences
+                            ._assetIdTable(db),
+                        referencedColumn: $$StartupDetailsTableReferences
+                            ._assetIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$StartupDetailsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $StartupDetailsTable,
+      StartupDetail,
+      $$StartupDetailsTableFilterComposer,
+      $$StartupDetailsTableOrderingComposer,
+      $$StartupDetailsTableAnnotationComposer,
+      $$StartupDetailsTableCreateCompanionBuilder,
+      $$StartupDetailsTableUpdateCompanionBuilder,
+      (StartupDetail, $$StartupDetailsTableReferences),
+      StartupDetail,
+      PrefetchHooks Function({bool assetId})
+    >;
+typedef $$FundingRoundsTableCreateCompanionBuilder =
+    FundingRoundsCompanion Function({
+      Value<int> id,
+      required int assetId,
+      Value<DateTime?> date,
+      Value<double> montantLeve,
+      Value<double> valorisationPostMoney,
+      Value<double> prixParAction,
+      Value<String?> note,
+    });
+typedef $$FundingRoundsTableUpdateCompanionBuilder =
+    FundingRoundsCompanion Function({
+      Value<int> id,
+      Value<int> assetId,
+      Value<DateTime?> date,
+      Value<double> montantLeve,
+      Value<double> valorisationPostMoney,
+      Value<double> prixParAction,
+      Value<String?> note,
+    });
+
+final class $$FundingRoundsTableReferences
+    extends BaseReferences<_$AppDatabase, $FundingRoundsTable, FundingRound> {
+  $$FundingRoundsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $AssetsTable _assetIdTable(_$AppDatabase db) =>
+      db.assets.createAlias('funding_rounds__asset_id__assets__id');
+
+  $$AssetsTableProcessedTableManager get assetId {
+    final $_column = $_itemColumn<int>('asset_id')!;
+
+    final manager = $$AssetsTableTableManager(
+      $_db,
+      $_db.assets,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_assetIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$FundingRoundsTableFilterComposer
+    extends Composer<_$AppDatabase, $FundingRoundsTable> {
+  $$FundingRoundsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get montantLeve => $composableBuilder(
+    column: $table.montantLeve,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get valorisationPostMoney => $composableBuilder(
+    column: $table.valorisationPostMoney,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get prixParAction => $composableBuilder(
+    column: $table.prixParAction,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$AssetsTableFilterComposer get assetId {
+    final $$AssetsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.assetId,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableFilterComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$FundingRoundsTableOrderingComposer
+    extends Composer<_$AppDatabase, $FundingRoundsTable> {
+  $$FundingRoundsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get montantLeve => $composableBuilder(
+    column: $table.montantLeve,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get valorisationPostMoney => $composableBuilder(
+    column: $table.valorisationPostMoney,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get prixParAction => $composableBuilder(
+    column: $table.prixParAction,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$AssetsTableOrderingComposer get assetId {
+    final $$AssetsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.assetId,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableOrderingComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$FundingRoundsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FundingRoundsTable> {
+  $$FundingRoundsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<double> get montantLeve => $composableBuilder(
+    column: $table.montantLeve,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get valorisationPostMoney => $composableBuilder(
+    column: $table.valorisationPostMoney,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get prixParAction => $composableBuilder(
+    column: $table.prixParAction,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  $$AssetsTableAnnotationComposer get assetId {
+    final $$AssetsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.assetId,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$FundingRoundsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FundingRoundsTable,
+          FundingRound,
+          $$FundingRoundsTableFilterComposer,
+          $$FundingRoundsTableOrderingComposer,
+          $$FundingRoundsTableAnnotationComposer,
+          $$FundingRoundsTableCreateCompanionBuilder,
+          $$FundingRoundsTableUpdateCompanionBuilder,
+          (FundingRound, $$FundingRoundsTableReferences),
+          FundingRound,
+          PrefetchHooks Function({bool assetId})
+        > {
+  $$FundingRoundsTableTableManager(_$AppDatabase db, $FundingRoundsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FundingRoundsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FundingRoundsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FundingRoundsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> assetId = const Value.absent(),
+                Value<DateTime?> date = const Value.absent(),
+                Value<double> montantLeve = const Value.absent(),
+                Value<double> valorisationPostMoney = const Value.absent(),
+                Value<double> prixParAction = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+              }) => FundingRoundsCompanion(
+                id: id,
+                assetId: assetId,
+                date: date,
+                montantLeve: montantLeve,
+                valorisationPostMoney: valorisationPostMoney,
+                prixParAction: prixParAction,
+                note: note,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int assetId,
+                Value<DateTime?> date = const Value.absent(),
+                Value<double> montantLeve = const Value.absent(),
+                Value<double> valorisationPostMoney = const Value.absent(),
+                Value<double> prixParAction = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+              }) => FundingRoundsCompanion.insert(
+                id: id,
+                assetId: assetId,
+                date: date,
+                montantLeve: montantLeve,
+                valorisationPostMoney: valorisationPostMoney,
+                prixParAction: prixParAction,
+                note: note,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$FundingRoundsTable, FundingRound>(table),
+                  $$FundingRoundsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({assetId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (assetId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.assetId,
+                        referencedTable: $$FundingRoundsTableReferences
+                            ._assetIdTable(db),
+                        referencedColumn: $$FundingRoundsTableReferences
+                            ._assetIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$FundingRoundsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FundingRoundsTable,
+      FundingRound,
+      $$FundingRoundsTableFilterComposer,
+      $$FundingRoundsTableOrderingComposer,
+      $$FundingRoundsTableAnnotationComposer,
+      $$FundingRoundsTableCreateCompanionBuilder,
+      $$FundingRoundsTableUpdateCompanionBuilder,
+      (FundingRound, $$FundingRoundsTableReferences),
+      FundingRound,
+      PrefetchHooks Function({bool assetId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6038,4 +8656,8 @@ class $AppDatabaseManager {
       $$RentalsTableTableManager(_db, _db.rentals);
   $$DocumentsTableTableManager get documents =>
       $$DocumentsTableTableManager(_db, _db.documents);
+  $$StartupDetailsTableTableManager get startupDetails =>
+      $$StartupDetailsTableTableManager(_db, _db.startupDetails);
+  $$FundingRoundsTableTableManager get fundingRounds =>
+      $$FundingRoundsTableTableManager(_db, _db.fundingRounds);
 }

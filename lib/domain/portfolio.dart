@@ -1,13 +1,18 @@
 import '../data/database.dart';
 import '../models/asset_type.dart';
+import 'startup.dart';
 
-/// Valeur actuelle d'un actif : positions × prix de marché, ou valeur manuelle
-/// si l'actif ne porte pas de positions.
+/// Valeur actuelle d'un actif :
+/// - une fiche startup valorise l'actif (quantité × prix actuel manuel) ;
+/// - sinon positions × prix de marché ;
+/// - sinon la valeur manuelle saisie sur l'actif.
 double assetValue({
   required Asset asset,
   required List<Position> positions,
   required Map<String, double> prices,
+  StartupDetail? startup,
 }) {
+  if (startup != null) return lineValue(startup);
   if (positions.isEmpty) return asset.value;
   var total = 0.0;
   for (final pos in positions) {
@@ -50,6 +55,7 @@ PortfolioSummary summarize({
   required List<Asset> assets,
   required Map<int, List<Position>> positionsByAsset,
   required Map<String, double> prices,
+  Map<int, StartupDetail> startupsByAsset = const {},
 }) {
   var assetsTotal = 0.0;
   var liabilitiesTotal = 0.0;
@@ -60,7 +66,12 @@ PortfolioSummary summarize({
   for (final a in assets) {
     final type = assetTypeFrom(a.type);
     final positions = positionsByAsset[a.id] ?? const <Position>[];
-    final v = assetValue(asset: a, positions: positions, prices: prices);
+    final v = assetValue(
+      asset: a,
+      positions: positions,
+      prices: prices,
+      startup: startupsByAsset[a.id],
+    );
 
     if (isLiabilityType(type)) {
       liabilitiesTotal += v;
