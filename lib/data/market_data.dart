@@ -14,20 +14,21 @@ class MarketQuote {
   });
 }
 
-/// Récupération des prix via l'API publique Yahoo Finance (non officielle).
+/// Récupération des prix de marché.
 ///
-/// Format des symboles :
-///  - Action US : `AAPL`
-///  - Action / ETF Euronext Paris : `AIR.PA`, `CW8.PA`
-///  - Crypto : `BTC-USD`, `ETH-USD`
-///  - Devise : `EURUSD=X`
-///  - Or : `GC=F`
+/// - Yahoo Finance (non officiel) pour actions, ETF, devises, grandes cryptos :
+///   `AAPL`, `AIR.PA`, `CW8.PA`, `BTC-USD`, `EURUSD=X`, `GC=F`.
+/// - CoinGecko en repli pour les petites cryptos absentes de Yahoo.
 class MarketDataService {
-  static const _base = 'https://query1.finance.yahoo.com/v8/finance/chart/';
+  static const _yahooBase =
+      'https://query1.finance.yahoo.com/v8/finance/chart/';
+  static const _coingeckoBase = 'https://api.coingecko.com/api/v3/';
+
+  final Map<String, String> _coinIdCache = {};
 
   Future<MarketQuote?> fetchQuote(String symbol) async {
     final uri = Uri.parse(
-        '$_base${Uri.encodeComponent(symbol)}?interval=1d&range=1d');
+        '$_yahooBase${Uri.encodeComponent(symbol)}?interval=1d&range=1d');
     try {
       final res = await http
           .get(uri, headers: const {'User-Agent': 'Mozilla/5.0'})
@@ -64,5 +65,54 @@ class MarketDataService {
     final q = await fetchQuote('EUR$currency=X');
     if (q == null || q.price <= 0) return null;
     return 1.0 / q.price;
+  }
+
+  /// Prix d'une crypto via CoinGecko (repli pour les tokens absents de Yahoo).
+  /// Retourne le prix en EUR, ou null si le token est introuvable.
+  Future<MarketQuote?> fetchCryptoPrice(String symbol) async {
+    final target = symbol.toLowerCase();
+    try {
+      var id = _coinIdCache[target];
+      id ??= await _searchCoinId(target);
+      if (id == null) return null;
+      _coinIdCache[target] = id;
+
+      final uri = Uri.parse(
+          '${_coingeckoBase}simple/price?ids=${Uri.encodeComponent(id)}&vs_currencies=eur');
+      final res = await http
+          .get(uri, headers: const {'User-Agent': 'Mozilla/5.0'})
+          .timeout(const Duration(seconds: 15));
+      if (res.statusCode != 200) return null;
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      final eur = (data[id]?['eur'] as num?)?.toDouble();
+      if (eur == null || eur <= 0) return null;
+      return MarketQuote(symbol: symbol, price: eur, currency: 'EUR');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Trouve l'id CoinGecko d'un symbole (préfère la plus grosse capitalisation).
+  Future<String?> _searchCoinId(String query) async {
+    final uri = Uri.parse(
+        '${_coingeckoBase}search?query=${Uri.encodeComponent(query)}');
+    final res = await http
+        .get(uri, headers: const {'User-Agent': 'Mozilla/5.0'})
+        .timeout(const Duration(seconds: 15));
+    if (res.statusCode != 200) return null;
+    final data = jsonDecode(res.body) as Map<String, dynamic>;
+    final coins = data['coins'] as List? ?? const [];
+    String? bestId;
+    int? bestRank;
+    for (final c in coins) {
+      final sym = (c['symbol'] as String? ?? '').toLowerCase();
+      if (sym != query) continue;
+      final rank = (c['market_cap_rank'] as num?)?.toInt();
+      if (bestId == null || (rank != null && (bestRank == null || rank < bestRank))) {
+        bestId = c['id'] as String?;
+        bestRank = rank;
+      }
+    }
+    return bestId;
   }
 }

@@ -145,7 +145,15 @@ class PortfolioController extends ChangeNotifier {
   }
 
   Future<PriceRefreshResult> _fetchAndStore(Set<String> symbols) async {
-    final quotes = await market.fetchQuotes(symbols);
+    final quotes = <String, MarketQuote>{};
+    quotes.addAll(await market.fetchQuotes(symbols));
+
+    // Repli CoinGecko pour les symboles introuvables (petites cryptos).
+    final missing = symbols.difference(quotes.keys.toSet());
+    for (final s in missing) {
+      final cq = await market.fetchCryptoPrice(s);
+      if (cq != null) quotes[s] = cq;
+    }
 
     // Devises à convertir vers EUR.
     final currencies =
