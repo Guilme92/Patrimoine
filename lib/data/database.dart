@@ -57,12 +57,87 @@ class Snapshots extends Table {
   RealColumn get netWorth => real()();
 }
 
-@DriftDatabase(tables: [Assets, Positions, PriceCache, Snapshots])
+/// Détails de la location d'un bien immobilier.
+/// Une seule fiche de location par bien (`assetId` unique).
+@DataClassName('Rental')
+class Rentals extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get assetId =>
+      integer().references(Assets, #id, onDelete: KeyAction.cascade).unique()();
+
+  /// loue | vacant | autre
+  TextColumn get statut => text().withDefault(const Constant('vacant'))();
+
+  /// vide | meuble | commercial | saisonnier | colocation | autre
+  TextColumn get typeBail => text().nullable()();
+  TextColumn get locataire => text().nullable()();
+
+  RealColumn get loyerHc => real().withDefault(const Constant(0))();
+  RealColumn get chargesLocatives => real().withDefault(const Constant(0))();
+  RealColumn get depotGarantie => real().withDefault(const Constant(0))();
+
+  DateTimeColumn get dateDebutBail => dateTime().nullable()();
+  DateTimeColumn get dateFinBail => dateTime().nullable()();
+
+  /// direct | agence | autre
+  TextColumn get modeGestion => text().nullable()();
+  RealColumn get fraisGestion => real().withDefault(const Constant(0))();
+
+  RealColumn get taxeFonciere => real().withDefault(const Constant(0))();
+  RealColumn get assurancePno => real().withDefault(const Constant(0))();
+  RealColumn get chargesCopropriete => real().withDefault(const Constant(0))();
+  RealColumn get travauxEntretien => real().withDefault(const Constant(0))();
+  RealColumn get vacanceLocative => real().withDefault(const Constant(0))();
+
+  TextColumn get note => text().nullable()();
+
+  BoolColumn get aUnCredit => boolean().withDefault(const Constant(false))();
+  RealColumn get montantCredit => real().withDefault(const Constant(0))();
+  RealColumn get tauxCreditPct => real().withDefault(const Constant(0))();
+  RealColumn get mensualiteCredit => real().withDefault(const Constant(0))();
+  IntColumn get dureeCreditMois => integer().withDefault(const Constant(0))();
+  RealColumn get capitalRestantDu => real().withDefault(const Constant(0))();
+  RealColumn get assuranceEmprunteur => real().withDefault(const Constant(0))();
+
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// Document rattaché à un actif (bail, facture, relevé…).
+/// Le fichier est copié dans `<documents>/documents/<assetId>/<fileName>`.
+@DataClassName('AssetDocument')
+class Documents extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get assetId =>
+      integer().references(Assets, #id, onDelete: KeyAction.cascade)();
+  TextColumn get label => text()();
+  TextColumn get fileName => text()();
+  TextColumn get filePath => text()();
+  TextColumn get note => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+@DriftDatabase(
+  tables: [Assets, Positions, PriceCache, Snapshots, Rentals, Documents],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
+  /// Constructeur pour les tests (base en mémoire, exécuteur fourni).
+  AppDatabase.forTesting(super.executor);
+
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(rentals);
+        await m.createTable(documents);
+      }
+    },
+  );
 
   // ---- Assets ----
   Future<List<Asset>> allAssets() =>
@@ -70,8 +145,7 @@ class AppDatabase extends _$AppDatabase {
 
   Future<int> addAsset(AssetsCompanion entry) => into(assets).insert(entry);
 
-  Future<void> updateAsset(Asset asset) =>
-      update(assets).replace(asset);
+  Future<void> updateAsset(Asset asset) => update(assets).replace(asset);
 
   Future<void> deleteAsset(int id) =>
       (delete(assets)..where((t) => t.id.equals(id))).go();
@@ -89,8 +163,9 @@ class AppDatabase extends _$AppDatabase {
       (delete(positions)..where((t) => t.id.equals(id))).go();
 
   // ---- Prix ----
-  Future<MarketPrice?> priceFor(String symbol) =>
-      (select(priceCache)..where((t) => t.symbol.equals(symbol))).getSingleOrNull();
+  Future<MarketPrice?> priceFor(String symbol) => (select(
+    priceCache,
+  )..where((t) => t.symbol.equals(symbol))).getSingleOrNull();
 
   Future<void> upsertPrice(String symbol, double price, String currency) =>
       into(priceCache).insertOnConflictUpdate(
@@ -103,8 +178,10 @@ class AppDatabase extends _$AppDatabase {
       );
 
   Future<Map<String, double>> cachedPricesFor(Set<String> symbols) async {
-    final rows = await (select(priceCache)..where((t) => t.symbol.isIn(symbols)))
-        .get();
+    if (symbols.isEmpty) return {};
+    final rows = await (select(
+      priceCache,
+    )..where((t) => t.symbol.isIn(symbols))).get();
     return {for (final r in rows) r.symbol: r.price};
   }
 
@@ -115,21 +192,56 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // ---- Snapshots ----
-  Future<void> saveSnapshot(double netWorth) => into(snapshots).insert(
-        SnapshotsCompanion.insert(
-          date: DateTime.now(),
-          netWorth: netWorth,
-        ),
-      );
+  Future<void> saveSnapshot(double netWorth) => into(
+    snapshots,
+  ).insert(SnapshotsCompanion.insert(date: DateTime.now(), netWorth: netWorth));
 
   Future<List<NetWorthSnapshot>> allSnapshots() =>
       (select(snapshots)..orderBy([(t) => OrderingTerm.asc(t.date)])).get();
 
   Future<void> pruneSnapshots(int keepDays) async {
     final cutoff = DateTime.now().subtract(Duration(days: keepDays));
-    await (delete(snapshots)..where((t) => t.date.isSmallerThanValue(cutoff)))
-        .go();
+    await (delete(
+      snapshots,
+    )..where((t) => t.date.isSmallerThanValue(cutoff))).go();
   }
+
+  // ---- Location ----
+  Future<Rental?> rentalFor(int assetId) => (select(
+    rentals,
+  )..where((t) => t.assetId.equals(assetId))).getSingleOrNull();
+
+  Future<List<Rental>> allRentals() => select(rentals).get();
+
+  /// Crée ou met à jour la fiche de location du bien.
+  Future<void> saveRental(RentalsCompanion entry) async {
+    final existing = await rentalFor(entry.assetId.value);
+    if (existing == null) {
+      await into(rentals).insert(entry);
+    } else {
+      await (update(rentals)..where((t) => t.id.equals(existing.id))).write(
+        entry.copyWith(id: Value(existing.id)),
+      );
+    }
+  }
+
+  Future<void> deleteRental(int assetId) =>
+      (delete(rentals)..where((t) => t.assetId.equals(assetId))).go();
+
+  // ---- Documents ----
+  Future<List<AssetDocument>> documentsFor(int assetId) =>
+      (select(documents)
+            ..where((t) => t.assetId.equals(assetId))
+            ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+          .get();
+
+  Future<List<AssetDocument>> allDocuments() => select(documents).get();
+
+  Future<int> addDocument(DocumentsCompanion entry) =>
+      into(documents).insert(entry);
+
+  Future<void> deleteDocument(int id) =>
+      (delete(documents)..where((t) => t.id.equals(id))).go();
 }
 
 LazyDatabase _openConnection() {

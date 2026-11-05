@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'controllers/portfolio_controller.dart';
@@ -15,15 +16,22 @@ class PatrimoineApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) {
         final controller = PortfolioController(db);
-        controller
-            .load()
-            .then((_) => controller.refreshPrices(missingOnly: true));
+        controller.load().then(
+          (_) => controller.refreshPrices(missingOnly: true),
+        );
         return controller;
       },
       child: MaterialApp(
         title: 'Patrimoine',
         debugShowCheckedModeBanner: false,
         theme: buildDarkTheme(),
+        locale: const Locale('fr'),
+        supportedLocales: const [Locale('fr'), Locale('en')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         home: const HomeScreen(),
       ),
     );

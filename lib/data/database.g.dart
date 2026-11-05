@@ -1696,6 +1696,1883 @@ class SnapshotsCompanion extends UpdateCompanion<NetWorthSnapshot> {
   }
 }
 
+class $RentalsTable extends Rentals with TableInfo<$RentalsTable, Rental> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RentalsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _assetIdMeta = const VerificationMeta(
+    'assetId',
+  );
+  @override
+  late final GeneratedColumn<int> assetId = GeneratedColumn<int>(
+    'asset_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'UNIQUE REFERENCES assets (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _statutMeta = const VerificationMeta('statut');
+  @override
+  late final GeneratedColumn<String> statut = GeneratedColumn<String>(
+    'statut',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('vacant'),
+  );
+  static const VerificationMeta _typeBailMeta = const VerificationMeta(
+    'typeBail',
+  );
+  @override
+  late final GeneratedColumn<String> typeBail = GeneratedColumn<String>(
+    'type_bail',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _locataireMeta = const VerificationMeta(
+    'locataire',
+  );
+  @override
+  late final GeneratedColumn<String> locataire = GeneratedColumn<String>(
+    'locataire',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _loyerHcMeta = const VerificationMeta(
+    'loyerHc',
+  );
+  @override
+  late final GeneratedColumn<double> loyerHc = GeneratedColumn<double>(
+    'loyer_hc',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _chargesLocativesMeta = const VerificationMeta(
+    'chargesLocatives',
+  );
+  @override
+  late final GeneratedColumn<double> chargesLocatives = GeneratedColumn<double>(
+    'charges_locatives',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _depotGarantieMeta = const VerificationMeta(
+    'depotGarantie',
+  );
+  @override
+  late final GeneratedColumn<double> depotGarantie = GeneratedColumn<double>(
+    'depot_garantie',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _dateDebutBailMeta = const VerificationMeta(
+    'dateDebutBail',
+  );
+  @override
+  late final GeneratedColumn<DateTime> dateDebutBail =
+      GeneratedColumn<DateTime>(
+        'date_debut_bail',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _dateFinBailMeta = const VerificationMeta(
+    'dateFinBail',
+  );
+  @override
+  late final GeneratedColumn<DateTime> dateFinBail = GeneratedColumn<DateTime>(
+    'date_fin_bail',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _modeGestionMeta = const VerificationMeta(
+    'modeGestion',
+  );
+  @override
+  late final GeneratedColumn<String> modeGestion = GeneratedColumn<String>(
+    'mode_gestion',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fraisGestionMeta = const VerificationMeta(
+    'fraisGestion',
+  );
+  @override
+  late final GeneratedColumn<double> fraisGestion = GeneratedColumn<double>(
+    'frais_gestion',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _taxeFonciereMeta = const VerificationMeta(
+    'taxeFonciere',
+  );
+  @override
+  late final GeneratedColumn<double> taxeFonciere = GeneratedColumn<double>(
+    'taxe_fonciere',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _assurancePnoMeta = const VerificationMeta(
+    'assurancePno',
+  );
+  @override
+  late final GeneratedColumn<double> assurancePno = GeneratedColumn<double>(
+    'assurance_pno',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _chargesCoproprieteMeta =
+      const VerificationMeta('chargesCopropriete');
+  @override
+  late final GeneratedColumn<double> chargesCopropriete =
+      GeneratedColumn<double>(
+        'charges_copropriete',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
+  static const VerificationMeta _travauxEntretienMeta = const VerificationMeta(
+    'travauxEntretien',
+  );
+  @override
+  late final GeneratedColumn<double> travauxEntretien = GeneratedColumn<double>(
+    'travaux_entretien',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _vacanceLocativeMeta = const VerificationMeta(
+    'vacanceLocative',
+  );
+  @override
+  late final GeneratedColumn<double> vacanceLocative = GeneratedColumn<double>(
+    'vacance_locative',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _aUnCreditMeta = const VerificationMeta(
+    'aUnCredit',
+  );
+  @override
+  late final GeneratedColumn<bool> aUnCredit = GeneratedColumn<bool>(
+    'a_un_credit',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("a_un_credit" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _montantCreditMeta = const VerificationMeta(
+    'montantCredit',
+  );
+  @override
+  late final GeneratedColumn<double> montantCredit = GeneratedColumn<double>(
+    'montant_credit',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _tauxCreditPctMeta = const VerificationMeta(
+    'tauxCreditPct',
+  );
+  @override
+  late final GeneratedColumn<double> tauxCreditPct = GeneratedColumn<double>(
+    'taux_credit_pct',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _mensualiteCreditMeta = const VerificationMeta(
+    'mensualiteCredit',
+  );
+  @override
+  late final GeneratedColumn<double> mensualiteCredit = GeneratedColumn<double>(
+    'mensualite_credit',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _dureeCreditMoisMeta = const VerificationMeta(
+    'dureeCreditMois',
+  );
+  @override
+  late final GeneratedColumn<int> dureeCreditMois = GeneratedColumn<int>(
+    'duree_credit_mois',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _capitalRestantDuMeta = const VerificationMeta(
+    'capitalRestantDu',
+  );
+  @override
+  late final GeneratedColumn<double> capitalRestantDu = GeneratedColumn<double>(
+    'capital_restant_du',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _assuranceEmprunteurMeta =
+      const VerificationMeta('assuranceEmprunteur');
+  @override
+  late final GeneratedColumn<double> assuranceEmprunteur =
+      GeneratedColumn<double>(
+        'assurance_emprunteur',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    assetId,
+    statut,
+    typeBail,
+    locataire,
+    loyerHc,
+    chargesLocatives,
+    depotGarantie,
+    dateDebutBail,
+    dateFinBail,
+    modeGestion,
+    fraisGestion,
+    taxeFonciere,
+    assurancePno,
+    chargesCopropriete,
+    travauxEntretien,
+    vacanceLocative,
+    note,
+    aUnCredit,
+    montantCredit,
+    tauxCreditPct,
+    mensualiteCredit,
+    dureeCreditMois,
+    capitalRestantDu,
+    assuranceEmprunteur,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'rentals';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Rental> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('asset_id')) {
+      context.handle(
+        _assetIdMeta,
+        assetId.isAcceptableOrUnknown(data['asset_id']!, _assetIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_assetIdMeta);
+    }
+    if (data.containsKey('statut')) {
+      context.handle(
+        _statutMeta,
+        statut.isAcceptableOrUnknown(data['statut']!, _statutMeta),
+      );
+    }
+    if (data.containsKey('type_bail')) {
+      context.handle(
+        _typeBailMeta,
+        typeBail.isAcceptableOrUnknown(data['type_bail']!, _typeBailMeta),
+      );
+    }
+    if (data.containsKey('locataire')) {
+      context.handle(
+        _locataireMeta,
+        locataire.isAcceptableOrUnknown(data['locataire']!, _locataireMeta),
+      );
+    }
+    if (data.containsKey('loyer_hc')) {
+      context.handle(
+        _loyerHcMeta,
+        loyerHc.isAcceptableOrUnknown(data['loyer_hc']!, _loyerHcMeta),
+      );
+    }
+    if (data.containsKey('charges_locatives')) {
+      context.handle(
+        _chargesLocativesMeta,
+        chargesLocatives.isAcceptableOrUnknown(
+          data['charges_locatives']!,
+          _chargesLocativesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('depot_garantie')) {
+      context.handle(
+        _depotGarantieMeta,
+        depotGarantie.isAcceptableOrUnknown(
+          data['depot_garantie']!,
+          _depotGarantieMeta,
+        ),
+      );
+    }
+    if (data.containsKey('date_debut_bail')) {
+      context.handle(
+        _dateDebutBailMeta,
+        dateDebutBail.isAcceptableOrUnknown(
+          data['date_debut_bail']!,
+          _dateDebutBailMeta,
+        ),
+      );
+    }
+    if (data.containsKey('date_fin_bail')) {
+      context.handle(
+        _dateFinBailMeta,
+        dateFinBail.isAcceptableOrUnknown(
+          data['date_fin_bail']!,
+          _dateFinBailMeta,
+        ),
+      );
+    }
+    if (data.containsKey('mode_gestion')) {
+      context.handle(
+        _modeGestionMeta,
+        modeGestion.isAcceptableOrUnknown(
+          data['mode_gestion']!,
+          _modeGestionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('frais_gestion')) {
+      context.handle(
+        _fraisGestionMeta,
+        fraisGestion.isAcceptableOrUnknown(
+          data['frais_gestion']!,
+          _fraisGestionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('taxe_fonciere')) {
+      context.handle(
+        _taxeFonciereMeta,
+        taxeFonciere.isAcceptableOrUnknown(
+          data['taxe_fonciere']!,
+          _taxeFonciereMeta,
+        ),
+      );
+    }
+    if (data.containsKey('assurance_pno')) {
+      context.handle(
+        _assurancePnoMeta,
+        assurancePno.isAcceptableOrUnknown(
+          data['assurance_pno']!,
+          _assurancePnoMeta,
+        ),
+      );
+    }
+    if (data.containsKey('charges_copropriete')) {
+      context.handle(
+        _chargesCoproprieteMeta,
+        chargesCopropriete.isAcceptableOrUnknown(
+          data['charges_copropriete']!,
+          _chargesCoproprieteMeta,
+        ),
+      );
+    }
+    if (data.containsKey('travaux_entretien')) {
+      context.handle(
+        _travauxEntretienMeta,
+        travauxEntretien.isAcceptableOrUnknown(
+          data['travaux_entretien']!,
+          _travauxEntretienMeta,
+        ),
+      );
+    }
+    if (data.containsKey('vacance_locative')) {
+      context.handle(
+        _vacanceLocativeMeta,
+        vacanceLocative.isAcceptableOrUnknown(
+          data['vacance_locative']!,
+          _vacanceLocativeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('a_un_credit')) {
+      context.handle(
+        _aUnCreditMeta,
+        aUnCredit.isAcceptableOrUnknown(data['a_un_credit']!, _aUnCreditMeta),
+      );
+    }
+    if (data.containsKey('montant_credit')) {
+      context.handle(
+        _montantCreditMeta,
+        montantCredit.isAcceptableOrUnknown(
+          data['montant_credit']!,
+          _montantCreditMeta,
+        ),
+      );
+    }
+    if (data.containsKey('taux_credit_pct')) {
+      context.handle(
+        _tauxCreditPctMeta,
+        tauxCreditPct.isAcceptableOrUnknown(
+          data['taux_credit_pct']!,
+          _tauxCreditPctMeta,
+        ),
+      );
+    }
+    if (data.containsKey('mensualite_credit')) {
+      context.handle(
+        _mensualiteCreditMeta,
+        mensualiteCredit.isAcceptableOrUnknown(
+          data['mensualite_credit']!,
+          _mensualiteCreditMeta,
+        ),
+      );
+    }
+    if (data.containsKey('duree_credit_mois')) {
+      context.handle(
+        _dureeCreditMoisMeta,
+        dureeCreditMois.isAcceptableOrUnknown(
+          data['duree_credit_mois']!,
+          _dureeCreditMoisMeta,
+        ),
+      );
+    }
+    if (data.containsKey('capital_restant_du')) {
+      context.handle(
+        _capitalRestantDuMeta,
+        capitalRestantDu.isAcceptableOrUnknown(
+          data['capital_restant_du']!,
+          _capitalRestantDuMeta,
+        ),
+      );
+    }
+    if (data.containsKey('assurance_emprunteur')) {
+      context.handle(
+        _assuranceEmprunteurMeta,
+        assuranceEmprunteur.isAcceptableOrUnknown(
+          data['assurance_emprunteur']!,
+          _assuranceEmprunteurMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Rental map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Rental(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      assetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}asset_id'],
+      )!,
+      statut: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}statut'],
+      )!,
+      typeBail: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type_bail'],
+      ),
+      locataire: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}locataire'],
+      ),
+      loyerHc: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}loyer_hc'],
+      )!,
+      chargesLocatives: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}charges_locatives'],
+      )!,
+      depotGarantie: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}depot_garantie'],
+      )!,
+      dateDebutBail: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}date_debut_bail'],
+      ),
+      dateFinBail: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}date_fin_bail'],
+      ),
+      modeGestion: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mode_gestion'],
+      ),
+      fraisGestion: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}frais_gestion'],
+      )!,
+      taxeFonciere: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}taxe_fonciere'],
+      )!,
+      assurancePno: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}assurance_pno'],
+      )!,
+      chargesCopropriete: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}charges_copropriete'],
+      )!,
+      travauxEntretien: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}travaux_entretien'],
+      )!,
+      vacanceLocative: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}vacance_locative'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      aUnCredit: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}a_un_credit'],
+      )!,
+      montantCredit: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}montant_credit'],
+      )!,
+      tauxCreditPct: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}taux_credit_pct'],
+      )!,
+      mensualiteCredit: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}mensualite_credit'],
+      )!,
+      dureeCreditMois: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duree_credit_mois'],
+      )!,
+      capitalRestantDu: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}capital_restant_du'],
+      )!,
+      assuranceEmprunteur: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}assurance_emprunteur'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $RentalsTable createAlias(String alias) {
+    return $RentalsTable(attachedDatabase, alias);
+  }
+}
+
+class Rental extends DataClass implements Insertable<Rental> {
+  final int id;
+  final int assetId;
+
+  /// loue | vacant | autre
+  final String statut;
+
+  /// vide | meuble | commercial | saisonnier | colocation | autre
+  final String? typeBail;
+  final String? locataire;
+  final double loyerHc;
+  final double chargesLocatives;
+  final double depotGarantie;
+  final DateTime? dateDebutBail;
+  final DateTime? dateFinBail;
+
+  /// direct | agence | autre
+  final String? modeGestion;
+  final double fraisGestion;
+  final double taxeFonciere;
+  final double assurancePno;
+  final double chargesCopropriete;
+  final double travauxEntretien;
+  final double vacanceLocative;
+  final String? note;
+  final bool aUnCredit;
+  final double montantCredit;
+  final double tauxCreditPct;
+  final double mensualiteCredit;
+  final int dureeCreditMois;
+  final double capitalRestantDu;
+  final double assuranceEmprunteur;
+  final DateTime createdAt;
+  const Rental({
+    required this.id,
+    required this.assetId,
+    required this.statut,
+    this.typeBail,
+    this.locataire,
+    required this.loyerHc,
+    required this.chargesLocatives,
+    required this.depotGarantie,
+    this.dateDebutBail,
+    this.dateFinBail,
+    this.modeGestion,
+    required this.fraisGestion,
+    required this.taxeFonciere,
+    required this.assurancePno,
+    required this.chargesCopropriete,
+    required this.travauxEntretien,
+    required this.vacanceLocative,
+    this.note,
+    required this.aUnCredit,
+    required this.montantCredit,
+    required this.tauxCreditPct,
+    required this.mensualiteCredit,
+    required this.dureeCreditMois,
+    required this.capitalRestantDu,
+    required this.assuranceEmprunteur,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['asset_id'] = Variable<int>(assetId);
+    map['statut'] = Variable<String>(statut);
+    if (!nullToAbsent || typeBail != null) {
+      map['type_bail'] = Variable<String>(typeBail);
+    }
+    if (!nullToAbsent || locataire != null) {
+      map['locataire'] = Variable<String>(locataire);
+    }
+    map['loyer_hc'] = Variable<double>(loyerHc);
+    map['charges_locatives'] = Variable<double>(chargesLocatives);
+    map['depot_garantie'] = Variable<double>(depotGarantie);
+    if (!nullToAbsent || dateDebutBail != null) {
+      map['date_debut_bail'] = Variable<DateTime>(dateDebutBail);
+    }
+    if (!nullToAbsent || dateFinBail != null) {
+      map['date_fin_bail'] = Variable<DateTime>(dateFinBail);
+    }
+    if (!nullToAbsent || modeGestion != null) {
+      map['mode_gestion'] = Variable<String>(modeGestion);
+    }
+    map['frais_gestion'] = Variable<double>(fraisGestion);
+    map['taxe_fonciere'] = Variable<double>(taxeFonciere);
+    map['assurance_pno'] = Variable<double>(assurancePno);
+    map['charges_copropriete'] = Variable<double>(chargesCopropriete);
+    map['travaux_entretien'] = Variable<double>(travauxEntretien);
+    map['vacance_locative'] = Variable<double>(vacanceLocative);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['a_un_credit'] = Variable<bool>(aUnCredit);
+    map['montant_credit'] = Variable<double>(montantCredit);
+    map['taux_credit_pct'] = Variable<double>(tauxCreditPct);
+    map['mensualite_credit'] = Variable<double>(mensualiteCredit);
+    map['duree_credit_mois'] = Variable<int>(dureeCreditMois);
+    map['capital_restant_du'] = Variable<double>(capitalRestantDu);
+    map['assurance_emprunteur'] = Variable<double>(assuranceEmprunteur);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  RentalsCompanion toCompanion(bool nullToAbsent) {
+    return RentalsCompanion(
+      id: Value(id),
+      assetId: Value(assetId),
+      statut: Value(statut),
+      typeBail: typeBail == null && nullToAbsent
+          ? const Value.absent()
+          : Value(typeBail),
+      locataire: locataire == null && nullToAbsent
+          ? const Value.absent()
+          : Value(locataire),
+      loyerHc: Value(loyerHc),
+      chargesLocatives: Value(chargesLocatives),
+      depotGarantie: Value(depotGarantie),
+      dateDebutBail: dateDebutBail == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dateDebutBail),
+      dateFinBail: dateFinBail == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dateFinBail),
+      modeGestion: modeGestion == null && nullToAbsent
+          ? const Value.absent()
+          : Value(modeGestion),
+      fraisGestion: Value(fraisGestion),
+      taxeFonciere: Value(taxeFonciere),
+      assurancePno: Value(assurancePno),
+      chargesCopropriete: Value(chargesCopropriete),
+      travauxEntretien: Value(travauxEntretien),
+      vacanceLocative: Value(vacanceLocative),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      aUnCredit: Value(aUnCredit),
+      montantCredit: Value(montantCredit),
+      tauxCreditPct: Value(tauxCreditPct),
+      mensualiteCredit: Value(mensualiteCredit),
+      dureeCreditMois: Value(dureeCreditMois),
+      capitalRestantDu: Value(capitalRestantDu),
+      assuranceEmprunteur: Value(assuranceEmprunteur),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory Rental.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Rental(
+      id: serializer.fromJson<int>(json['id']),
+      assetId: serializer.fromJson<int>(json['assetId']),
+      statut: serializer.fromJson<String>(json['statut']),
+      typeBail: serializer.fromJson<String?>(json['typeBail']),
+      locataire: serializer.fromJson<String?>(json['locataire']),
+      loyerHc: serializer.fromJson<double>(json['loyerHc']),
+      chargesLocatives: serializer.fromJson<double>(json['chargesLocatives']),
+      depotGarantie: serializer.fromJson<double>(json['depotGarantie']),
+      dateDebutBail: serializer.fromJson<DateTime?>(json['dateDebutBail']),
+      dateFinBail: serializer.fromJson<DateTime?>(json['dateFinBail']),
+      modeGestion: serializer.fromJson<String?>(json['modeGestion']),
+      fraisGestion: serializer.fromJson<double>(json['fraisGestion']),
+      taxeFonciere: serializer.fromJson<double>(json['taxeFonciere']),
+      assurancePno: serializer.fromJson<double>(json['assurancePno']),
+      chargesCopropriete: serializer.fromJson<double>(
+        json['chargesCopropriete'],
+      ),
+      travauxEntretien: serializer.fromJson<double>(json['travauxEntretien']),
+      vacanceLocative: serializer.fromJson<double>(json['vacanceLocative']),
+      note: serializer.fromJson<String?>(json['note']),
+      aUnCredit: serializer.fromJson<bool>(json['aUnCredit']),
+      montantCredit: serializer.fromJson<double>(json['montantCredit']),
+      tauxCreditPct: serializer.fromJson<double>(json['tauxCreditPct']),
+      mensualiteCredit: serializer.fromJson<double>(json['mensualiteCredit']),
+      dureeCreditMois: serializer.fromJson<int>(json['dureeCreditMois']),
+      capitalRestantDu: serializer.fromJson<double>(json['capitalRestantDu']),
+      assuranceEmprunteur: serializer.fromJson<double>(
+        json['assuranceEmprunteur'],
+      ),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'assetId': serializer.toJson<int>(assetId),
+      'statut': serializer.toJson<String>(statut),
+      'typeBail': serializer.toJson<String?>(typeBail),
+      'locataire': serializer.toJson<String?>(locataire),
+      'loyerHc': serializer.toJson<double>(loyerHc),
+      'chargesLocatives': serializer.toJson<double>(chargesLocatives),
+      'depotGarantie': serializer.toJson<double>(depotGarantie),
+      'dateDebutBail': serializer.toJson<DateTime?>(dateDebutBail),
+      'dateFinBail': serializer.toJson<DateTime?>(dateFinBail),
+      'modeGestion': serializer.toJson<String?>(modeGestion),
+      'fraisGestion': serializer.toJson<double>(fraisGestion),
+      'taxeFonciere': serializer.toJson<double>(taxeFonciere),
+      'assurancePno': serializer.toJson<double>(assurancePno),
+      'chargesCopropriete': serializer.toJson<double>(chargesCopropriete),
+      'travauxEntretien': serializer.toJson<double>(travauxEntretien),
+      'vacanceLocative': serializer.toJson<double>(vacanceLocative),
+      'note': serializer.toJson<String?>(note),
+      'aUnCredit': serializer.toJson<bool>(aUnCredit),
+      'montantCredit': serializer.toJson<double>(montantCredit),
+      'tauxCreditPct': serializer.toJson<double>(tauxCreditPct),
+      'mensualiteCredit': serializer.toJson<double>(mensualiteCredit),
+      'dureeCreditMois': serializer.toJson<int>(dureeCreditMois),
+      'capitalRestantDu': serializer.toJson<double>(capitalRestantDu),
+      'assuranceEmprunteur': serializer.toJson<double>(assuranceEmprunteur),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  Rental copyWith({
+    int? id,
+    int? assetId,
+    String? statut,
+    Value<String?> typeBail = const Value.absent(),
+    Value<String?> locataire = const Value.absent(),
+    double? loyerHc,
+    double? chargesLocatives,
+    double? depotGarantie,
+    Value<DateTime?> dateDebutBail = const Value.absent(),
+    Value<DateTime?> dateFinBail = const Value.absent(),
+    Value<String?> modeGestion = const Value.absent(),
+    double? fraisGestion,
+    double? taxeFonciere,
+    double? assurancePno,
+    double? chargesCopropriete,
+    double? travauxEntretien,
+    double? vacanceLocative,
+    Value<String?> note = const Value.absent(),
+    bool? aUnCredit,
+    double? montantCredit,
+    double? tauxCreditPct,
+    double? mensualiteCredit,
+    int? dureeCreditMois,
+    double? capitalRestantDu,
+    double? assuranceEmprunteur,
+    DateTime? createdAt,
+  }) => Rental(
+    id: id ?? this.id,
+    assetId: assetId ?? this.assetId,
+    statut: statut ?? this.statut,
+    typeBail: typeBail.present ? typeBail.value : this.typeBail,
+    locataire: locataire.present ? locataire.value : this.locataire,
+    loyerHc: loyerHc ?? this.loyerHc,
+    chargesLocatives: chargesLocatives ?? this.chargesLocatives,
+    depotGarantie: depotGarantie ?? this.depotGarantie,
+    dateDebutBail: dateDebutBail.present
+        ? dateDebutBail.value
+        : this.dateDebutBail,
+    dateFinBail: dateFinBail.present ? dateFinBail.value : this.dateFinBail,
+    modeGestion: modeGestion.present ? modeGestion.value : this.modeGestion,
+    fraisGestion: fraisGestion ?? this.fraisGestion,
+    taxeFonciere: taxeFonciere ?? this.taxeFonciere,
+    assurancePno: assurancePno ?? this.assurancePno,
+    chargesCopropriete: chargesCopropriete ?? this.chargesCopropriete,
+    travauxEntretien: travauxEntretien ?? this.travauxEntretien,
+    vacanceLocative: vacanceLocative ?? this.vacanceLocative,
+    note: note.present ? note.value : this.note,
+    aUnCredit: aUnCredit ?? this.aUnCredit,
+    montantCredit: montantCredit ?? this.montantCredit,
+    tauxCreditPct: tauxCreditPct ?? this.tauxCreditPct,
+    mensualiteCredit: mensualiteCredit ?? this.mensualiteCredit,
+    dureeCreditMois: dureeCreditMois ?? this.dureeCreditMois,
+    capitalRestantDu: capitalRestantDu ?? this.capitalRestantDu,
+    assuranceEmprunteur: assuranceEmprunteur ?? this.assuranceEmprunteur,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  Rental copyWithCompanion(RentalsCompanion data) {
+    return Rental(
+      id: data.id.present ? data.id.value : this.id,
+      assetId: data.assetId.present ? data.assetId.value : this.assetId,
+      statut: data.statut.present ? data.statut.value : this.statut,
+      typeBail: data.typeBail.present ? data.typeBail.value : this.typeBail,
+      locataire: data.locataire.present ? data.locataire.value : this.locataire,
+      loyerHc: data.loyerHc.present ? data.loyerHc.value : this.loyerHc,
+      chargesLocatives: data.chargesLocatives.present
+          ? data.chargesLocatives.value
+          : this.chargesLocatives,
+      depotGarantie: data.depotGarantie.present
+          ? data.depotGarantie.value
+          : this.depotGarantie,
+      dateDebutBail: data.dateDebutBail.present
+          ? data.dateDebutBail.value
+          : this.dateDebutBail,
+      dateFinBail: data.dateFinBail.present
+          ? data.dateFinBail.value
+          : this.dateFinBail,
+      modeGestion: data.modeGestion.present
+          ? data.modeGestion.value
+          : this.modeGestion,
+      fraisGestion: data.fraisGestion.present
+          ? data.fraisGestion.value
+          : this.fraisGestion,
+      taxeFonciere: data.taxeFonciere.present
+          ? data.taxeFonciere.value
+          : this.taxeFonciere,
+      assurancePno: data.assurancePno.present
+          ? data.assurancePno.value
+          : this.assurancePno,
+      chargesCopropriete: data.chargesCopropriete.present
+          ? data.chargesCopropriete.value
+          : this.chargesCopropriete,
+      travauxEntretien: data.travauxEntretien.present
+          ? data.travauxEntretien.value
+          : this.travauxEntretien,
+      vacanceLocative: data.vacanceLocative.present
+          ? data.vacanceLocative.value
+          : this.vacanceLocative,
+      note: data.note.present ? data.note.value : this.note,
+      aUnCredit: data.aUnCredit.present ? data.aUnCredit.value : this.aUnCredit,
+      montantCredit: data.montantCredit.present
+          ? data.montantCredit.value
+          : this.montantCredit,
+      tauxCreditPct: data.tauxCreditPct.present
+          ? data.tauxCreditPct.value
+          : this.tauxCreditPct,
+      mensualiteCredit: data.mensualiteCredit.present
+          ? data.mensualiteCredit.value
+          : this.mensualiteCredit,
+      dureeCreditMois: data.dureeCreditMois.present
+          ? data.dureeCreditMois.value
+          : this.dureeCreditMois,
+      capitalRestantDu: data.capitalRestantDu.present
+          ? data.capitalRestantDu.value
+          : this.capitalRestantDu,
+      assuranceEmprunteur: data.assuranceEmprunteur.present
+          ? data.assuranceEmprunteur.value
+          : this.assuranceEmprunteur,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Rental(')
+          ..write('id: $id, ')
+          ..write('assetId: $assetId, ')
+          ..write('statut: $statut, ')
+          ..write('typeBail: $typeBail, ')
+          ..write('locataire: $locataire, ')
+          ..write('loyerHc: $loyerHc, ')
+          ..write('chargesLocatives: $chargesLocatives, ')
+          ..write('depotGarantie: $depotGarantie, ')
+          ..write('dateDebutBail: $dateDebutBail, ')
+          ..write('dateFinBail: $dateFinBail, ')
+          ..write('modeGestion: $modeGestion, ')
+          ..write('fraisGestion: $fraisGestion, ')
+          ..write('taxeFonciere: $taxeFonciere, ')
+          ..write('assurancePno: $assurancePno, ')
+          ..write('chargesCopropriete: $chargesCopropriete, ')
+          ..write('travauxEntretien: $travauxEntretien, ')
+          ..write('vacanceLocative: $vacanceLocative, ')
+          ..write('note: $note, ')
+          ..write('aUnCredit: $aUnCredit, ')
+          ..write('montantCredit: $montantCredit, ')
+          ..write('tauxCreditPct: $tauxCreditPct, ')
+          ..write('mensualiteCredit: $mensualiteCredit, ')
+          ..write('dureeCreditMois: $dureeCreditMois, ')
+          ..write('capitalRestantDu: $capitalRestantDu, ')
+          ..write('assuranceEmprunteur: $assuranceEmprunteur, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    id,
+    assetId,
+    statut,
+    typeBail,
+    locataire,
+    loyerHc,
+    chargesLocatives,
+    depotGarantie,
+    dateDebutBail,
+    dateFinBail,
+    modeGestion,
+    fraisGestion,
+    taxeFonciere,
+    assurancePno,
+    chargesCopropriete,
+    travauxEntretien,
+    vacanceLocative,
+    note,
+    aUnCredit,
+    montantCredit,
+    tauxCreditPct,
+    mensualiteCredit,
+    dureeCreditMois,
+    capitalRestantDu,
+    assuranceEmprunteur,
+    createdAt,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Rental &&
+          other.id == this.id &&
+          other.assetId == this.assetId &&
+          other.statut == this.statut &&
+          other.typeBail == this.typeBail &&
+          other.locataire == this.locataire &&
+          other.loyerHc == this.loyerHc &&
+          other.chargesLocatives == this.chargesLocatives &&
+          other.depotGarantie == this.depotGarantie &&
+          other.dateDebutBail == this.dateDebutBail &&
+          other.dateFinBail == this.dateFinBail &&
+          other.modeGestion == this.modeGestion &&
+          other.fraisGestion == this.fraisGestion &&
+          other.taxeFonciere == this.taxeFonciere &&
+          other.assurancePno == this.assurancePno &&
+          other.chargesCopropriete == this.chargesCopropriete &&
+          other.travauxEntretien == this.travauxEntretien &&
+          other.vacanceLocative == this.vacanceLocative &&
+          other.note == this.note &&
+          other.aUnCredit == this.aUnCredit &&
+          other.montantCredit == this.montantCredit &&
+          other.tauxCreditPct == this.tauxCreditPct &&
+          other.mensualiteCredit == this.mensualiteCredit &&
+          other.dureeCreditMois == this.dureeCreditMois &&
+          other.capitalRestantDu == this.capitalRestantDu &&
+          other.assuranceEmprunteur == this.assuranceEmprunteur &&
+          other.createdAt == this.createdAt);
+}
+
+class RentalsCompanion extends UpdateCompanion<Rental> {
+  final Value<int> id;
+  final Value<int> assetId;
+  final Value<String> statut;
+  final Value<String?> typeBail;
+  final Value<String?> locataire;
+  final Value<double> loyerHc;
+  final Value<double> chargesLocatives;
+  final Value<double> depotGarantie;
+  final Value<DateTime?> dateDebutBail;
+  final Value<DateTime?> dateFinBail;
+  final Value<String?> modeGestion;
+  final Value<double> fraisGestion;
+  final Value<double> taxeFonciere;
+  final Value<double> assurancePno;
+  final Value<double> chargesCopropriete;
+  final Value<double> travauxEntretien;
+  final Value<double> vacanceLocative;
+  final Value<String?> note;
+  final Value<bool> aUnCredit;
+  final Value<double> montantCredit;
+  final Value<double> tauxCreditPct;
+  final Value<double> mensualiteCredit;
+  final Value<int> dureeCreditMois;
+  final Value<double> capitalRestantDu;
+  final Value<double> assuranceEmprunteur;
+  final Value<DateTime> createdAt;
+  const RentalsCompanion({
+    this.id = const Value.absent(),
+    this.assetId = const Value.absent(),
+    this.statut = const Value.absent(),
+    this.typeBail = const Value.absent(),
+    this.locataire = const Value.absent(),
+    this.loyerHc = const Value.absent(),
+    this.chargesLocatives = const Value.absent(),
+    this.depotGarantie = const Value.absent(),
+    this.dateDebutBail = const Value.absent(),
+    this.dateFinBail = const Value.absent(),
+    this.modeGestion = const Value.absent(),
+    this.fraisGestion = const Value.absent(),
+    this.taxeFonciere = const Value.absent(),
+    this.assurancePno = const Value.absent(),
+    this.chargesCopropriete = const Value.absent(),
+    this.travauxEntretien = const Value.absent(),
+    this.vacanceLocative = const Value.absent(),
+    this.note = const Value.absent(),
+    this.aUnCredit = const Value.absent(),
+    this.montantCredit = const Value.absent(),
+    this.tauxCreditPct = const Value.absent(),
+    this.mensualiteCredit = const Value.absent(),
+    this.dureeCreditMois = const Value.absent(),
+    this.capitalRestantDu = const Value.absent(),
+    this.assuranceEmprunteur = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  RentalsCompanion.insert({
+    this.id = const Value.absent(),
+    required int assetId,
+    this.statut = const Value.absent(),
+    this.typeBail = const Value.absent(),
+    this.locataire = const Value.absent(),
+    this.loyerHc = const Value.absent(),
+    this.chargesLocatives = const Value.absent(),
+    this.depotGarantie = const Value.absent(),
+    this.dateDebutBail = const Value.absent(),
+    this.dateFinBail = const Value.absent(),
+    this.modeGestion = const Value.absent(),
+    this.fraisGestion = const Value.absent(),
+    this.taxeFonciere = const Value.absent(),
+    this.assurancePno = const Value.absent(),
+    this.chargesCopropriete = const Value.absent(),
+    this.travauxEntretien = const Value.absent(),
+    this.vacanceLocative = const Value.absent(),
+    this.note = const Value.absent(),
+    this.aUnCredit = const Value.absent(),
+    this.montantCredit = const Value.absent(),
+    this.tauxCreditPct = const Value.absent(),
+    this.mensualiteCredit = const Value.absent(),
+    this.dureeCreditMois = const Value.absent(),
+    this.capitalRestantDu = const Value.absent(),
+    this.assuranceEmprunteur = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : assetId = Value(assetId);
+  static Insertable<Rental> custom({
+    Expression<int>? id,
+    Expression<int>? assetId,
+    Expression<String>? statut,
+    Expression<String>? typeBail,
+    Expression<String>? locataire,
+    Expression<double>? loyerHc,
+    Expression<double>? chargesLocatives,
+    Expression<double>? depotGarantie,
+    Expression<DateTime>? dateDebutBail,
+    Expression<DateTime>? dateFinBail,
+    Expression<String>? modeGestion,
+    Expression<double>? fraisGestion,
+    Expression<double>? taxeFonciere,
+    Expression<double>? assurancePno,
+    Expression<double>? chargesCopropriete,
+    Expression<double>? travauxEntretien,
+    Expression<double>? vacanceLocative,
+    Expression<String>? note,
+    Expression<bool>? aUnCredit,
+    Expression<double>? montantCredit,
+    Expression<double>? tauxCreditPct,
+    Expression<double>? mensualiteCredit,
+    Expression<int>? dureeCreditMois,
+    Expression<double>? capitalRestantDu,
+    Expression<double>? assuranceEmprunteur,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (assetId != null) 'asset_id': assetId,
+      if (statut != null) 'statut': statut,
+      if (typeBail != null) 'type_bail': typeBail,
+      if (locataire != null) 'locataire': locataire,
+      if (loyerHc != null) 'loyer_hc': loyerHc,
+      if (chargesLocatives != null) 'charges_locatives': chargesLocatives,
+      if (depotGarantie != null) 'depot_garantie': depotGarantie,
+      if (dateDebutBail != null) 'date_debut_bail': dateDebutBail,
+      if (dateFinBail != null) 'date_fin_bail': dateFinBail,
+      if (modeGestion != null) 'mode_gestion': modeGestion,
+      if (fraisGestion != null) 'frais_gestion': fraisGestion,
+      if (taxeFonciere != null) 'taxe_fonciere': taxeFonciere,
+      if (assurancePno != null) 'assurance_pno': assurancePno,
+      if (chargesCopropriete != null) 'charges_copropriete': chargesCopropriete,
+      if (travauxEntretien != null) 'travaux_entretien': travauxEntretien,
+      if (vacanceLocative != null) 'vacance_locative': vacanceLocative,
+      if (note != null) 'note': note,
+      if (aUnCredit != null) 'a_un_credit': aUnCredit,
+      if (montantCredit != null) 'montant_credit': montantCredit,
+      if (tauxCreditPct != null) 'taux_credit_pct': tauxCreditPct,
+      if (mensualiteCredit != null) 'mensualite_credit': mensualiteCredit,
+      if (dureeCreditMois != null) 'duree_credit_mois': dureeCreditMois,
+      if (capitalRestantDu != null) 'capital_restant_du': capitalRestantDu,
+      if (assuranceEmprunteur != null)
+        'assurance_emprunteur': assuranceEmprunteur,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  RentalsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? assetId,
+    Value<String>? statut,
+    Value<String?>? typeBail,
+    Value<String?>? locataire,
+    Value<double>? loyerHc,
+    Value<double>? chargesLocatives,
+    Value<double>? depotGarantie,
+    Value<DateTime?>? dateDebutBail,
+    Value<DateTime?>? dateFinBail,
+    Value<String?>? modeGestion,
+    Value<double>? fraisGestion,
+    Value<double>? taxeFonciere,
+    Value<double>? assurancePno,
+    Value<double>? chargesCopropriete,
+    Value<double>? travauxEntretien,
+    Value<double>? vacanceLocative,
+    Value<String?>? note,
+    Value<bool>? aUnCredit,
+    Value<double>? montantCredit,
+    Value<double>? tauxCreditPct,
+    Value<double>? mensualiteCredit,
+    Value<int>? dureeCreditMois,
+    Value<double>? capitalRestantDu,
+    Value<double>? assuranceEmprunteur,
+    Value<DateTime>? createdAt,
+  }) {
+    return RentalsCompanion(
+      id: id ?? this.id,
+      assetId: assetId ?? this.assetId,
+      statut: statut ?? this.statut,
+      typeBail: typeBail ?? this.typeBail,
+      locataire: locataire ?? this.locataire,
+      loyerHc: loyerHc ?? this.loyerHc,
+      chargesLocatives: chargesLocatives ?? this.chargesLocatives,
+      depotGarantie: depotGarantie ?? this.depotGarantie,
+      dateDebutBail: dateDebutBail ?? this.dateDebutBail,
+      dateFinBail: dateFinBail ?? this.dateFinBail,
+      modeGestion: modeGestion ?? this.modeGestion,
+      fraisGestion: fraisGestion ?? this.fraisGestion,
+      taxeFonciere: taxeFonciere ?? this.taxeFonciere,
+      assurancePno: assurancePno ?? this.assurancePno,
+      chargesCopropriete: chargesCopropriete ?? this.chargesCopropriete,
+      travauxEntretien: travauxEntretien ?? this.travauxEntretien,
+      vacanceLocative: vacanceLocative ?? this.vacanceLocative,
+      note: note ?? this.note,
+      aUnCredit: aUnCredit ?? this.aUnCredit,
+      montantCredit: montantCredit ?? this.montantCredit,
+      tauxCreditPct: tauxCreditPct ?? this.tauxCreditPct,
+      mensualiteCredit: mensualiteCredit ?? this.mensualiteCredit,
+      dureeCreditMois: dureeCreditMois ?? this.dureeCreditMois,
+      capitalRestantDu: capitalRestantDu ?? this.capitalRestantDu,
+      assuranceEmprunteur: assuranceEmprunteur ?? this.assuranceEmprunteur,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (assetId.present) {
+      map['asset_id'] = Variable<int>(assetId.value);
+    }
+    if (statut.present) {
+      map['statut'] = Variable<String>(statut.value);
+    }
+    if (typeBail.present) {
+      map['type_bail'] = Variable<String>(typeBail.value);
+    }
+    if (locataire.present) {
+      map['locataire'] = Variable<String>(locataire.value);
+    }
+    if (loyerHc.present) {
+      map['loyer_hc'] = Variable<double>(loyerHc.value);
+    }
+    if (chargesLocatives.present) {
+      map['charges_locatives'] = Variable<double>(chargesLocatives.value);
+    }
+    if (depotGarantie.present) {
+      map['depot_garantie'] = Variable<double>(depotGarantie.value);
+    }
+    if (dateDebutBail.present) {
+      map['date_debut_bail'] = Variable<DateTime>(dateDebutBail.value);
+    }
+    if (dateFinBail.present) {
+      map['date_fin_bail'] = Variable<DateTime>(dateFinBail.value);
+    }
+    if (modeGestion.present) {
+      map['mode_gestion'] = Variable<String>(modeGestion.value);
+    }
+    if (fraisGestion.present) {
+      map['frais_gestion'] = Variable<double>(fraisGestion.value);
+    }
+    if (taxeFonciere.present) {
+      map['taxe_fonciere'] = Variable<double>(taxeFonciere.value);
+    }
+    if (assurancePno.present) {
+      map['assurance_pno'] = Variable<double>(assurancePno.value);
+    }
+    if (chargesCopropriete.present) {
+      map['charges_copropriete'] = Variable<double>(chargesCopropriete.value);
+    }
+    if (travauxEntretien.present) {
+      map['travaux_entretien'] = Variable<double>(travauxEntretien.value);
+    }
+    if (vacanceLocative.present) {
+      map['vacance_locative'] = Variable<double>(vacanceLocative.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (aUnCredit.present) {
+      map['a_un_credit'] = Variable<bool>(aUnCredit.value);
+    }
+    if (montantCredit.present) {
+      map['montant_credit'] = Variable<double>(montantCredit.value);
+    }
+    if (tauxCreditPct.present) {
+      map['taux_credit_pct'] = Variable<double>(tauxCreditPct.value);
+    }
+    if (mensualiteCredit.present) {
+      map['mensualite_credit'] = Variable<double>(mensualiteCredit.value);
+    }
+    if (dureeCreditMois.present) {
+      map['duree_credit_mois'] = Variable<int>(dureeCreditMois.value);
+    }
+    if (capitalRestantDu.present) {
+      map['capital_restant_du'] = Variable<double>(capitalRestantDu.value);
+    }
+    if (assuranceEmprunteur.present) {
+      map['assurance_emprunteur'] = Variable<double>(assuranceEmprunteur.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RentalsCompanion(')
+          ..write('id: $id, ')
+          ..write('assetId: $assetId, ')
+          ..write('statut: $statut, ')
+          ..write('typeBail: $typeBail, ')
+          ..write('locataire: $locataire, ')
+          ..write('loyerHc: $loyerHc, ')
+          ..write('chargesLocatives: $chargesLocatives, ')
+          ..write('depotGarantie: $depotGarantie, ')
+          ..write('dateDebutBail: $dateDebutBail, ')
+          ..write('dateFinBail: $dateFinBail, ')
+          ..write('modeGestion: $modeGestion, ')
+          ..write('fraisGestion: $fraisGestion, ')
+          ..write('taxeFonciere: $taxeFonciere, ')
+          ..write('assurancePno: $assurancePno, ')
+          ..write('chargesCopropriete: $chargesCopropriete, ')
+          ..write('travauxEntretien: $travauxEntretien, ')
+          ..write('vacanceLocative: $vacanceLocative, ')
+          ..write('note: $note, ')
+          ..write('aUnCredit: $aUnCredit, ')
+          ..write('montantCredit: $montantCredit, ')
+          ..write('tauxCreditPct: $tauxCreditPct, ')
+          ..write('mensualiteCredit: $mensualiteCredit, ')
+          ..write('dureeCreditMois: $dureeCreditMois, ')
+          ..write('capitalRestantDu: $capitalRestantDu, ')
+          ..write('assuranceEmprunteur: $assuranceEmprunteur, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DocumentsTable extends Documents
+    with TableInfo<$DocumentsTable, AssetDocument> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DocumentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _assetIdMeta = const VerificationMeta(
+    'assetId',
+  );
+  @override
+  late final GeneratedColumn<int> assetId = GeneratedColumn<int>(
+    'asset_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES assets (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fileNameMeta = const VerificationMeta(
+    'fileName',
+  );
+  @override
+  late final GeneratedColumn<String> fileName = GeneratedColumn<String>(
+    'file_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _filePathMeta = const VerificationMeta(
+    'filePath',
+  );
+  @override
+  late final GeneratedColumn<String> filePath = GeneratedColumn<String>(
+    'file_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    assetId,
+    label,
+    fileName,
+    filePath,
+    note,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'documents';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AssetDocument> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('asset_id')) {
+      context.handle(
+        _assetIdMeta,
+        assetId.isAcceptableOrUnknown(data['asset_id']!, _assetIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_assetIdMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('file_name')) {
+      context.handle(
+        _fileNameMeta,
+        fileName.isAcceptableOrUnknown(data['file_name']!, _fileNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileNameMeta);
+    }
+    if (data.containsKey('file_path')) {
+      context.handle(
+        _filePathMeta,
+        filePath.isAcceptableOrUnknown(data['file_path']!, _filePathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_filePathMeta);
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AssetDocument map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AssetDocument(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      assetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}asset_id'],
+      )!,
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      )!,
+      fileName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_name'],
+      )!,
+      filePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_path'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DocumentsTable createAlias(String alias) {
+    return $DocumentsTable(attachedDatabase, alias);
+  }
+}
+
+class AssetDocument extends DataClass implements Insertable<AssetDocument> {
+  final int id;
+  final int assetId;
+  final String label;
+  final String fileName;
+  final String filePath;
+  final String? note;
+  final DateTime createdAt;
+  const AssetDocument({
+    required this.id,
+    required this.assetId,
+    required this.label,
+    required this.fileName,
+    required this.filePath,
+    this.note,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['asset_id'] = Variable<int>(assetId);
+    map['label'] = Variable<String>(label);
+    map['file_name'] = Variable<String>(fileName);
+    map['file_path'] = Variable<String>(filePath);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  DocumentsCompanion toCompanion(bool nullToAbsent) {
+    return DocumentsCompanion(
+      id: Value(id),
+      assetId: Value(assetId),
+      label: Value(label),
+      fileName: Value(fileName),
+      filePath: Value(filePath),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory AssetDocument.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AssetDocument(
+      id: serializer.fromJson<int>(json['id']),
+      assetId: serializer.fromJson<int>(json['assetId']),
+      label: serializer.fromJson<String>(json['label']),
+      fileName: serializer.fromJson<String>(json['fileName']),
+      filePath: serializer.fromJson<String>(json['filePath']),
+      note: serializer.fromJson<String?>(json['note']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'assetId': serializer.toJson<int>(assetId),
+      'label': serializer.toJson<String>(label),
+      'fileName': serializer.toJson<String>(fileName),
+      'filePath': serializer.toJson<String>(filePath),
+      'note': serializer.toJson<String?>(note),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  AssetDocument copyWith({
+    int? id,
+    int? assetId,
+    String? label,
+    String? fileName,
+    String? filePath,
+    Value<String?> note = const Value.absent(),
+    DateTime? createdAt,
+  }) => AssetDocument(
+    id: id ?? this.id,
+    assetId: assetId ?? this.assetId,
+    label: label ?? this.label,
+    fileName: fileName ?? this.fileName,
+    filePath: filePath ?? this.filePath,
+    note: note.present ? note.value : this.note,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  AssetDocument copyWithCompanion(DocumentsCompanion data) {
+    return AssetDocument(
+      id: data.id.present ? data.id.value : this.id,
+      assetId: data.assetId.present ? data.assetId.value : this.assetId,
+      label: data.label.present ? data.label.value : this.label,
+      fileName: data.fileName.present ? data.fileName.value : this.fileName,
+      filePath: data.filePath.present ? data.filePath.value : this.filePath,
+      note: data.note.present ? data.note.value : this.note,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AssetDocument(')
+          ..write('id: $id, ')
+          ..write('assetId: $assetId, ')
+          ..write('label: $label, ')
+          ..write('fileName: $fileName, ')
+          ..write('filePath: $filePath, ')
+          ..write('note: $note, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, assetId, label, fileName, filePath, note, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AssetDocument &&
+          other.id == this.id &&
+          other.assetId == this.assetId &&
+          other.label == this.label &&
+          other.fileName == this.fileName &&
+          other.filePath == this.filePath &&
+          other.note == this.note &&
+          other.createdAt == this.createdAt);
+}
+
+class DocumentsCompanion extends UpdateCompanion<AssetDocument> {
+  final Value<int> id;
+  final Value<int> assetId;
+  final Value<String> label;
+  final Value<String> fileName;
+  final Value<String> filePath;
+  final Value<String?> note;
+  final Value<DateTime> createdAt;
+  const DocumentsCompanion({
+    this.id = const Value.absent(),
+    this.assetId = const Value.absent(),
+    this.label = const Value.absent(),
+    this.fileName = const Value.absent(),
+    this.filePath = const Value.absent(),
+    this.note = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  DocumentsCompanion.insert({
+    this.id = const Value.absent(),
+    required int assetId,
+    required String label,
+    required String fileName,
+    required String filePath,
+    this.note = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : assetId = Value(assetId),
+       label = Value(label),
+       fileName = Value(fileName),
+       filePath = Value(filePath);
+  static Insertable<AssetDocument> custom({
+    Expression<int>? id,
+    Expression<int>? assetId,
+    Expression<String>? label,
+    Expression<String>? fileName,
+    Expression<String>? filePath,
+    Expression<String>? note,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (assetId != null) 'asset_id': assetId,
+      if (label != null) 'label': label,
+      if (fileName != null) 'file_name': fileName,
+      if (filePath != null) 'file_path': filePath,
+      if (note != null) 'note': note,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  DocumentsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? assetId,
+    Value<String>? label,
+    Value<String>? fileName,
+    Value<String>? filePath,
+    Value<String?>? note,
+    Value<DateTime>? createdAt,
+  }) {
+    return DocumentsCompanion(
+      id: id ?? this.id,
+      assetId: assetId ?? this.assetId,
+      label: label ?? this.label,
+      fileName: fileName ?? this.fileName,
+      filePath: filePath ?? this.filePath,
+      note: note ?? this.note,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (assetId.present) {
+      map['asset_id'] = Variable<int>(assetId.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (fileName.present) {
+      map['file_name'] = Variable<String>(fileName.value);
+    }
+    if (filePath.present) {
+      map['file_path'] = Variable<String>(filePath.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DocumentsCompanion(')
+          ..write('id: $id, ')
+          ..write('assetId: $assetId, ')
+          ..write('label: $label, ')
+          ..write('fileName: $fileName, ')
+          ..write('filePath: $filePath, ')
+          ..write('note: $note, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1703,6 +3580,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PositionsTable positions = $PositionsTable(this);
   late final $PriceCacheTable priceCache = $PriceCacheTable(this);
   late final $SnapshotsTable snapshots = $SnapshotsTable(this);
+  late final $RentalsTable rentals = $RentalsTable(this);
+  late final $DocumentsTable documents = $DocumentsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1712,6 +3591,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     positions,
     priceCache,
     snapshots,
+    rentals,
+    documents,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -1721,6 +3602,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('positions', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'assets',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('rentals', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'assets',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('documents', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -1763,6 +3658,43 @@ final class $$AssetsTableReferences
     ).filter((f) => f.assetId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_positionsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$RentalsTable, List<Rental>> _rentalsRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.rentals,
+    aliasName: 'assets__id__rentals__asset_id',
+  );
+
+  $$RentalsTableProcessedTableManager get rentalsRefs {
+    final manager = $$RentalsTableTableManager(
+      $_db,
+      $_db.rentals,
+    ).filter((f) => f.assetId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_rentalsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$DocumentsTable, List<AssetDocument>>
+  _documentsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.documents,
+    aliasName: 'assets__id__documents__asset_id',
+  );
+
+  $$DocumentsTableProcessedTableManager get documentsRefs {
+    final manager = $$DocumentsTableTableManager(
+      $_db,
+      $_db.documents,
+    ).filter((f) => f.assetId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_documentsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -1834,6 +3766,56 @@ class $$AssetsTableFilterComposer
           }) => $$PositionsTableFilterComposer(
             $db: $db,
             $table: $db.positions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> rentalsRefs(
+    Expression<bool> Function($$RentalsTableFilterComposer f) f,
+  ) {
+    final $$RentalsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.rentals,
+      getReferencedColumn: (t) => t.assetId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RentalsTableFilterComposer(
+            $db: $db,
+            $table: $db.rentals,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> documentsRefs(
+    Expression<bool> Function($$DocumentsTableFilterComposer f) f,
+  ) {
+    final $$DocumentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.documents,
+      getReferencedColumn: (t) => t.assetId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DocumentsTableFilterComposer(
+            $db: $db,
+            $table: $db.documents,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -1953,6 +3935,56 @@ class $$AssetsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> rentalsRefs<T extends Object>(
+    Expression<T> Function($$RentalsTableAnnotationComposer a) f,
+  ) {
+    final $$RentalsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.rentals,
+      getReferencedColumn: (t) => t.assetId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RentalsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.rentals,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> documentsRefs<T extends Object>(
+    Expression<T> Function($$DocumentsTableAnnotationComposer a) f,
+  ) {
+    final $$DocumentsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.documents,
+      getReferencedColumn: (t) => t.assetId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DocumentsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.documents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$AssetsTableTableManager
@@ -1968,7 +4000,11 @@ class $$AssetsTableTableManager
           $$AssetsTableUpdateCompanionBuilder,
           (Asset, $$AssetsTableReferences),
           Asset,
-          PrefetchHooks Function({bool positionsRefs})
+          PrefetchHooks Function({
+            bool positionsRefs,
+            bool rentalsRefs,
+            bool documentsRefs,
+          })
         > {
   $$AssetsTableTableManager(_$AppDatabase db, $AssetsTable table)
     : super(
@@ -2029,33 +4065,86 @@ class $$AssetsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({positionsRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [if (positionsRefs) db.positions],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (positionsRefs)
-                    await $_getPrefetchedDataByColumns<
-                      Asset,
-                      $AssetsTable,
-                      Position,
-                      $PositionsTable
-                    >(
-                      currentTable: table,
-                      referencedTable: $$AssetsTableReferences
-                          ._positionsRefsTable(db),
-                      managerFromTypedResult: (p0) =>
-                          $$AssetsTableReferences(db, table, p0).positionsRefs,
-                      currentColumn: 'id',
-                      referencedColumn: 'asset_id',
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({
+                positionsRefs = false,
+                rentalsRefs = false,
+                documentsRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (positionsRefs) db.positions,
+                    if (rentalsRefs) db.rentals,
+                    if (documentsRefs) db.documents,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (positionsRefs)
+                        await $_getPrefetchedDataByColumns<
+                          Asset,
+                          $AssetsTable,
+                          Position,
+                          $PositionsTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AssetsTableReferences
+                              ._positionsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AssetsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).positionsRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'asset_id',
+                          typedResults: items,
+                        ),
+                      if (rentalsRefs)
+                        await $_getPrefetchedDataByColumns<
+                          Asset,
+                          $AssetsTable,
+                          Rental,
+                          $RentalsTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AssetsTableReferences
+                              ._rentalsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AssetsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).rentalsRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'asset_id',
+                          typedResults: items,
+                        ),
+                      if (documentsRefs)
+                        await $_getPrefetchedDataByColumns<
+                          Asset,
+                          $AssetsTable,
+                          AssetDocument,
+                          $DocumentsTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AssetsTableReferences
+                              ._documentsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AssetsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).documentsRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'asset_id',
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -2072,7 +4161,11 @@ typedef $$AssetsTableProcessedTableManager =
       $$AssetsTableUpdateCompanionBuilder,
       (Asset, $$AssetsTableReferences),
       Asset,
-      PrefetchHooks Function({bool positionsRefs})
+      PrefetchHooks Function({
+        bool positionsRefs,
+        bool rentalsRefs,
+        bool documentsRefs,
+      })
     >;
 typedef $$PositionsTableCreateCompanionBuilder = PositionsCompanion Function({
   Value<int> id,
@@ -2843,6 +4936,1092 @@ typedef $$SnapshotsTableProcessedTableManager =
       NetWorthSnapshot,
       PrefetchHooks Function()
     >;
+typedef $$RentalsTableCreateCompanionBuilder = RentalsCompanion Function({
+  Value<int> id,
+  required int assetId,
+  Value<String> statut,
+  Value<String?> typeBail,
+  Value<String?> locataire,
+  Value<double> loyerHc,
+  Value<double> chargesLocatives,
+  Value<double> depotGarantie,
+  Value<DateTime?> dateDebutBail,
+  Value<DateTime?> dateFinBail,
+  Value<String?> modeGestion,
+  Value<double> fraisGestion,
+  Value<double> taxeFonciere,
+  Value<double> assurancePno,
+  Value<double> chargesCopropriete,
+  Value<double> travauxEntretien,
+  Value<double> vacanceLocative,
+  Value<String?> note,
+  Value<bool> aUnCredit,
+  Value<double> montantCredit,
+  Value<double> tauxCreditPct,
+  Value<double> mensualiteCredit,
+  Value<int> dureeCreditMois,
+  Value<double> capitalRestantDu,
+  Value<double> assuranceEmprunteur,
+  Value<DateTime> createdAt,
+});
+typedef $$RentalsTableUpdateCompanionBuilder = RentalsCompanion Function({
+  Value<int> id,
+  Value<int> assetId,
+  Value<String> statut,
+  Value<String?> typeBail,
+  Value<String?> locataire,
+  Value<double> loyerHc,
+  Value<double> chargesLocatives,
+  Value<double> depotGarantie,
+  Value<DateTime?> dateDebutBail,
+  Value<DateTime?> dateFinBail,
+  Value<String?> modeGestion,
+  Value<double> fraisGestion,
+  Value<double> taxeFonciere,
+  Value<double> assurancePno,
+  Value<double> chargesCopropriete,
+  Value<double> travauxEntretien,
+  Value<double> vacanceLocative,
+  Value<String?> note,
+  Value<bool> aUnCredit,
+  Value<double> montantCredit,
+  Value<double> tauxCreditPct,
+  Value<double> mensualiteCredit,
+  Value<int> dureeCreditMois,
+  Value<double> capitalRestantDu,
+  Value<double> assuranceEmprunteur,
+  Value<DateTime> createdAt,
+});
+
+final class $$RentalsTableReferences
+    extends BaseReferences<_$AppDatabase, $RentalsTable, Rental> {
+  $$RentalsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $AssetsTable _assetIdTable(_$AppDatabase db) =>
+      db.assets.createAlias('rentals__asset_id__assets__id');
+
+  $$AssetsTableProcessedTableManager get assetId {
+    final $_column = $_itemColumn<int>('asset_id')!;
+
+    final manager = $$AssetsTableTableManager(
+      $_db,
+      $_db.assets,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_assetIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$RentalsTableFilterComposer
+    extends Composer<_$AppDatabase, $RentalsTable> {
+  $$RentalsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get statut => $composableBuilder(
+    column: $table.statut,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get typeBail => $composableBuilder(
+    column: $table.typeBail,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get locataire => $composableBuilder(
+    column: $table.locataire,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get loyerHc => $composableBuilder(
+    column: $table.loyerHc,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get chargesLocatives => $composableBuilder(
+    column: $table.chargesLocatives,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get depotGarantie => $composableBuilder(
+    column: $table.depotGarantie,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dateDebutBail => $composableBuilder(
+    column: $table.dateDebutBail,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dateFinBail => $composableBuilder(
+    column: $table.dateFinBail,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get modeGestion => $composableBuilder(
+    column: $table.modeGestion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get fraisGestion => $composableBuilder(
+    column: $table.fraisGestion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get taxeFonciere => $composableBuilder(
+    column: $table.taxeFonciere,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get assurancePno => $composableBuilder(
+    column: $table.assurancePno,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get chargesCopropriete => $composableBuilder(
+    column: $table.chargesCopropriete,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get travauxEntretien => $composableBuilder(
+    column: $table.travauxEntretien,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get vacanceLocative => $composableBuilder(
+    column: $table.vacanceLocative,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get aUnCredit => $composableBuilder(
+    column: $table.aUnCredit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get montantCredit => $composableBuilder(
+    column: $table.montantCredit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get tauxCreditPct => $composableBuilder(
+    column: $table.tauxCreditPct,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get mensualiteCredit => $composableBuilder(
+    column: $table.mensualiteCredit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dureeCreditMois => $composableBuilder(
+    column: $table.dureeCreditMois,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get capitalRestantDu => $composableBuilder(
+    column: $table.capitalRestantDu,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get assuranceEmprunteur => $composableBuilder(
+    column: $table.assuranceEmprunteur,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$AssetsTableFilterComposer get assetId {
+    final $$AssetsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.assetId,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableFilterComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RentalsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RentalsTable> {
+  $$RentalsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get statut => $composableBuilder(
+    column: $table.statut,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get typeBail => $composableBuilder(
+    column: $table.typeBail,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get locataire => $composableBuilder(
+    column: $table.locataire,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get loyerHc => $composableBuilder(
+    column: $table.loyerHc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get chargesLocatives => $composableBuilder(
+    column: $table.chargesLocatives,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get depotGarantie => $composableBuilder(
+    column: $table.depotGarantie,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get dateDebutBail => $composableBuilder(
+    column: $table.dateDebutBail,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get dateFinBail => $composableBuilder(
+    column: $table.dateFinBail,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get modeGestion => $composableBuilder(
+    column: $table.modeGestion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get fraisGestion => $composableBuilder(
+    column: $table.fraisGestion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get taxeFonciere => $composableBuilder(
+    column: $table.taxeFonciere,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get assurancePno => $composableBuilder(
+    column: $table.assurancePno,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get chargesCopropriete => $composableBuilder(
+    column: $table.chargesCopropriete,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get travauxEntretien => $composableBuilder(
+    column: $table.travauxEntretien,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get vacanceLocative => $composableBuilder(
+    column: $table.vacanceLocative,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get aUnCredit => $composableBuilder(
+    column: $table.aUnCredit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get montantCredit => $composableBuilder(
+    column: $table.montantCredit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get tauxCreditPct => $composableBuilder(
+    column: $table.tauxCreditPct,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get mensualiteCredit => $composableBuilder(
+    column: $table.mensualiteCredit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dureeCreditMois => $composableBuilder(
+    column: $table.dureeCreditMois,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get capitalRestantDu => $composableBuilder(
+    column: $table.capitalRestantDu,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get assuranceEmprunteur => $composableBuilder(
+    column: $table.assuranceEmprunteur,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$AssetsTableOrderingComposer get assetId {
+    final $$AssetsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.assetId,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableOrderingComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RentalsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RentalsTable> {
+  $$RentalsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get statut =>
+      $composableBuilder(column: $table.statut, builder: (column) => column);
+
+  GeneratedColumn<String> get typeBail =>
+      $composableBuilder(column: $table.typeBail, builder: (column) => column);
+
+  GeneratedColumn<String> get locataire =>
+      $composableBuilder(column: $table.locataire, builder: (column) => column);
+
+  GeneratedColumn<double> get loyerHc =>
+      $composableBuilder(column: $table.loyerHc, builder: (column) => column);
+
+  GeneratedColumn<double> get chargesLocatives => $composableBuilder(
+    column: $table.chargesLocatives,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get depotGarantie => $composableBuilder(
+    column: $table.depotGarantie,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get dateDebutBail => $composableBuilder(
+    column: $table.dateDebutBail,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get dateFinBail => $composableBuilder(
+    column: $table.dateFinBail,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get modeGestion => $composableBuilder(
+    column: $table.modeGestion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get fraisGestion => $composableBuilder(
+    column: $table.fraisGestion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get taxeFonciere => $composableBuilder(
+    column: $table.taxeFonciere,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get assurancePno => $composableBuilder(
+    column: $table.assurancePno,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get chargesCopropriete => $composableBuilder(
+    column: $table.chargesCopropriete,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get travauxEntretien => $composableBuilder(
+    column: $table.travauxEntretien,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get vacanceLocative => $composableBuilder(
+    column: $table.vacanceLocative,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<bool> get aUnCredit =>
+      $composableBuilder(column: $table.aUnCredit, builder: (column) => column);
+
+  GeneratedColumn<double> get montantCredit => $composableBuilder(
+    column: $table.montantCredit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get tauxCreditPct => $composableBuilder(
+    column: $table.tauxCreditPct,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get mensualiteCredit => $composableBuilder(
+    column: $table.mensualiteCredit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get dureeCreditMois => $composableBuilder(
+    column: $table.dureeCreditMois,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get capitalRestantDu => $composableBuilder(
+    column: $table.capitalRestantDu,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get assuranceEmprunteur => $composableBuilder(
+    column: $table.assuranceEmprunteur,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$AssetsTableAnnotationComposer get assetId {
+    final $$AssetsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.assetId,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RentalsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RentalsTable,
+          Rental,
+          $$RentalsTableFilterComposer,
+          $$RentalsTableOrderingComposer,
+          $$RentalsTableAnnotationComposer,
+          $$RentalsTableCreateCompanionBuilder,
+          $$RentalsTableUpdateCompanionBuilder,
+          (Rental, $$RentalsTableReferences),
+          Rental,
+          PrefetchHooks Function({bool assetId})
+        > {
+  $$RentalsTableTableManager(_$AppDatabase db, $RentalsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RentalsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RentalsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RentalsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> assetId = const Value.absent(),
+                Value<String> statut = const Value.absent(),
+                Value<String?> typeBail = const Value.absent(),
+                Value<String?> locataire = const Value.absent(),
+                Value<double> loyerHc = const Value.absent(),
+                Value<double> chargesLocatives = const Value.absent(),
+                Value<double> depotGarantie = const Value.absent(),
+                Value<DateTime?> dateDebutBail = const Value.absent(),
+                Value<DateTime?> dateFinBail = const Value.absent(),
+                Value<String?> modeGestion = const Value.absent(),
+                Value<double> fraisGestion = const Value.absent(),
+                Value<double> taxeFonciere = const Value.absent(),
+                Value<double> assurancePno = const Value.absent(),
+                Value<double> chargesCopropriete = const Value.absent(),
+                Value<double> travauxEntretien = const Value.absent(),
+                Value<double> vacanceLocative = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<bool> aUnCredit = const Value.absent(),
+                Value<double> montantCredit = const Value.absent(),
+                Value<double> tauxCreditPct = const Value.absent(),
+                Value<double> mensualiteCredit = const Value.absent(),
+                Value<int> dureeCreditMois = const Value.absent(),
+                Value<double> capitalRestantDu = const Value.absent(),
+                Value<double> assuranceEmprunteur = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => RentalsCompanion(
+                id: id,
+                assetId: assetId,
+                statut: statut,
+                typeBail: typeBail,
+                locataire: locataire,
+                loyerHc: loyerHc,
+                chargesLocatives: chargesLocatives,
+                depotGarantie: depotGarantie,
+                dateDebutBail: dateDebutBail,
+                dateFinBail: dateFinBail,
+                modeGestion: modeGestion,
+                fraisGestion: fraisGestion,
+                taxeFonciere: taxeFonciere,
+                assurancePno: assurancePno,
+                chargesCopropriete: chargesCopropriete,
+                travauxEntretien: travauxEntretien,
+                vacanceLocative: vacanceLocative,
+                note: note,
+                aUnCredit: aUnCredit,
+                montantCredit: montantCredit,
+                tauxCreditPct: tauxCreditPct,
+                mensualiteCredit: mensualiteCredit,
+                dureeCreditMois: dureeCreditMois,
+                capitalRestantDu: capitalRestantDu,
+                assuranceEmprunteur: assuranceEmprunteur,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int assetId,
+                Value<String> statut = const Value.absent(),
+                Value<String?> typeBail = const Value.absent(),
+                Value<String?> locataire = const Value.absent(),
+                Value<double> loyerHc = const Value.absent(),
+                Value<double> chargesLocatives = const Value.absent(),
+                Value<double> depotGarantie = const Value.absent(),
+                Value<DateTime?> dateDebutBail = const Value.absent(),
+                Value<DateTime?> dateFinBail = const Value.absent(),
+                Value<String?> modeGestion = const Value.absent(),
+                Value<double> fraisGestion = const Value.absent(),
+                Value<double> taxeFonciere = const Value.absent(),
+                Value<double> assurancePno = const Value.absent(),
+                Value<double> chargesCopropriete = const Value.absent(),
+                Value<double> travauxEntretien = const Value.absent(),
+                Value<double> vacanceLocative = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<bool> aUnCredit = const Value.absent(),
+                Value<double> montantCredit = const Value.absent(),
+                Value<double> tauxCreditPct = const Value.absent(),
+                Value<double> mensualiteCredit = const Value.absent(),
+                Value<int> dureeCreditMois = const Value.absent(),
+                Value<double> capitalRestantDu = const Value.absent(),
+                Value<double> assuranceEmprunteur = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => RentalsCompanion.insert(
+                id: id,
+                assetId: assetId,
+                statut: statut,
+                typeBail: typeBail,
+                locataire: locataire,
+                loyerHc: loyerHc,
+                chargesLocatives: chargesLocatives,
+                depotGarantie: depotGarantie,
+                dateDebutBail: dateDebutBail,
+                dateFinBail: dateFinBail,
+                modeGestion: modeGestion,
+                fraisGestion: fraisGestion,
+                taxeFonciere: taxeFonciere,
+                assurancePno: assurancePno,
+                chargesCopropriete: chargesCopropriete,
+                travauxEntretien: travauxEntretien,
+                vacanceLocative: vacanceLocative,
+                note: note,
+                aUnCredit: aUnCredit,
+                montantCredit: montantCredit,
+                tauxCreditPct: tauxCreditPct,
+                mensualiteCredit: mensualiteCredit,
+                dureeCreditMois: dureeCreditMois,
+                capitalRestantDu: capitalRestantDu,
+                assuranceEmprunteur: assuranceEmprunteur,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$RentalsTable, Rental>(table),
+                  $$RentalsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({assetId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (assetId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.assetId,
+                        referencedTable: $$RentalsTableReferences._assetIdTable(
+                          db,
+                        ),
+                        referencedColumn: $$RentalsTableReferences
+                            ._assetIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$RentalsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RentalsTable,
+      Rental,
+      $$RentalsTableFilterComposer,
+      $$RentalsTableOrderingComposer,
+      $$RentalsTableAnnotationComposer,
+      $$RentalsTableCreateCompanionBuilder,
+      $$RentalsTableUpdateCompanionBuilder,
+      (Rental, $$RentalsTableReferences),
+      Rental,
+      PrefetchHooks Function({bool assetId})
+    >;
+typedef $$DocumentsTableCreateCompanionBuilder = DocumentsCompanion Function({
+  Value<int> id,
+  required int assetId,
+  required String label,
+  required String fileName,
+  required String filePath,
+  Value<String?> note,
+  Value<DateTime> createdAt,
+});
+typedef $$DocumentsTableUpdateCompanionBuilder = DocumentsCompanion Function({
+  Value<int> id,
+  Value<int> assetId,
+  Value<String> label,
+  Value<String> fileName,
+  Value<String> filePath,
+  Value<String?> note,
+  Value<DateTime> createdAt,
+});
+
+final class $$DocumentsTableReferences
+    extends BaseReferences<_$AppDatabase, $DocumentsTable, AssetDocument> {
+  $$DocumentsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $AssetsTable _assetIdTable(_$AppDatabase db) =>
+      db.assets.createAlias('documents__asset_id__assets__id');
+
+  $$AssetsTableProcessedTableManager get assetId {
+    final $_column = $_itemColumn<int>('asset_id')!;
+
+    final manager = $$AssetsTableTableManager(
+      $_db,
+      $_db.assets,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_assetIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$DocumentsTableFilterComposer
+    extends Composer<_$AppDatabase, $DocumentsTable> {
+  $$DocumentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fileName => $composableBuilder(
+    column: $table.fileName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get filePath => $composableBuilder(
+    column: $table.filePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$AssetsTableFilterComposer get assetId {
+    final $$AssetsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.assetId,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableFilterComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DocumentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $DocumentsTable> {
+  $$DocumentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fileName => $composableBuilder(
+    column: $table.fileName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get filePath => $composableBuilder(
+    column: $table.filePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$AssetsTableOrderingComposer get assetId {
+    final $$AssetsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.assetId,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableOrderingComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DocumentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DocumentsTable> {
+  $$DocumentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<String> get fileName =>
+      $composableBuilder(column: $table.fileName, builder: (column) => column);
+
+  GeneratedColumn<String> get filePath =>
+      $composableBuilder(column: $table.filePath, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$AssetsTableAnnotationComposer get assetId {
+    final $$AssetsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.assetId,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DocumentsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DocumentsTable,
+          AssetDocument,
+          $$DocumentsTableFilterComposer,
+          $$DocumentsTableOrderingComposer,
+          $$DocumentsTableAnnotationComposer,
+          $$DocumentsTableCreateCompanionBuilder,
+          $$DocumentsTableUpdateCompanionBuilder,
+          (AssetDocument, $$DocumentsTableReferences),
+          AssetDocument,
+          PrefetchHooks Function({bool assetId})
+        > {
+  $$DocumentsTableTableManager(_$AppDatabase db, $DocumentsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DocumentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DocumentsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DocumentsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> assetId = const Value.absent(),
+                Value<String> label = const Value.absent(),
+                Value<String> fileName = const Value.absent(),
+                Value<String> filePath = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => DocumentsCompanion(
+                id: id,
+                assetId: assetId,
+                label: label,
+                fileName: fileName,
+                filePath: filePath,
+                note: note,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int assetId,
+                required String label,
+                required String fileName,
+                required String filePath,
+                Value<String?> note = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => DocumentsCompanion.insert(
+                id: id,
+                assetId: assetId,
+                label: label,
+                fileName: fileName,
+                filePath: filePath,
+                note: note,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$DocumentsTable, AssetDocument>(table),
+                  $$DocumentsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({assetId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (assetId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.assetId,
+                        referencedTable: $$DocumentsTableReferences
+                            ._assetIdTable(db),
+                        referencedColumn: $$DocumentsTableReferences
+                            ._assetIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$DocumentsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DocumentsTable,
+      AssetDocument,
+      $$DocumentsTableFilterComposer,
+      $$DocumentsTableOrderingComposer,
+      $$DocumentsTableAnnotationComposer,
+      $$DocumentsTableCreateCompanionBuilder,
+      $$DocumentsTableUpdateCompanionBuilder,
+      (AssetDocument, $$DocumentsTableReferences),
+      AssetDocument,
+      PrefetchHooks Function({bool assetId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2855,4 +6034,8 @@ class $AppDatabaseManager {
       $$PriceCacheTableTableManager(_db, _db.priceCache);
   $$SnapshotsTableTableManager get snapshots =>
       $$SnapshotsTableTableManager(_db, _db.snapshots);
+  $$RentalsTableTableManager get rentals =>
+      $$RentalsTableTableManager(_db, _db.rentals);
+  $$DocumentsTableTableManager get documents =>
+      $$DocumentsTableTableManager(_db, _db.documents);
 }
