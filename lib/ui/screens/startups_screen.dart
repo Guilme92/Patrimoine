@@ -182,11 +182,104 @@ class _StartupsScreenState extends State<StartupsScreen> {
     final filtered = all.where(_matches).toList();
     final summary = summarizeStartups(filtered);
 
+    // Le contenu de section est toujours en bas : il reste attaché au
+    // sélecteur d'onglets (il suit le choix courant) sans être réordonnable.
+    final sectionContent = filtered.isEmpty
+        ? _NoResultState(onReset: _resetFilters)
+        : switch (_section) {
+            _Section.synthesis => _SynthesisTab(
+              summary: summary,
+              onOpen: _open,
+            ),
+            _Section.list => _ListTab(
+              entries: _sorted(filtered),
+              sortKey: _sortKey,
+              ascending: _ascending,
+              onSort: _sortBy,
+              onOpen: _open,
+            ),
+            _Section.exits => _ExitsTab(
+              entries: filtered
+                  .where((e) => e.detail.statut == 'sorti')
+                  .toList(),
+              onOpen: _open,
+            ),
+          };
+
+    final blockOrder = controller.startupBlockOrder;
+
     return SafeArea(
-      child: ListView(
+      child: ReorderableListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+        buildDefaultDragHandles: false,
+        onReorderItem: (oldIndex, newIndex) {
+          final order = [...blockOrder];
+          order.insert(newIndex, order.removeAt(oldIndex));
+          controller.reorderStartupBlocks(order);
+        },
+        footer: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: sectionContent,
+        ),
         children: [
-          _FiltersCard(
+          for (var i = 0; i < blockOrder.length; i++)
+            _buildBlock(blockOrder[i], i, years),
+        ],
+      ),
+    );
+  }
+
+  /// Un bloc réordonnable : le sélecteur d'onglets ou la carte des filtres.
+  Widget _buildBlock(String id, int index, List<int> years) {
+    switch (id) {
+      case 'tabs':
+        return Padding(
+          key: const ValueKey<String>('tabs'),
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: SegmentedButton<_Section>(
+                  segments: const [
+                    ButtonSegment(
+                      value: _Section.synthesis,
+                      label: Text('Synthèse'),
+                    ),
+                    ButtonSegment(value: _Section.list, label: Text('Liste')),
+                    ButtonSegment(
+                      value: _Section.exits,
+                      label: Text('Sorties'),
+                    ),
+                  ],
+                  selected: {_section},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (s) =>
+                      setState(() => _section = s.first),
+                  style: const ButtonStyle(
+                    visualDensity: VisualDensity.compact,
+                    textStyle: WidgetStatePropertyAll(TextStyle(fontSize: 13)),
+                    foregroundColor: WidgetStatePropertyAll(
+                      AppColors.textSecondary,
+                    ),
+                    backgroundColor: WidgetStatePropertyAll(
+                      AppColors.surface,
+                    ),
+                    side: WidgetStatePropertyAll(
+                      BorderSide(color: AppColors.divider),
+                    ),
+                  ),
+                ),
+              ),
+              _DragHandle(index: index),
+            ],
+          ),
+        );
+      case 'filters':
+      default:
+        return Padding(
+          key: const ValueKey<String>('filters'),
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _FiltersCard(
             years: years,
             categories: _categories,
             year: _year,
@@ -194,6 +287,7 @@ class _StartupsScreenState extends State<StartupsScreen> {
             hasFilters: _hasFilters,
             searchController: _searchController,
             query: _query,
+            dragHandle: _DragHandle(index: index),
             onSearchChanged: (q) => setState(() => _query = q),
             onClearSearch: _clearSearch,
             onReset: _resetFilters,
@@ -203,61 +297,32 @@ class _StartupsScreenState extends State<StartupsScreen> {
             onYearChanged: (y) => setState(() => _year = y),
             onStatusChanged: (s) => setState(() => _status = s),
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: SegmentedButton<_Section>(
-              segments: const [
-                ButtonSegment(
-                  value: _Section.synthesis,
-                  label: Text('Synthèse'),
-                ),
-                ButtonSegment(value: _Section.list, label: Text('Liste')),
-                ButtonSegment(value: _Section.exits, label: Text('Sorties')),
-              ],
-              selected: {_section},
-              showSelectedIcon: false,
-              onSelectionChanged: (s) => setState(() => _section = s.first),
-              style: const ButtonStyle(
-                visualDensity: VisualDensity.compact,
-                textStyle: WidgetStatePropertyAll(TextStyle(fontSize: 13)),
-                foregroundColor: WidgetStatePropertyAll(
-                  AppColors.textSecondary,
-                ),
-                backgroundColor: WidgetStatePropertyAll(AppColors.surface),
-                side: WidgetStatePropertyAll(
-                  BorderSide(color: AppColors.divider),
-                ),
-              ),
-            ),
+        );
+    }
+  }
+}
+
+/// Poignée de glisser-déposer d'un bloc (le glissement ne démarre que par
+/// cette poignée, pour ne pas gêner la saisie dans les filtres).
+class _DragHandle extends StatelessWidget {
+  final int index;
+
+  const _DragHandle({required this.index});
+
+  @override
+  Widget build(BuildContext context) {
+    return ReorderableDragStartListener(
+      index: index,
+      child: Semantics(
+        label: 'Réordonner le bloc',
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          child: Icon(
+            Icons.drag_indicator,
+            size: 20,
+            color: AppColors.textSecondary,
           ),
-          const SizedBox(height: 16),
-          if (filtered.isEmpty)
-            _NoResultState(onReset: _resetFilters)
-          else
-            ...switch (_section) {
-              _Section.synthesis => [
-                _SynthesisTab(summary: summary, onOpen: _open),
-              ],
-              _Section.list => [
-                _ListTab(
-                  entries: _sorted(filtered),
-                  sortKey: _sortKey,
-                  ascending: _ascending,
-                  onSort: _sortBy,
-                  onOpen: _open,
-                ),
-              ],
-              _Section.exits => [
-                _ExitsTab(
-                  entries: filtered
-                      .where((e) => e.detail.statut == 'sorti')
-                      .toList(),
-                  onOpen: _open,
-                ),
-              ],
-            },
-        ],
+        ),
       ),
     );
   }
@@ -275,6 +340,7 @@ class _FiltersCard extends StatelessWidget {
   final bool hasFilters;
   final TextEditingController searchController;
   final String query;
+  final Widget? dragHandle;
   final ValueChanged<String> onSearchChanged;
   final VoidCallback onClearSearch;
   final VoidCallback onReset;
@@ -290,6 +356,7 @@ class _FiltersCard extends StatelessWidget {
     required this.hasFilters,
     required this.searchController,
     required this.query,
+    this.dragHandle,
     required this.onSearchChanged,
     required this.onClearSearch,
     required this.onReset,
@@ -321,6 +388,7 @@ class _FiltersCard extends StatelessWidget {
                   ),
                   child: const Text('Réinitialiser'),
                 ),
+              ?dragHandle,
             ],
           ),
           const SizedBox(height: 12),
@@ -996,6 +1064,7 @@ class _CategoryTable extends StatelessWidget {
               columns: const [
                 DataColumn(label: Text('Catégorie')),
                 DataColumn(label: Text('Investi'), numeric: true),
+                DataColumn(label: Text('Frais'), numeric: true),
                 DataColumn(label: Text('Valeur'), numeric: true),
                 DataColumn(label: Text('PV latente'), numeric: true),
                 DataColumn(label: Text('MOIC'), numeric: true),
@@ -1015,6 +1084,7 @@ class _CategoryTable extends StatelessWidget {
                         ),
                       ),
                       DataCell(Text(formatEuro(e.value.invested))),
+                      DataCell(Text(formatEuro(e.value.frais))),
                       DataCell(Text(formatEuro(e.value.value))),
                       DataCell(
                         Text(
@@ -1048,6 +1118,12 @@ class _CategoryTable extends StatelessWidget {
                     DataCell(
                       Text(
                         formatEuro(summary.totalInvested),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        formatEuro(summary.totalFrais),
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),

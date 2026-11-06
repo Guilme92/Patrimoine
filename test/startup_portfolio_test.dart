@@ -162,6 +162,7 @@ void main() {
       final licornes = s.kpiByCategory['Licornes pre-IPO']!;
       expect(licornes.count, 2);
       expect(licornes.invested, 2000);
+      expect(licornes.frais, 0);
       expect(licornes.value, 4000);
       expect(licornes.unrealized, 2000);
       expect(licornes.realized, 0);
@@ -199,6 +200,37 @@ void main() {
       expect(s.totalFrais, 20);
       // Les frais restent inclus dans le capital investi de chaque ligne.
       expect(s.totalInvested, 1000 + 12.5 + 1000 + 7.5 + 1000);
+    });
+
+    test('agrège les frais par catégorie', () {
+      final entries = [
+        _entry(1, 'Alpha', categorie: 'Licornes pre-IPO', frais: 12.5),
+        _entry(2, 'Beta', categorie: 'Licornes pre-IPO', frais: 7.5),
+        _entry(
+          3,
+          'Gamma',
+          categorie: 'Europe Multi-Stage',
+          statut: 'sorti',
+          exitProduit: 1200,
+          frais: 20,
+        ),
+        _entry(4, 'Delta', categorie: '  ', statut: 'radie', frais: 0),
+      ];
+      final s = summarizeStartups(entries, today: _today);
+
+      expect(s.kpiByCategory['Licornes pre-IPO']!.frais, 20);
+      expect(s.kpiByCategory['Europe Multi-Stage']!.frais, 20);
+      expect(s.kpiByCategory['Sans catégorie']!.frais, 0);
+      // Les frais d'une catégorie restent inclus dans son capital investi.
+      expect(s.kpiByCategory['Licornes pre-IPO']!.invested, 2000 + 20);
+
+      // La somme des frais par catégorie redonne le total du périmètre.
+      final sumByCategory = s.kpiByCategory.values.fold<double>(
+        0,
+        (sum, kpi) => sum + kpi.frais,
+      );
+      expect(sumByCategory, s.totalFrais);
+      expect(sumByCategory, 40);
     });
 
     test('portefeuille vide : tous les agrégats à zéro', () {

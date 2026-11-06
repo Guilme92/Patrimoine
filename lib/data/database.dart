@@ -177,6 +177,17 @@ class FundingRounds extends Table {
   TextColumn get note => text().nullable()();
 }
 
+/// Préférences d'affichage clé/valeur (ex. ordre des blocs du dashboard
+/// startups). Petite table dédiée pour éviter un couplage aux tables métier.
+@DataClassName('Preference')
+class Preferences extends Table {
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+
+  @override
+  Set<Column> get primaryKey => {key};
+}
+
 @DriftDatabase(
   tables: [
     Assets,
@@ -187,6 +198,7 @@ class FundingRounds extends Table {
     Documents,
     StartupDetails,
     FundingRounds,
+    Preferences,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -196,7 +208,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -214,6 +226,10 @@ class AppDatabase extends _$AppDatabase {
         // `createTable` ci-dessus crée déjà `categorie` (schéma courant) :
         // l'ajout ne concerne que les bases déjà en v3.
         await m.addColumn(startupDetails, startupDetails.categorie);
+      }
+      if (from < 5) {
+        // Préférences d'affichage (ordre des blocs du dashboard startups).
+        await m.createTable(preferences);
       }
     },
   );
@@ -390,6 +406,21 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> deleteFundingRound(int id) =>
       (delete(fundingRounds)..where((t) => t.id.equals(id))).go();
+
+  // ---- Préférences ----
+  /// Valeur d'une préférence d'affichage, ou null si la clé est absente.
+  Future<String?> preferenceValue(String key) async {
+    final row = await (select(
+      preferences,
+    )..where((t) => t.key.equals(key))).getSingleOrNull();
+    return row?.value;
+  }
+
+  /// Crée ou met à jour une préférence d'affichage.
+  Future<void> setPreference(String key, String value) =>
+      into(preferences).insertOnConflictUpdate(
+        PreferencesCompanion.insert(key: key, value: value),
+      );
 }
 
 LazyDatabase _openConnection() {

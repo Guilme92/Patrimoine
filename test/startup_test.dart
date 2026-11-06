@@ -533,4 +533,27 @@ void main() {
       await dir.delete(recursive: true);
     });
   });
+
+  group('préférences d\'affichage', () {
+    test('l\'ordre des blocs startups survit à une réouverture', () async {
+      final dir = await Directory.systemTemp.createTemp('patrimoine_prefs');
+      final file = File('${dir.path}/prefs.sqlite');
+
+      var db = AppDatabase.forTesting(NativeDatabase(file));
+      // Première ouverture : aucune préférence enregistrée.
+      expect(await db.preferenceValue('startups.blockOrder'), isNull);
+      await db.setPreference('startups.blockOrder', 'filters,tabs');
+      await db.close();
+
+      // Réouverture : la valeur est toujours là.
+      db = AppDatabase.forTesting(NativeDatabase(file));
+      expect(await db.preferenceValue('startups.blockOrder'), 'filters,tabs');
+      // La mise à jour remplace la ligne (pas de doublon).
+      await db.setPreference('startups.blockOrder', 'tabs,filters');
+      expect(await db.preferenceValue('startups.blockOrder'), 'tabs,filters');
+      expect(await db.select(db.preferences).get(), hasLength(1));
+      await db.close();
+      await dir.delete(recursive: true);
+    });
+  });
 }

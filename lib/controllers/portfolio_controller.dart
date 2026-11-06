@@ -21,6 +21,32 @@ class PriceRefreshResult {
   const PriceRefreshResult({required this.updated, required this.failed});
 }
 
+/// Blocs réordonnables du dashboard startups (ordre par défaut :
+/// onglets puis filtres).
+const List<String> startupBlockIds = ['tabs', 'filters'];
+
+/// Clé de préférence persistée pour l'ordre des blocs startups.
+const String startupBlockOrderKey = 'startups.blockOrder';
+
+/// Décode un ordre persisté (« tabs,filters ») en liste fiable : identifiants
+/// inconnus ou doublons ignorés, blocs manquants ajoutés à la fin.
+List<String> parseStartupBlockOrder(String? raw) {
+  final seen = <String>{};
+  final order = <String>[];
+  final trimmed = raw?.trim() ?? '';
+  if (trimmed.isNotEmpty) {
+    for (final part in trimmed.split(',')) {
+      final id = part.trim();
+      if (id.isEmpty || !startupBlockIds.contains(id)) continue;
+      if (seen.add(id)) order.add(id);
+    }
+  }
+  for (final id in startupBlockIds) {
+    if (seen.add(id)) order.add(id);
+  }
+  return order;
+}
+
 /// État central du patrimoine : charge les données, calcule la synthèse,
 /// expose les mutations.
 class PortfolioController extends ChangeNotifier {
@@ -37,6 +63,7 @@ class PortfolioController extends ChangeNotifier {
   Map<String, double> _prices = {};
   DateTime? _lastPriceUpdate;
   List<NetWorthSnapshot> _snapshots = [];
+  List<String> _startupBlockOrder = List.unmodifiable(startupBlockIds);
   bool _loading = true;
   String? _error;
 
@@ -63,6 +90,18 @@ class PortfolioController extends ChangeNotifier {
   );
 
   List<Position> positionsOf(int assetId) => _positions[assetId] ?? const [];
+
+  /// Ordre d'affichage des blocs du dashboard startups (persisté en base).
+  List<String> get startupBlockOrder => _startupBlockOrder;
+
+  /// Réordonne les blocs startups et persiste le nouvel ordre.
+  Future<void> reorderStartupBlocks(List<String> order) async {
+    final normalized = parseStartupBlockOrder(order.join(','));
+    if (listEquals(normalized, _startupBlockOrder)) return;
+    _startupBlockOrder = List.unmodifiable(normalized);
+    notifyListeners();
+    await db.setPreference(startupBlockOrderKey, normalized.join(','));
+  }
 
   /// Actif courant (rafraîchi après mutation), ou null s'il a été supprimé.
   Asset? assetById(int id) {
@@ -182,6 +221,9 @@ class PortfolioController extends ChangeNotifier {
     _prices = await db.cachedPricesFor(symbols);
     _lastPriceUpdate = await db.latestPriceUpdate();
     _snapshots = await db.allSnapshots();
+    _startupBlockOrder = parseStartupBlockOrder(
+      await db.preferenceValue(startupBlockOrderKey),
+    );
   }
 
   /// Enregistre un point du jour si l'historique n'en a pas encore :

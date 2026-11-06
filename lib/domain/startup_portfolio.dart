@@ -18,6 +18,9 @@ class StartupEntry {
 /// Agrégats d'une catégorie de startups.
 class CategoryKpi {
   final double invested;
+
+  /// Frais d'entrée cumulés de la catégorie (inclus dans [invested]).
+  final double frais;
   final double value;
   final double unrealized;
   final double realized;
@@ -27,6 +30,7 @@ class CategoryKpi {
 
   const CategoryKpi({
     required this.invested,
+    required this.frais,
     required this.value,
     required this.unrealized,
     required this.realized,
@@ -142,6 +146,7 @@ StartupPortfolioSummary summarizeStartups(
 
     final kpi = accumulators.putIfAbsent(category, _CategoryAccumulator.new);
     kpi.invested += invested;
+    kpi.frais += detail.frais;
     kpi.value += value;
     kpi.count += 1;
 
@@ -176,6 +181,7 @@ StartupPortfolioSummary summarizeStartups(
     for (final e in accumulators.entries)
       e.key: CategoryKpi(
         invested: e.value.invested,
+        frais: e.value.frais,
         value: e.value.value,
         unrealized: e.value.unrealized,
         realized: e.value.realized,
@@ -206,6 +212,7 @@ StartupPortfolioSummary summarizeStartups(
 
 class _CategoryAccumulator {
   double invested = 0;
+  double frais = 0;
   double value = 0;
   double unrealized = 0;
   double realized = 0;

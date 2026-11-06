@@ -157,8 +157,8 @@ void main() {
     );
 
     // Sous-onglet Sorties (le libellé du filtre de statut porte le même nom :
-    // le dernier « Sorties » est celui du sélecteur de section).
-    await tester.tap(find.text('Sorties').last);
+    // les onglets étant désormais en haut, c'est le premier « Sorties »).
+    await tester.tap(find.text('Sorties').first);
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(find.text('Sorties (1)'), findsOneWidget);
@@ -188,17 +188,19 @@ void main() {
     await pumpScreen(tester);
 
     // Somme des frais du périmètre complet : 12 + 8 + 5 + 0.
+    // Le montant apparaît dans le KPI et dans la ligne « Total » du tableau
+    // par catégorie (sa colonne « Frais »).
     expect(find.text('Frais total'), findsOneWidget);
-    expect(find.text(formatEuro(25)), findsOneWidget);
+    expect(find.text(formatEuro(25)), findsWidgets);
 
     // Le KPI suit le filtre de catégorie (12 + 8).
     await tester.tap(find.widgetWithText(FilterChip, 'Licornes pre-IPO').first);
     await tester.pumpAndSettle();
-    expect(find.text(formatEuro(20)), findsOneWidget);
+    expect(find.text(formatEuro(20)), findsWidgets);
 
     await tester.tap(find.text('Réinitialiser'));
     await tester.pumpAndSettle();
-    expect(find.text(formatEuro(25)), findsOneWidget);
+    expect(find.text(formatEuro(25)), findsWidgets);
 
     // Recherche sur le sous-onglet Liste : casse et accents ignorés.
     await tester.tap(find.text('Liste'));
@@ -216,12 +218,12 @@ void main() {
     // Le KPI Frais total suit aussi la recherche (Gamma : 5 €).
     await tester.tap(find.text('Synthèse'));
     await tester.pumpAndSettle();
-    expect(find.text(formatEuro(5)), findsOneWidget);
+    expect(find.text(formatEuro(5)), findsWidgets);
 
     // Effacement de la recherche via la croix.
     await tester.tap(find.byTooltip('Effacer la recherche'));
     await tester.pumpAndSettle();
-    expect(find.text(formatEuro(25)), findsOneWidget);
+    expect(find.text(formatEuro(25)), findsWidgets);
     await tester.tap(find.text('Liste'));
     await tester.pumpAndSettle();
     expect(find.text('Startups (4)'), findsOneWidget);
@@ -270,5 +272,108 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Capital investi'), findsOneWidget);
+  });
+
+  testWidgets('colonne « Frais » dans la synthèse par catégorie', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await seed();
+    await pumpScreen(tester);
+
+    // En-tête de colonne du tableau (le KPI s'appelle « Frais total »).
+    expect(find.text('Frais'), findsOneWidget);
+    final inTable = find.descendant(
+      of: find.byType(DataTable),
+      matching: find.text(formatEuro(20)),
+    );
+    // Frais de la catégorie Licornes : 12 + 8.
+    expect(inTable, findsOneWidget);
+    // Frais d'Europe Multi-Stage : 5 (une seule ligne du tableau).
+    expect(
+      find.descendant(
+        of: find.byType(DataTable),
+        matching: find.text(formatEuro(5)),
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('blocs réordonnables : onglets en haut, ordre persisté', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await seed();
+    await pumpScreen(tester);
+
+    // Ordre par défaut : sélecteur d'onglets avant la carte des filtres.
+    expect(
+      tester.getTopLeft(find.text('Synthèse')).dy,
+      lessThan(tester.getTopLeft(find.text('Filtres')).dy),
+    );
+    // Les deux blocs exposent une poignée de glisser-déposer.
+    expect(find.byIcon(Icons.drag_indicator), findsNWidgets(2));
+
+    // Réordonnancement (équivalent du glisser-déposer) : filtres puis onglets.
+    await tester.runAsync(
+      () => controller.reorderStartupBlocks(const ['filters', 'tabs']),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.getTopLeft(find.text('Filtres')).dy,
+      lessThan(tester.getTopLeft(find.text('Synthèse')).dy),
+    );
+
+    // L'ordre est écrit en base et rechargé par un nouveau contrôleur.
+    expect(await db.preferenceValue(startupBlockOrderKey), 'filters,tabs');
+    final reloaded = PortfolioController(db);
+    await tester.runAsync(reloaded.load);
+    expect(reloaded.startupBlockOrder, ['filters', 'tabs']);
+    expect(tester.takeException(), isNull);
+  });
+
+  test('parseStartupBlockOrder : ordre robuste', () {
+    expect(parseStartupBlockOrder(null), ['tabs', 'filters']);
+    expect(parseStartupBlockOrder('  '), ['tabs', 'filters']);
+    expect(parseStartupBlockOrder('tabs,filters'), ['tabs', 'filters']);
+    expect(parseStartupBlockOrder('filters,tabs'), ['filters', 'tabs']);
+    // Doublons et identifiants inconnus ignorés, blocs manquants ajoutés.
+    expect(parseStartupBlockOrder('tabs,tabs,inconnu'), ['tabs', 'filters']);
+    expect(parseStartupBlockOrder('filters'), ['filters', 'tabs']);
+  });
+
+  testWidgets('glisser-déposer : les onglets passent sous les filtres', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await seed();
+    await pumpScreen(tester);
+
+    // Poignée du bloc d'onglets (premier de l'écran) : en la faisant glisser
+    // vers le bas, le bloc passe sous la carte des filtres. Le seuil de
+    // permutation dépend de la hauteur du bloc survolé (≈ sa moitié).
+    final handle = find.byIcon(Icons.drag_indicator).first;
+    final gesture = await tester.startGesture(tester.getCenter(handle));
+    await tester.pump(const Duration(milliseconds: 100));
+    for (var i = 0; i < 30; i++) {
+      await gesture.moveBy(const Offset(0, 20));
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(controller.startupBlockOrder, ['filters', 'tabs']);
+    expect(
+      tester.getTopLeft(find.text('Filtres')).dy,
+      lessThan(tester.getTopLeft(find.text('Synthèse')).dy),
+    );
+    expect(tester.takeException(), isNull);
   });
 }
