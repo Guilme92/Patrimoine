@@ -7,6 +7,7 @@ import 'package:patrimoine/models/startup.dart';
 import 'package:patrimoine/theme/app_theme.dart';
 import 'package:patrimoine/ui/screens/home_screen.dart';
 import 'package:patrimoine/ui/screens/startups_screen.dart';
+import 'package:patrimoine/utils/format.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -36,6 +37,7 @@ void main() {
         quantite: 100,
         prixEntree: 10,
         prixActuel: 30,
+        frais: 12,
         dateInvestissement: DateTime(2020, 1, 1),
       ),
     );
@@ -46,6 +48,7 @@ void main() {
         quantite: 100,
         prixEntree: 10,
         prixActuel: 10,
+        frais: 8,
         dateInvestissement: DateTime(2022, 1, 1),
       ),
     );
@@ -55,6 +58,7 @@ void main() {
         categorie: 'Europe Multi-Stage',
         quantite: 100,
         prixEntree: 10,
+        frais: 5,
         statut: 'sorti',
         exitProduit: 2500,
         dateInvestissement: DateTime(2020, 1, 1),
@@ -174,6 +178,62 @@ void main() {
       find.text('Ajoutez une startup pour voir ce dashboard'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('KPI « Frais total » et recherche par nom', (tester) async {
+    tester.view.physicalSize = const Size(360, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await seed();
+    await pumpScreen(tester);
+
+    // Somme des frais du périmètre complet : 12 + 8 + 5 + 0.
+    expect(find.text('Frais total'), findsOneWidget);
+    expect(find.text(formatEuro(25)), findsOneWidget);
+
+    // Le KPI suit le filtre de catégorie (12 + 8).
+    await tester.tap(find.widgetWithText(FilterChip, 'Licornes pre-IPO').first);
+    await tester.pumpAndSettle();
+    expect(find.text(formatEuro(20)), findsOneWidget);
+
+    await tester.tap(find.text('Réinitialiser'));
+    await tester.pumpAndSettle();
+    expect(find.text(formatEuro(25)), findsOneWidget);
+
+    // Recherche sur le sous-onglet Liste : casse et accents ignorés.
+    await tester.tap(find.text('Liste'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'GAM');
+    await tester.pumpAndSettle();
+    expect(find.text('Startups (1)'), findsOneWidget);
+    expect(find.text('Gamma'), findsOneWidget);
+    expect(find.text('Alpha'), findsNothing);
+
+    await tester.enterText(find.byType(TextField), 'gämma');
+    await tester.pumpAndSettle();
+    expect(find.text('Gamma'), findsOneWidget);
+
+    // Le KPI Frais total suit aussi la recherche (Gamma : 5 €).
+    await tester.tap(find.text('Synthèse'));
+    await tester.pumpAndSettle();
+    expect(find.text(formatEuro(5)), findsOneWidget);
+
+    // Effacement de la recherche via la croix.
+    await tester.tap(find.byTooltip('Effacer la recherche'));
+    await tester.pumpAndSettle();
+    expect(find.text(formatEuro(25)), findsOneWidget);
+    await tester.tap(find.text('Liste'));
+    await tester.pumpAndSettle();
+    expect(find.text('Startups (4)'), findsOneWidget);
+
+    // Une recherche sans résultat affiche l'état vide.
+    await tester.enterText(find.byType(TextField), 'zzz');
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Aucune startup ne correspond aux filtres ou à la recherche.'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('« Startups » est la 3e destination de la barre de navigation', (

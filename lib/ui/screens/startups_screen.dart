@@ -47,21 +47,39 @@ Color _signedColor(double v) =>
 
 class _StartupsScreenState extends State<StartupsScreen> {
   final Set<String> _categories = <String>{};
+  final TextEditingController _searchController = TextEditingController();
   int _year = 0; // 0 = toutes les années
   String _status = 'all';
+  String _query = '';
   _Section _section = _Section.synthesis;
   _SortKey _sortKey = _SortKey.value;
   bool _ascending = false;
 
   bool get _hasFilters =>
-      _categories.isNotEmpty || _year != 0 || _status != 'all';
+      _categories.isNotEmpty ||
+      _year != 0 ||
+      _status != 'all' ||
+      _query.trim().isNotEmpty;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _resetFilters() {
     setState(() {
       _categories.clear();
       _year = 0;
       _status = 'all';
+      _query = '';
     });
+    _searchController.clear();
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    setState(() => _query = '');
   }
 
   bool _matches(StartupEntry entry) {
@@ -73,6 +91,7 @@ class _StartupsScreenState extends State<StartupsScreen> {
       return false;
     }
     if (_status != 'all' && entry.detail.statut != _status) return false;
+    if (!startupNameMatches(entry.asset.name, _query)) return false;
     return true;
   }
 
@@ -173,6 +192,10 @@ class _StartupsScreenState extends State<StartupsScreen> {
             year: _year,
             status: _status,
             hasFilters: _hasFilters,
+            searchController: _searchController,
+            query: _query,
+            onSearchChanged: (q) => setState(() => _query = q),
+            onClearSearch: _clearSearch,
             onReset: _resetFilters,
             onToggleCategory: (c) => setState(() {
               if (!_categories.add(c)) _categories.remove(c);
@@ -250,6 +273,10 @@ class _FiltersCard extends StatelessWidget {
   final int year;
   final String status;
   final bool hasFilters;
+  final TextEditingController searchController;
+  final String query;
+  final ValueChanged<String> onSearchChanged;
+  final VoidCallback onClearSearch;
   final VoidCallback onReset;
   final ValueChanged<String> onToggleCategory;
   final ValueChanged<int> onYearChanged;
@@ -261,6 +288,10 @@ class _FiltersCard extends StatelessWidget {
     required this.year,
     required this.status,
     required this.hasFilters,
+    required this.searchController,
+    required this.query,
+    required this.onSearchChanged,
+    required this.onClearSearch,
     required this.onReset,
     required this.onToggleCategory,
     required this.onYearChanged,
@@ -293,6 +324,13 @@ class _FiltersCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          _SearchField(
+            controller: searchController,
+            hasText: query.isNotEmpty,
+            onChanged: onSearchChanged,
+            onClear: onClearSearch,
+          ),
+          const SizedBox(height: 14),
           Text('Catégorie', style: theme.textTheme.bodySmall),
           const SizedBox(height: 6),
           Wrap(
@@ -428,6 +466,79 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
+class _SearchField extends StatelessWidget {
+  final TextEditingController controller;
+  final bool hasText;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  const _SearchField({
+    required this.controller,
+    required this.hasText,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      onChanged: onChanged,
+      textInputAction: TextInputAction.search,
+      style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+      cursorColor: AppColors.primary,
+      decoration: InputDecoration(
+        isDense: true,
+        hintText: 'Rechercher une startup…',
+        hintStyle: const TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 13,
+        ),
+        prefixIcon: const Icon(
+          Icons.search,
+          size: 18,
+          color: AppColors.textSecondary,
+        ),
+        prefixIconConstraints: const BoxConstraints(
+          minWidth: 36,
+          minHeight: 36,
+        ),
+        suffixIcon: hasText
+            ? IconButton(
+                onPressed: onClear,
+                tooltip: 'Effacer la recherche',
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(
+                  Icons.close,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
+              )
+            : null,
+        suffixIconConstraints: const BoxConstraints(
+          minWidth: 36,
+          minHeight: 36,
+        ),
+        filled: true,
+        fillColor: AppColors.surfaceAlt,
+        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.divider),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.divider),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.primary),
+        ),
+      ),
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Synthèse
 // ---------------------------------------------------------------------------
@@ -447,6 +558,17 @@ class _SynthesisTab extends StatelessWidget {
         value: formatEuro(summary.totalInvested),
         hint:
             'Somme des capitaux investis : quantité × prix d\'entrée + frais.',
+      ),
+      _KpiCard(
+        label: 'Frais total',
+        value: formatEuro(summary.totalFrais),
+        sub: summary.totalInvested > 0
+            ? '${formatShare(summary.totalFrais / summary.totalInvested * 100)} '
+                  'du capital'
+            : null,
+        hint:
+            'Somme des frais d\'entrée (dossier, commissions) de toutes les '
+            'startups du périmètre filtré, tous statuts confondus.',
       ),
       _KpiCard(
         label: 'Valorisation totale',
@@ -1406,7 +1528,7 @@ class _NoResultState extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Aucune startup ne correspond aux filtres.',
+            'Aucune startup ne correspond aux filtres ou à la recherche.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium,
           ),

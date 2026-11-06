@@ -188,9 +188,23 @@ void main() {
       expect(s.kpiByCategory.keys, hasLength(3));
     });
 
+    test('somme les frais de toutes les lignes du périmètre', () {
+      final entries = [
+        _entry(1, 'Alpha', categorie: 'Licornes pre-IPO', frais: 12.5),
+        _entry(2, 'Beta', statut: 'sorti', exitProduit: 1200, frais: 7.5),
+        _entry(3, 'Gamma', statut: 'radie', frais: 0),
+      ];
+      final s = summarizeStartups(entries, today: _today);
+
+      expect(s.totalFrais, 20);
+      // Les frais restent inclus dans le capital investi de chaque ligne.
+      expect(s.totalInvested, 1000 + 12.5 + 1000 + 7.5 + 1000);
+    });
+
     test('portefeuille vide : tous les agrégats à zéro', () {
       final s = summarizeStartups([]);
       expect(s.totalInvested, 0);
+      expect(s.totalFrais, 0);
       expect(s.totalValue, 0);
       expect(s.unrealizedGain, 0);
       expect(s.unrealizedGainPct, 0);
@@ -263,6 +277,25 @@ void main() {
       expect(startupCategoryKey(''), 'Sans catégorie');
       expect(startupCategoryKey('   '), 'Sans catégorie');
       expect(startupCategoryKey('  Licornes pre-IPO '), 'Licornes pre-IPO');
+    });
+  });
+
+  group('recherche par nom', () {
+    test('insensible à la casse, aux accents et sur sous-chaîne', () {
+      expect(startupNameMatches('Éco-Logic', 'eco'), isTrue);
+      expect(startupNameMatches('eco-logic', 'ÉCO'), isTrue);
+      expect(startupNameMatches('Gamma', 'gämma'), isTrue);
+      expect(startupNameMatches('Ma Société', 'soci'), isTrue);
+      expect(startupNameMatches('Gamma', 'delta'), isFalse);
+    });
+
+    test('une requête vide accepte toutes les lignes', () {
+      expect(startupNameMatches('Gamma', ''), isTrue);
+      expect(startupNameMatches('Gamma', '   '), isTrue);
+    });
+
+    test('normalise la requête (minuscules, sans accents, bords retirés)', () {
+      expect(normalizeStartupSearch('  ÉCO-Logic '), 'eco-logic');
     });
   });
 }

@@ -1,4 +1,5 @@
 import '../data/database.dart';
+import '../utils/choice.dart';
 import 'startup.dart';
 
 /// Agrégats du portefeuille de startups.
@@ -38,6 +39,7 @@ class CategoryKpi {
 /// Synthèse complète d'un lot de startups (après filtres côté UI).
 class StartupPortfolioSummary {
   final double totalInvested;
+  final double totalFrais;
   final double totalValue;
   final double unrealizedGain;
   final double unrealizedGainPct;
@@ -54,6 +56,7 @@ class StartupPortfolioSummary {
 
   const StartupPortfolioSummary({
     required this.totalInvested,
+    required this.totalFrais,
     required this.totalValue,
     required this.unrealizedGain,
     required this.unrealizedGainPct,
@@ -79,9 +82,23 @@ String startupCategoryKey(String? categorie) {
   return (t == null || t.isEmpty) ? 'Sans catégorie' : t;
 }
 
+/// Normalise un texte pour la recherche par nom : minuscules, sans accents,
+/// espaces de bord retirés.
+String normalizeStartupSearch(String raw) =>
+    stripAccents(raw.toLowerCase()).trim();
+
+/// Vrai si [name] contient [query] (sous-chaîne, insensible à la casse et
+/// aux accents). Une requête vide accepte tout.
+bool startupNameMatches(String name, String query) {
+  final q = normalizeStartupSearch(query);
+  if (q.isEmpty) return true;
+  return normalizeStartupSearch(name).contains(q);
+}
+
 /// Agrège [entries] en une synthèse unique.
 ///
 /// - `totalInvested` / `totalValue` portent sur toutes les lignes ;
+/// - `totalFrais` est la somme des frais d'entrée de toutes les lignes ;
 /// - `unrealizedGain` ne compte que les lignes en portefeuille ;
 /// - `realizedGain` ne compte que les lignes sorties ;
 /// - le MOIC global est valorisation totale ÷ capital investi total ;
@@ -92,6 +109,7 @@ StartupPortfolioSummary summarizeStartups(
   DateTime? today,
 }) {
   var totalInvested = 0.0;
+  var totalFrais = 0.0;
   var totalValue = 0.0;
   var unrealized = 0.0;
   var realized = 0.0;
@@ -111,6 +129,7 @@ StartupPortfolioSummary summarizeStartups(
     final value = lineValue(detail);
 
     totalInvested += invested;
+    totalFrais += detail.frais;
     totalValue += value;
 
     final category = startupCategoryKey(detail.categorie);
@@ -168,6 +187,7 @@ StartupPortfolioSummary summarizeStartups(
 
   return StartupPortfolioSummary(
     totalInvested: totalInvested,
+    totalFrais: totalFrais,
     totalValue: totalValue,
     unrealizedGain: unrealized,
     unrealizedGainPct: totalInvested > 0 ? unrealized / totalInvested * 100 : 0,
