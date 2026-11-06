@@ -1094,6 +1094,8 @@ class _StartupCard extends StatelessWidget {
             ],
           ),
           const Divider(height: 28, color: AppColors.divider),
+          if (s.categorie != null && s.categorie!.trim().isNotEmpty)
+            InfoRow(label: 'Catégorie', value: startupCategoryLabel(s.categorie)),
           InfoRow(label: 'Quantité', value: _qty(s.quantite)),
           InfoRow(
             label: 'Prix d\'entrée',

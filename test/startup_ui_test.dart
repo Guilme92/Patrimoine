@@ -41,6 +41,7 @@ void main() {
     await db.saveStartupDetails(
       const StartupDraft(
         typeTitre: 'actions',
+        categorie: 'Europe Multi-Stage',
         quantite: 100,
         prixEntree: 10,
         frais: 50,
@@ -75,6 +76,9 @@ void main() {
     expect(find.text('PV latente'), findsOneWidget);
     expect(find.text('Multiple (MOIC)'), findsOneWidget);
     expect(find.text('TRI annualisé'), findsOneWidget);
+    // La catégorie de la fiche startup est affichée.
+    expect(find.text('Catégorie'), findsOneWidget);
+    expect(find.text('Europe Multi-Stage'), findsOneWidget);
     // MOIC = 2500 / 1050 = 2.38×
     expect(find.text('2.38×'), findsOneWidget);
     // La valorisation calculée (100 × 25 €) remplace la valeur manuelle.

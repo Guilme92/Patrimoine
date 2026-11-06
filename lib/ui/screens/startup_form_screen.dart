@@ -25,6 +25,7 @@ class _StartupDetailsFormScreenState extends State<StartupDetailsFormScreen> {
 
   String _statut = 'en_portefeuille';
   String _typeTitre = '';
+  String _categorie = '';
   String _stade = '';
   String _exitMode = '';
   late final TextEditingController _quantite;
@@ -54,6 +55,7 @@ class _StartupDetailsFormScreenState extends State<StartupDetailsFormScreen> {
         ? d.typeTitre!
         : '';
     _stade = startupStages.contains(d.stade) ? d.stade! : '';
+    _categorie = d.categorie?.trim() ?? '';
     _exitMode = startupExitModes.contains(d.exitMode) ? d.exitMode! : '';
     _quantite = TextEditingController(text: amountText(d.quantite));
     _prixEntree = TextEditingController(text: amountText(d.prixEntree));
@@ -105,6 +107,7 @@ class _StartupDetailsFormScreenState extends State<StartupDetailsFormScreen> {
 
   StartupDraft _draft() => StartupDraft(
     typeTitre: _nullIfBlank(_typeTitre),
+    categorie: _nullIfBlank(_categorie),
     quantite: parseAmount(_quantite.text),
     prixEntree: parseAmount(_prixEntree.text),
     frais: parseAmount(_frais.text),
@@ -177,6 +180,27 @@ class _StartupDetailsFormScreenState extends State<StartupDetailsFormScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
+            const FormSectionTitle(title: 'Catégorie'),
+            DropdownButtonFormField<String>(
+              initialValue: _categorie,
+              decoration: const InputDecoration(
+                labelText: 'Portefeuille / catégorie',
+              ),
+              items: [
+                const DropdownMenuItem(value: '', child: Text('Non renseigné')),
+                ...startupCategories.map(
+                  (c) => DropdownMenuItem(value: c, child: Text(c)),
+                ),
+                // Une catégorie importée hors liste reste sélectionnable.
+                if (_categorie.isNotEmpty &&
+                    !startupCategories.contains(_categorie))
+                  DropdownMenuItem(
+                    value: _categorie,
+                    child: Text(_categorie),
+                  ),
+              ],
+              onChanged: (v) => setState(() => _categorie = v ?? ''),
+            ),
             const FormSectionTitle(title: 'Investissement'),
             DropdownButtonFormField<String>(
               initialValue: _typeTitre,

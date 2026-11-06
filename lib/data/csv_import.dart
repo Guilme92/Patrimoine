@@ -60,11 +60,15 @@ List<String> csvHeaderKeys(String input) {
 }
 
 /// Détecte le type d'import d'après les colonnes présentes :
-/// `loyer_hc` -> immobilier, `quantite`/`type_titre` -> startup.
+/// `loyer_hc` -> immobilier, `quantite`/`type_titre`/`instrument` -> startup.
 AssetType? detectCsvAssetType(String input) {
   final keys = csvHeaderKeys(input).toSet();
   if (keys.contains('loyer_hc')) return AssetType.realEstate;
-  if (keys.contains('quantite') || keys.contains('type_titre')) {
+  if (keys.contains('quantite') ||
+      keys.contains('type_titre') ||
+      keys.contains('instrument') ||
+      keys.contains('montant_investi_eur') ||
+      keys.contains('lien_blast')) {
     return AssetType.startup;
   }
   return null;
@@ -159,6 +163,11 @@ CsvParseResult parseRealEstateCsv(String input) {
 // Parsing startups
 // ---------------------------------------------------------------------------
 
+/// Parse un CSV de startups : template historique (`type_titre`, `prix_entree`,
+/// `note`, `levees`…) et export Blast enrichi (`categorie`, `instrument`,
+/// `montant_investi_eur`, `prix_entree_eur`, `valorisation_entree_eur`,
+/// `valorisation_entree`, `lien_blast`). Les colonnes historiques restent
+/// prioritaires lorsqu'elles sont renseignées.
 CsvParseResult parseStartupCsv(String input) {
   final table = _decodeTable(input);
   if (table == null) return const CsvParseResult(rows: [], skipped: 0);
@@ -173,33 +182,81 @@ CsvParseResult parseStartupCsv(String input) {
       continue;
     }
     final statut = normalizeStartupStatus(row.text('statut'));
+    final quantite = row.number('quantite');
+
+    // Prix d'entrée : colonne historique, alias Blast, puis montant investi
+    // réparti sur la quantité (0 si la quantité est inconnue).
+    var prixEntree = row.number('prix_entree');
+    if (prixEntree == 0) prixEntree = row.number('prix_entree_eur');
+    if (prixEntree == 0) {
+      final montantInvesti = row.number('montant_investi_eur');
+      if (montantInvesti != 0 && quantite != 0) {
+        prixEntree = montantInvesti / quantite;
+      }
+    }
+
+    // Valorisation : colonne historique, puis alias Blast.
+    var valorisationEntreprise = row.number('valorisation_entreprise');
+    if (valorisationEntreprise == 0) {
+      valorisationEntreprise = row.number('valorisation_entree_eur');
+    }
+
+    // Note enrichie : note d'origine, précision texte sur la valorisation
+    // (si aucune valorisation chiffrée), lien vers la fiche Blast.
+    final noteParts = <String>[];
+    final baseNote = row.text('note');
+    if (baseNote != null) noteParts.add(baseNote);
+    final valorisationTexte = row.text('valorisation_entree');
+    if (valorisationEntreprise == 0 && valorisationTexte != null) {
+      noteParts.add(valorisationTexte);
+    }
+    final lienBlast = row.text('lien_blast');
+    if (lienBlast != null) noteParts.add('Blast: $lienBlast');
+    final note = noteParts.isEmpty ? null : noteParts.join('\n');
+
     rows.add(
       CsvImportRow(
         name: name,
         value: 0,
         currency: 'EUR',
         institution: row.text('etablissement'),
-        note: row.text('note'),
+        note: baseNote,
         startup: StartupDraft(
-          typeTitre: normalizeStartupInstrument(row.text('type_titre')),
-          quantite: row.number('quantite'),
-          prixEntree: row.number('prix_entree'),
+          typeTitre:
+              normalizeStartupInstrument(row.text('type_titre')) ??
+              _blastInstrument(row.text('instrument')),
+          categorie: row.text('categorie'),
+          quantite: quantite,
+          prixEntree: prixEntree,
           frais: row.number('frais'),
           dateInvestissement: row.date('date_investissement'),
           stade: normalizeStartupStage(row.text('stade')),
           prixActuel: row.number('prix_actuel'),
           dateValorisation: row.date('date_valorisation'),
-          valorisationEntreprise: row.number('valorisation_entreprise'),
+          valorisationEntreprise: valorisationEntreprise,
           statut: statut ?? 'en_portefeuille',
           exitDate: row.date('date_sortie'),
           exitProduit: row.number('produit_sortie'),
           exitMode: normalizeStartupExitMode(row.text('mode_sortie')),
+          note: note,
         ),
         rounds: parseFundingRounds(row.text('levees')),
       ),
     );
   }
   return CsvParseResult(rows: rows, skipped: skipped);
+}
+
+/// Traduit l'instrument d'un export Blast (`SAFE`, `Actions`) vers le
+/// vocabulaire interne ; toute autre valeur reste non renseignée.
+String? _blastInstrument(String? raw) {
+  final t = raw?.trim().toLowerCase();
+  if (t == null || t.isEmpty) return null;
+  if (t == 'safe' || t.startsWith('safe ')) return 'safe';
+  if (t == 'actions' || t == 'action' || t.startsWith('action ')) {
+    return 'actions';
+  }
+  return null;
 }
 
 /// Décode la colonne `levees` : rounds séparés par « ; », chaque round au

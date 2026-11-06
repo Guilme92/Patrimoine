@@ -3665,6 +3665,17 @@ class $StartupDetailsTable extends StartupDetails
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _categorieMeta = const VerificationMeta(
+    'categorie',
+  );
+  @override
+  late final GeneratedColumn<String> categorie = GeneratedColumn<String>(
+    'categorie',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _quantiteMeta = const VerificationMeta(
     'quantite',
   );
@@ -3825,6 +3836,7 @@ class $StartupDetailsTable extends StartupDetails
     id,
     assetId,
     typeTitre,
+    categorie,
     quantite,
     prixEntree,
     frais,
@@ -3867,6 +3879,12 @@ class $StartupDetailsTable extends StartupDetails
       context.handle(
         _typeTitreMeta,
         typeTitre.isAcceptableOrUnknown(data['type_titre']!, _typeTitreMeta),
+      );
+    }
+    if (data.containsKey('categorie')) {
+      context.handle(
+        _categorieMeta,
+        categorie.isAcceptableOrUnknown(data['categorie']!, _categorieMeta),
       );
     }
     if (data.containsKey('quantite')) {
@@ -3986,6 +4004,10 @@ class $StartupDetailsTable extends StartupDetails
         DriftSqlType.string,
         data['${effectivePrefix}type_titre'],
       ),
+      categorie: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}categorie'],
+      ),
       quantite: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}quantite'],
@@ -4058,6 +4080,9 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
   /// actions | actions_preference | bsa | bsa_air | bspce |
   /// obligations_convertibles | safe | autre
   final String? typeTitre;
+
+  /// Catégorie libre (ex. « Europe Multi-Stage », « Y Combinator Seed »).
+  final String? categorie;
   final double quantite;
   final double prixEntree;
   final double frais;
@@ -4084,6 +4109,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
     required this.id,
     required this.assetId,
     this.typeTitre,
+    this.categorie,
     required this.quantite,
     required this.prixEntree,
     required this.frais,
@@ -4106,6 +4132,9 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
     map['asset_id'] = Variable<int>(assetId);
     if (!nullToAbsent || typeTitre != null) {
       map['type_titre'] = Variable<String>(typeTitre);
+    }
+    if (!nullToAbsent || categorie != null) {
+      map['categorie'] = Variable<String>(categorie);
     }
     map['quantite'] = Variable<double>(quantite);
     map['prix_entree'] = Variable<double>(prixEntree);
@@ -4143,6 +4172,9 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
       typeTitre: typeTitre == null && nullToAbsent
           ? const Value.absent()
           : Value(typeTitre),
+      categorie: categorie == null && nullToAbsent
+          ? const Value.absent()
+          : Value(categorie),
       quantite: Value(quantite),
       prixEntree: Value(prixEntree),
       frais: Value(frais),
@@ -4179,6 +4211,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
       id: serializer.fromJson<int>(json['id']),
       assetId: serializer.fromJson<int>(json['assetId']),
       typeTitre: serializer.fromJson<String?>(json['typeTitre']),
+      categorie: serializer.fromJson<String?>(json['categorie']),
       quantite: serializer.fromJson<double>(json['quantite']),
       prixEntree: serializer.fromJson<double>(json['prixEntree']),
       frais: serializer.fromJson<double>(json['frais']),
@@ -4208,6 +4241,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
       'id': serializer.toJson<int>(id),
       'assetId': serializer.toJson<int>(assetId),
       'typeTitre': serializer.toJson<String?>(typeTitre),
+      'categorie': serializer.toJson<String?>(categorie),
       'quantite': serializer.toJson<double>(quantite),
       'prixEntree': serializer.toJson<double>(prixEntree),
       'frais': serializer.toJson<double>(frais),
@@ -4231,6 +4265,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
     int? id,
     int? assetId,
     Value<String?> typeTitre = const Value.absent(),
+    Value<String?> categorie = const Value.absent(),
     double? quantite,
     double? prixEntree,
     double? frais,
@@ -4249,6 +4284,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
     id: id ?? this.id,
     assetId: assetId ?? this.assetId,
     typeTitre: typeTitre.present ? typeTitre.value : this.typeTitre,
+    categorie: categorie.present ? categorie.value : this.categorie,
     quantite: quantite ?? this.quantite,
     prixEntree: prixEntree ?? this.prixEntree,
     frais: frais ?? this.frais,
@@ -4274,6 +4310,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
       id: data.id.present ? data.id.value : this.id,
       assetId: data.assetId.present ? data.assetId.value : this.assetId,
       typeTitre: data.typeTitre.present ? data.typeTitre.value : this.typeTitre,
+      categorie: data.categorie.present ? data.categorie.value : this.categorie,
       quantite: data.quantite.present ? data.quantite.value : this.quantite,
       prixEntree: data.prixEntree.present
           ? data.prixEntree.value
@@ -4309,6 +4346,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
           ..write('id: $id, ')
           ..write('assetId: $assetId, ')
           ..write('typeTitre: $typeTitre, ')
+          ..write('categorie: $categorie, ')
           ..write('quantite: $quantite, ')
           ..write('prixEntree: $prixEntree, ')
           ..write('frais: $frais, ')
@@ -4332,6 +4370,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
     id,
     assetId,
     typeTitre,
+    categorie,
     quantite,
     prixEntree,
     frais,
@@ -4354,6 +4393,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
           other.id == this.id &&
           other.assetId == this.assetId &&
           other.typeTitre == this.typeTitre &&
+          other.categorie == this.categorie &&
           other.quantite == this.quantite &&
           other.prixEntree == this.prixEntree &&
           other.frais == this.frais &&
@@ -4374,6 +4414,7 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
   final Value<int> id;
   final Value<int> assetId;
   final Value<String?> typeTitre;
+  final Value<String?> categorie;
   final Value<double> quantite;
   final Value<double> prixEntree;
   final Value<double> frais;
@@ -4392,6 +4433,7 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
     this.id = const Value.absent(),
     this.assetId = const Value.absent(),
     this.typeTitre = const Value.absent(),
+    this.categorie = const Value.absent(),
     this.quantite = const Value.absent(),
     this.prixEntree = const Value.absent(),
     this.frais = const Value.absent(),
@@ -4411,6 +4453,7 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
     this.id = const Value.absent(),
     required int assetId,
     this.typeTitre = const Value.absent(),
+    this.categorie = const Value.absent(),
     this.quantite = const Value.absent(),
     this.prixEntree = const Value.absent(),
     this.frais = const Value.absent(),
@@ -4430,6 +4473,7 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
     Expression<int>? id,
     Expression<int>? assetId,
     Expression<String>? typeTitre,
+    Expression<String>? categorie,
     Expression<double>? quantite,
     Expression<double>? prixEntree,
     Expression<double>? frais,
@@ -4449,6 +4493,7 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
       if (id != null) 'id': id,
       if (assetId != null) 'asset_id': assetId,
       if (typeTitre != null) 'type_titre': typeTitre,
+      if (categorie != null) 'categorie': categorie,
       if (quantite != null) 'quantite': quantite,
       if (prixEntree != null) 'prix_entree': prixEntree,
       if (frais != null) 'frais': frais,
@@ -4471,6 +4516,7 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
     Value<int>? id,
     Value<int>? assetId,
     Value<String?>? typeTitre,
+    Value<String?>? categorie,
     Value<double>? quantite,
     Value<double>? prixEntree,
     Value<double>? frais,
@@ -4490,6 +4536,7 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
       id: id ?? this.id,
       assetId: assetId ?? this.assetId,
       typeTitre: typeTitre ?? this.typeTitre,
+      categorie: categorie ?? this.categorie,
       quantite: quantite ?? this.quantite,
       prixEntree: prixEntree ?? this.prixEntree,
       frais: frais ?? this.frais,
@@ -4519,6 +4566,9 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
     }
     if (typeTitre.present) {
       map['type_titre'] = Variable<String>(typeTitre.value);
+    }
+    if (categorie.present) {
+      map['categorie'] = Variable<String>(categorie.value);
     }
     if (quantite.present) {
       map['quantite'] = Variable<double>(quantite.value);
@@ -4573,6 +4623,7 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
           ..write('id: $id, ')
           ..write('assetId: $assetId, ')
           ..write('typeTitre: $typeTitre, ')
+          ..write('categorie: $categorie, ')
           ..write('quantite: $quantite, ')
           ..write('prixEntree: $prixEntree, ')
           ..write('frais: $frais, ')
@@ -7733,6 +7784,7 @@ typedef $$StartupDetailsTableCreateCompanionBuilder =
       Value<int> id,
       required int assetId,
       Value<String?> typeTitre,
+      Value<String?> categorie,
       Value<double> quantite,
       Value<double> prixEntree,
       Value<double> frais,
@@ -7753,6 +7805,7 @@ typedef $$StartupDetailsTableUpdateCompanionBuilder =
       Value<int> id,
       Value<int> assetId,
       Value<String?> typeTitre,
+      Value<String?> categorie,
       Value<double> quantite,
       Value<double> prixEntree,
       Value<double> frais,
@@ -7811,6 +7864,11 @@ class $$StartupDetailsTableFilterComposer
 
   ColumnFilters<String> get typeTitre => $composableBuilder(
     column: $table.typeTitre,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get categorie => $composableBuilder(
+    column: $table.categorie,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7927,6 +7985,11 @@ class $$StartupDetailsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get categorie => $composableBuilder(
+    column: $table.categorie,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get quantite => $composableBuilder(
     column: $table.quantite,
     builder: (column) => ColumnOrderings(column),
@@ -8035,6 +8098,9 @@ class $$StartupDetailsTableAnnotationComposer
 
   GeneratedColumn<String> get typeTitre =>
       $composableBuilder(column: $table.typeTitre, builder: (column) => column);
+
+  GeneratedColumn<String> get categorie =>
+      $composableBuilder(column: $table.categorie, builder: (column) => column);
 
   GeneratedColumn<double> get quantite =>
       $composableBuilder(column: $table.quantite, builder: (column) => column);
@@ -8147,6 +8213,7 @@ class $$StartupDetailsTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<int> assetId = const Value.absent(),
                 Value<String?> typeTitre = const Value.absent(),
+                Value<String?> categorie = const Value.absent(),
                 Value<double> quantite = const Value.absent(),
                 Value<double> prixEntree = const Value.absent(),
                 Value<double> frais = const Value.absent(),
@@ -8165,6 +8232,7 @@ class $$StartupDetailsTableTableManager
                 id: id,
                 assetId: assetId,
                 typeTitre: typeTitre,
+                categorie: categorie,
                 quantite: quantite,
                 prixEntree: prixEntree,
                 frais: frais,
@@ -8185,6 +8253,7 @@ class $$StartupDetailsTableTableManager
                 Value<int> id = const Value.absent(),
                 required int assetId,
                 Value<String?> typeTitre = const Value.absent(),
+                Value<String?> categorie = const Value.absent(),
                 Value<double> quantite = const Value.absent(),
                 Value<double> prixEntree = const Value.absent(),
                 Value<double> frais = const Value.absent(),
@@ -8203,6 +8272,7 @@ class $$StartupDetailsTableTableManager
                 id: id,
                 assetId: assetId,
                 typeTitre: typeTitre,
+                categorie: categorie,
                 quantite: quantite,
                 prixEntree: prixEntree,
                 frais: frais,

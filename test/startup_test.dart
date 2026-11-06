@@ -450,4 +450,87 @@ void main() {
       },
     );
   });
+
+  group('migration v3 -> v4', () {
+    test('ajoute categorie sans perdre les fiches startup', () async {
+      final dir = await Directory.systemTemp.createTemp('patrimoine_v3');
+      final file = File('${dir.path}/v3.sqlite');
+
+      final raw = sqlite.sqlite3.open(file.path);
+      raw.execute('''
+        CREATE TABLE assets (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          type TEXT NOT NULL,
+          value REAL NOT NULL DEFAULT 0,
+          currency TEXT NOT NULL DEFAULT 'EUR',
+          institution TEXT,
+          note TEXT,
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+        );
+      ''');
+      raw.execute('''
+        CREATE TABLE startup_details (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          asset_id INTEGER NOT NULL UNIQUE REFERENCES assets(id) ON DELETE CASCADE,
+          type_titre TEXT,
+          quantite REAL NOT NULL DEFAULT 0,
+          prix_entree REAL NOT NULL DEFAULT 0,
+          frais REAL NOT NULL DEFAULT 0,
+          date_investissement INTEGER,
+          stade TEXT,
+          prix_actuel REAL NOT NULL DEFAULT 0,
+          date_valorisation INTEGER,
+          valorisation_entreprise REAL NOT NULL DEFAULT 0,
+          statut TEXT NOT NULL DEFAULT 'en_portefeuille',
+          exit_date INTEGER,
+          exit_produit REAL NOT NULL DEFAULT 0,
+          exit_mode TEXT,
+          note TEXT,
+          created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+        );
+      ''');
+      raw.execute(
+        "INSERT INTO assets (name, type, value) "
+        "VALUES ('Qonto', 'startup', 12000)",
+      );
+      raw.execute(
+        "INSERT INTO startup_details (asset_id, type_titre, quantite, "
+        "prix_entree) VALUES (1, 'actions', 100, 10)",
+      );
+      raw.execute('PRAGMA user_version = 3');
+      raw.close();
+
+      final db = AppDatabase.forTesting(NativeDatabase(file));
+      final assets = await db.allAssets();
+      expect(assets, hasLength(1));
+
+      final existing = await db.startupDetailsFor(assets.single.id);
+      expect(existing, isNotNull);
+      final detail = existing!;
+      expect(detail.quantite, 100);
+      expect(detail.categorie, isNull);
+
+      // La nouvelle colonne est requêtable et modifiable.
+      await db.saveStartupDetails(
+        StartupDraft.fromDetail(detail).toCompanion(assets.single.id),
+      );
+      final unchanged = await db.startupDetailsFor(assets.single.id);
+      expect(unchanged!.categorie, isNull);
+
+      await db.saveStartupDetails(
+        const StartupDraft(
+          categorie: 'Europe Multi-Stage',
+          quantite: 100,
+          prixEntree: 10,
+        ).toCompanion(assets.single.id),
+      );
+      final updated = await db.startupDetailsFor(assets.single.id);
+      expect(updated!.categorie, 'Europe Multi-Stage');
+
+      await db.close();
+      await dir.delete(recursive: true);
+    });
+  });
 }

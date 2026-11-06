@@ -38,6 +38,22 @@ String startupInstrumentLabel(String? s) {
   }
 }
 
+/// Catégories proposées pour une startup (import Blast, portefeuilles
+/// thématiques…). La valeur est stockée telle quelle dans
+/// `StartupDetails.categorie`.
+const List<String> startupCategories = [
+  'Licornes pre-IPO',
+  'Europe Multi-Stage',
+  'Y Combinator Series A',
+  'Y Combinator Seed Selection',
+];
+
+/// Libellé affiché pour une catégorie (vide -> « Non renseigné »).
+String startupCategoryLabel(String? c) {
+  final t = c?.trim();
+  return (t == null || t.isEmpty) ? 'Non renseigné' : t;
+}
+
 /// Valeurs de `StartupDetails.stade`.
 const List<String> startupStages = [
   'seed',
@@ -134,6 +150,7 @@ String? _blankToNull(String? v) {
 /// Données saisies dans le formulaire startup, converties en companion drift.
 class StartupDraft {
   final String? typeTitre;
+  final String? categorie;
   final double quantite;
   final double prixEntree;
   final double frais;
@@ -150,6 +167,7 @@ class StartupDraft {
 
   const StartupDraft({
     this.typeTitre,
+    this.categorie,
     this.quantite = 0,
     this.prixEntree = 0,
     this.frais = 0,
@@ -167,6 +185,7 @@ class StartupDraft {
 
   factory StartupDraft.fromDetail(StartupDetail s) => StartupDraft(
     typeTitre: s.typeTitre,
+    categorie: s.categorie,
     quantite: s.quantite,
     prixEntree: s.prixEntree,
     frais: s.frais,
@@ -185,6 +204,7 @@ class StartupDraft {
   StartupDetailsCompanion toCompanion(int assetId) => StartupDetailsCompanion.insert(
     assetId: assetId,
     typeTitre: Value(_blankToNull(typeTitre)),
+    categorie: Value(_blankToNull(categorie)),
     quantite: Value(quantite),
     prixEntree: Value(prixEntree),
     frais: Value(frais),

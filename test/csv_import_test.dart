@@ -28,6 +28,18 @@ final String _startupCsv = [
       'acquisition,',
 ].join('\n');
 
+/// Export Blast enrichi : la quantité et le montant investi remplacent le
+/// prix d'entrée, la catégorie et le lien enrichissent la fiche.
+final String _blastCsv = [
+  'nom,categorie,instrument,quantite,montant_investi_eur,'
+      'date_investissement,valorisation_entree_eur,valorisation_entree,'
+      'statut,lien_blast',
+  'Mistral AI,Europe Multi-Stage,SAFE,100,10000,2024-03-01,5000000,'
+      'SAFE · -10 % prochain tour,en_portefeuille,'
+      'https://blast.example/mistral',
+  'Qonto,Licornes pre-IPO,Actions,50,,2023-06-15,,,en portefeuille,',
+].join('\n');
+
 void main() {
   group('conversions élémentaires', () {
     test('nombres : virgule, espaces, milliers, symboles', () {
@@ -184,6 +196,8 @@ void main() {
       expect(s.dateValorisation, DateTime(2025, 1, 15));
       expect(s.valorisationEntreprise, 5000000);
       expect(s.statut, 'en_portefeuille');
+      expect(s.categorie, isNull);
+      expect(s.note, 'Crowdfunding');
 
       expect(qonto.rounds, hasLength(2));
       expect(qonto.rounds.first.date, DateTime(2023, 1, 15));
@@ -207,6 +221,47 @@ void main() {
       expect(parseFundingRounds('2023-01-15|500000'), hasLength(1));
       expect(parseFundingRounds('2023-01-15|500000|5000000|10;'),
           hasLength(1));
+    });
+
+    test('export Blast enrichi : catégorie, instrument, montant, lien', () {
+      expect(detectCsvAssetType(_blastCsv), AssetType.startup);
+      final parsed = parseStartupCsv(_blastCsv);
+      expect(parsed.rows, hasLength(2));
+      expect(parsed.skipped, 0);
+
+      final mistral = parsed.rows.first.startup!;
+      expect(mistral.categorie, 'Europe Multi-Stage');
+      expect(mistral.typeTitre, 'safe');
+      expect(mistral.quantite, 100);
+      // 10 000 € investis pour 100 titres -> 100 € l'unité.
+      expect(mistral.prixEntree, closeTo(100, 1e-9));
+      expect(mistral.dateInvestissement, DateTime(2024, 3, 1));
+      expect(mistral.valorisationEntreprise, 5000000);
+      expect(mistral.statut, 'en_portefeuille');
+      // La valorisation chiffrée existe : le texte libre reste hors note.
+      expect(mistral.note, 'Blast: https://blast.example/mistral');
+
+      final qonto = parsed.rows.last.startup!;
+      expect(qonto.categorie, 'Licornes pre-IPO');
+      expect(qonto.typeTitre, 'actions');
+      expect(qonto.quantite, 50);
+      // Ni montant ni prix unitaire : le prix d'entrée reste à 0.
+      expect(qonto.prixEntree, 0);
+      expect(qonto.valorisationEntreprise, 0);
+      expect(qonto.note, isNull);
+    });
+
+    test('export Blast : alias prix_entree_eur et texte de valorisation', () {
+      const csv = 'nom,instrument,quantite,prix_entree_eur,'
+          'valorisation_entree,note\n'
+          'Alan,SAFE,200,12.5,SAFE · -20 % prochain tour,Apport 2024\n';
+      final s = parseStartupCsv(csv).rows.single.startup!;
+      expect(s.typeTitre, 'safe');
+      expect(s.prixEntree, closeTo(12.5, 1e-9));
+      expect(s.valorisationEntreprise, 0);
+      expect(s.categorie, isNull);
+      // Sans valorisation chiffrée, le texte Blast rejoint la note.
+      expect(s.note, 'Apport 2024\nSAFE · -20 % prochain tour');
     });
   });
 
@@ -280,6 +335,24 @@ void main() {
       // load() notifie 2 fois (début + fin), pas une fois par ligne.
       expect(notifications, lessThanOrEqualTo(2));
       expect(controller.assets, hasLength(2));
+    });
+
+    test('startups Blast : catégorie et montant persistés en base', () async {
+      final result = await controller.importCsv(
+        csv: _blastCsv,
+        type: AssetType.startup,
+      );
+      expect(result.imported, 2);
+      expect(result.skipped, 0);
+
+      final assets = await db.allAssets();
+      final detail = await db.startupDetailsFor(assets.first.id);
+      expect(detail, isNotNull);
+      expect(detail!.categorie, 'Europe Multi-Stage');
+      expect(detail.typeTitre, 'safe');
+      expect(detail.prixEntree, closeTo(100, 1e-9));
+      expect(detail.valorisationEntreprise, 5000000);
+      expect(detail.note, contains('https://blast.example/mistral'));
     });
 
     test('un fichier vide ou sans nom n\'insère rien', () async {

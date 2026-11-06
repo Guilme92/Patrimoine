@@ -131,6 +131,9 @@ class StartupDetails extends Table {
   /// obligations_convertibles | safe | autre
   TextColumn get typeTitre => text().nullable()();
 
+  /// Catégorie libre (ex. « Europe Multi-Stage », « Y Combinator Seed »).
+  TextColumn get categorie => text().nullable()();
+
   RealColumn get quantite => real().withDefault(const Constant(0))();
   RealColumn get prixEntree => real().withDefault(const Constant(0))();
   RealColumn get frais => real().withDefault(const Constant(0))();
@@ -193,7 +196,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -207,6 +210,10 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(assets, assets.sortOrder);
         await m.createTable(startupDetails);
         await m.createTable(fundingRounds);
+      } else if (from < 4) {
+        // `createTable` ci-dessus crée déjà `categorie` (schéma courant) :
+        // l'ajout ne concerne que les bases déjà en v3.
+        await m.addColumn(startupDetails, startupDetails.categorie);
       }
     },
   );
