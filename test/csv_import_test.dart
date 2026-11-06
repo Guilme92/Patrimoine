@@ -263,6 +263,12 @@ void main() {
       // Sans valorisation chiffrée, le texte Blast rejoint la note.
       expect(s.note, 'Apport 2024\nSAFE · -20 % prochain tour');
     });
+
+    test('prix actuel : 1 €/action par défaut si non renseigné', () {
+      const csv = 'nom,quantite,prix_entree\nStartup A,100,2\n';
+      final s = parseStartupCsv(csv).rows.single.startup!;
+      expect(s.prixActuel, 1);
+    });
   });
 
   group('import en base via le contrôleur', () {
@@ -353,6 +359,26 @@ void main() {
       expect(detail.prixEntree, closeTo(100, 1e-9));
       expect(detail.valorisationEntreprise, 5000000);
       expect(detail.note, contains('https://blast.example/mistral'));
+    });
+
+    test('ré-import : met à jour au lieu de dupliquer', () async {
+      final first = await controller.importCsv(
+        csv: _blastCsv,
+        type: AssetType.startup,
+      );
+      expect(first.imported, 2);
+      expect(first.updated, 0);
+
+      // Second import du même fichier : tout doit être mis à jour, sans doublon.
+      final second = await controller.importCsv(
+        csv: _blastCsv,
+        type: AssetType.startup,
+      );
+      expect(second.imported, 0);
+      expect(second.updated, 2);
+
+      final assets = await db.allAssets();
+      expect(assets, hasLength(2));
     });
 
     test('un fichier vide ou sans nom n\'insère rien', () async {

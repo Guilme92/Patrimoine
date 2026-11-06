@@ -79,13 +79,16 @@ class _AssetsScreenState extends State<AssetsScreen> {
       return;
     }
 
-    final imported = result.imported == 1
-        ? '1 actif importé'
-        : '${result.imported} actifs importés';
-    final skipped = result.skipped == 1
-        ? '1 ligne ignorée'
-        : '${result.skipped} lignes ignorées';
-    _snack('$imported · $skipped');
+    final parts = <String>[
+      result.imported == 1 ? '1 actif importé' : '${result.imported} actifs importés',
+    ];
+    if (result.updated > 0) {
+      parts.add(result.updated == 1 ? '1 mis à jour' : '${result.updated} mis à jour');
+    }
+    if (result.skipped > 0) {
+      parts.add(result.skipped == 1 ? '1 ligne ignorée' : '${result.skipped} lignes ignorées');
+    }
+    _snack(parts.join(' · '));
   }
 
   /// Écrit les deux modèles CSV dans le dossier documents de l'application.

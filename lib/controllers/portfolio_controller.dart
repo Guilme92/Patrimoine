@@ -457,20 +457,36 @@ class PortfolioController extends ChangeNotifier {
       return CsvImportResult(imported: 0, skipped: parsed.skipped);
     }
 
+    // Déduplication : nom (insensible à la casse) -> id d'actif existant.
+    final nameToId = <String, int>{};
+    for (final a in _assets) {
+      if (a.type == type.name) {
+        nameToId[a.name.trim().toLowerCase()] = a.id;
+      }
+    }
+
+    var imported = 0;
+    var updated = 0;
     var sortOrder = await db.nextAssetSortOrder();
     await db.transaction(() async {
       for (final row in parsed.rows) {
-        final assetId = await db.addAsset(
-          AssetsCompanion.insert(
-            name: row.name,
-            type: type.name,
-            value: Value(row.value),
-            currency: Value(row.currency),
-            institution: Value(row.institution),
-            note: Value(row.note),
-            sortOrder: Value(sortOrder++),
-          ),
-        );
+        final key = row.name.trim().toLowerCase();
+        var assetId = nameToId[key];
+        final isNew = assetId == null;
+        if (isNew) {
+          assetId = await db.addAsset(
+            AssetsCompanion.insert(
+              name: row.name,
+              type: type.name,
+              value: Value(row.value),
+              currency: Value(row.currency),
+              institution: Value(row.institution),
+              note: Value(row.note),
+              sortOrder: Value(sortOrder++),
+            ),
+          );
+          nameToId[key] = assetId;
+        }
         final rental = row.rental;
         if (rental != null) {
           await db.saveRental(rental.toCompanion(assetId));
@@ -479,15 +495,21 @@ class PortfolioController extends ChangeNotifier {
         if (startup != null) {
           await db.saveStartupDetails(startup.toCompanion(assetId));
         }
-        for (final round in row.rounds) {
-          await db.addFundingRound(round.toCompanion(assetId));
+        if (isNew) {
+          for (final round in row.rounds) {
+            await db.addFundingRound(round.toCompanion(assetId));
+          }
+          imported++;
+        } else {
+          updated++;
         }
       }
     });
 
     await load();
     return CsvImportResult(
-      imported: parsed.rows.length,
+      imported: imported,
+      updated: updated,
       skipped: parsed.skipped,
     );
   }

@@ -8,13 +8,19 @@ import '../utils/choice.dart';
 /// Résultat d'un import CSV.
 class CsvImportResult {
   final int imported;
+  final int updated;
   final int skipped;
-  const CsvImportResult({required this.imported, required this.skipped});
+  const CsvImportResult({
+    required this.imported,
+    this.updated = 0,
+    required this.skipped,
+  });
 
-  int get total => imported + skipped;
+  int get total => imported + updated + skipped;
 
   @override
-  String toString() => 'CsvImportResult(imported: $imported, skipped: $skipped)';
+  String toString() =>
+      'CsvImportResult(imported: $imported, updated: $updated, skipped: $skipped)';
 }
 
 /// Une ligne CSV normalisée, prête à être insérée par le contrôleur.
@@ -214,6 +220,10 @@ CsvParseResult parseStartupCsv(String input) {
     if (lienBlast != null) noteParts.add('Blast: $lienBlast');
     final note = noteParts.isEmpty ? null : noteParts.join('\n');
 
+    // Prix actuel par défaut : 1 €/action si non renseigné.
+    var prixActuel = row.number('prix_actuel');
+    if (row.text('prix_actuel') == null) prixActuel = 1;
+
     rows.add(
       CsvImportRow(
         name: name,
@@ -231,7 +241,7 @@ CsvParseResult parseStartupCsv(String input) {
           frais: row.number('frais'),
           dateInvestissement: row.date('date_investissement'),
           stade: normalizeStartupStage(row.text('stade')),
-          prixActuel: row.number('prix_actuel'),
+          prixActuel: prixActuel,
           dateValorisation: row.date('date_valorisation'),
           valorisationEntreprise: valorisationEntreprise,
           statut: statut ?? 'en_portefeuille',
