@@ -6,6 +6,7 @@ import 'add_asset_screen.dart';
 import 'analytics_screen.dart';
 import 'assets_screen.dart';
 import 'dashboard_screen.dart';
+import 'startups_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -54,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: const [
           DashboardScreen(),
           AssetsScreen(),
+          StartupsScreen(),
           AnalyticsScreen(),
         ],
       ),
@@ -77,6 +79,11 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.account_balance_wallet_outlined),
             selectedIcon: Icon(Icons.account_balance_wallet),
             label: 'Actifs',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.rocket_launch_outlined),
+            selectedIcon: Icon(Icons.rocket_launch),
+            label: 'Startups',
           ),
           NavigationDestination(
             icon: Icon(Icons.pie_chart_outline),

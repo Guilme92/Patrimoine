@@ -9,6 +9,7 @@ import '../data/csv_import.dart';
 import '../data/document_store.dart';
 import '../data/market_data.dart';
 import '../domain/portfolio.dart';
+import '../domain/startup_portfolio.dart';
 import '../models/asset_type.dart';
 import '../models/rental.dart';
 import '../models/startup.dart';
@@ -74,6 +75,31 @@ class PortfolioController extends ChangeNotifier {
   Rental? rentalOf(int assetId) => _rentals[assetId];
 
   StartupDetail? startupOf(int assetId) => _startups[assetId];
+
+  /// Startups du portefeuille, prêtes pour le dashboard.
+  ///
+  /// Chaque actif de type startup est associé à sa fiche ; une startup créée
+  /// sans fiche est exposée avec une fiche vide (quantités et prix à 0) pour
+  /// rester visible et modifiable depuis l'onglet.
+  /// Tri : date d'investissement croissante, non datées en dernier, puis nom.
+  List<StartupEntry> get startupEntries {
+    final list = <StartupEntry>[];
+    for (final asset in _assets) {
+      if (assetTypeFrom(asset.type) != AssetType.startup) continue;
+      final detail = _startups[asset.id] ?? _emptyStartupDetail(asset);
+      list.add(StartupEntry(asset: asset, detail: detail));
+    }
+    list.sort((a, b) {
+      final da = a.detail.dateInvestissement;
+      final dbDate = b.detail.dateInvestissement;
+      if (da == null && dbDate == null) return _compareNames(a, b);
+      if (da == null) return 1;
+      if (dbDate == null) return -1;
+      final cmp = da.compareTo(dbDate);
+      return cmp != 0 ? cmp : _compareNames(a, b);
+    });
+    return list;
+  }
 
   List<FundingRound> fundingRoundsOf(int assetId) =>
       _fundingRounds[assetId] ?? const [];
@@ -471,3 +497,20 @@ String? _trimOrNull(String? v) {
   final t = v?.trim();
   return (t == null || t.isEmpty) ? null : t;
 }
+
+/// Fiche neutre pour une startup créée mais pas encore renseignée.
+StartupDetail _emptyStartupDetail(Asset asset) => StartupDetail(
+  id: 0,
+  assetId: asset.id,
+  quantite: 0,
+  prixEntree: 0,
+  frais: 0,
+  prixActuel: 0,
+  valorisationEntreprise: 0,
+  statut: 'en_portefeuille',
+  exitProduit: 0,
+  createdAt: asset.createdAt,
+);
+
+int _compareNames(StartupEntry a, StartupEntry b) =>
+    a.asset.name.toLowerCase().compareTo(b.asset.name.toLowerCase());
