@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notes de version — Patrimoine</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff; --positive: #3fb950;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  header { padding: 40px 24px 24px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg,#161b22,#0d1117); }
+  header h1 { margin: 0 0 8px; font-size: 28px; }
+  header p { margin: 0; color: var(--muted); }
+  .layout { display: flex; gap: 24px; max-width: 1080px; margin: 0 auto; padding: 24px; }
+  nav.toc { flex: 0 0 260px; position: sticky; top: 24px; align-self: flex-start; max-height: calc(100vh - 48px); overflow: auto; }
+  nav.toc h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 12px; }
+  nav.toc ul { list-style: none; margin: 0; padding: 0; }
+  nav.toc li { margin: 6px 0; }
+  nav.toc .phase-link > a { font-weight: 600; color: var(--text); }
+  nav.toc .sub { padding-left: 14px; margin: 4px 0 8px; }
+  nav.toc .sub a { font-size: 13px; color: var(--muted); }
+  main { flex: 1; min-width: 0; }
+  section.phase h2 { font-size: 20px; padding-bottom: 8px; border-bottom: 1px solid var(--border); margin: 32px 0 16px; }
+  section.build { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin: 12px 0; }
+  section.build h3 { margin: 0 0 10px; font-size: 17px; }
+  section.build .date { color: var(--muted); font-weight: 400; font-size: 13px; }
+  section.build ul { margin: 0; padding-left: 20px; }
+  section.build li { margin: 4px 0; }
+  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 24px; }
+  @media (max-width: 760px) {
+    .layout { flex-direction: column; }
+    nav.toc { position: static; flex: none; max-height: none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Notes de version — Patrimoine</h1>
+  <p>Les 14 builds de Patrimoine, du premier MVP au suivi multi-tours des startups.</p>
+</header>
+<div class="layout">
+  <nav class="toc">
+    <h2>Sommaire</h2>
+    <ul>
+      <li class="phase-link"><a href="#fondations">Fondations</a>
+        <ul class="sub"><li><a href="#build-1">Build 1 — MVP initial</a></li><li><a href="#build-2">Build 2 — Builds automatiques Windows et Android</a></li><li><a href="#build-3">Build 3 — APK allégé</a></li></ul>
+      </li>
+      <li class="phase-link"><a href="#automatisation-et-donnees-de-marche">Automatisation et données de marché</a>
+        <ul class="sub"><li><a href="#build-4">Build 4 — Prix de marché en euros</a></li><li><a href="#build-5">Build 5 — Repli CoinGecko pour les cryptos</a></li><li><a href="#build-6">Build 6 — Immobilier locatif détaillé</a></li></ul>
+      </li>
+      <li class="phase-link"><a href="#startups-et-analyse">Startups et analyse</a>
+        <ul class="sub"><li><a href="#build-7">Build 7 — Startups non cotées</a></li><li><a href="#build-8">Build 8 — Courbe d&#x27;évolution et import CSV</a></li><li><a href="#build-9">Build 9 — Catégorie startups et import Blast</a></li><li><a href="#build-10">Build 10 — Onglet Startups avancé</a></li></ul>
+      </li>
+      <li class="phase-link"><a href="#fiabilite-et-confort-dusage">Fiabilité et confort d&#x27;usage</a>
+        <ul class="sub"><li><a href="#build-11">Build 11 — Import sans doublons</a></li><li><a href="#build-12">Build 12 — KPI frais et recherche</a></li><li><a href="#build-13">Build 13 — Frais par catégorie et blocs réordonnables</a></li><li><a href="#build-14">Build 14 — Startups multi-tours</a></li></ul>
+      </li>
+    </ul>
+  </nav>
+  <main>
+  <section class="phase" id="fondations">
+    <h2>Fondations</h2>
+    <section id="build-1" class="build">
+      <h3>Build 1 — MVP initial <span class="date">· 5 novembre 2025</span></h3>
+      <ul>
+          <li>Application Flutter de suivi de patrimoine, 100 % local-first : vos données restent sur l&#x27;appareil.</li>
+          <li>Gestion manuelle des actifs (cash, investissements, crypto, immobilier, métaux, collections) et des passifs.</li>
+          <li>Dashboard du patrimoine net avec répartition par classe d&#x27;actifs, interface française en thème sombre fintech.</li>
+      </ul>
+    </section>
+    <section id="build-2" class="build">
+      <h3>Build 2 — Builds automatiques Windows et Android <span class="date">· 5 novembre 2025</span></h3>
+      <ul>
+          <li>Un build Windows (.exe) et un build Android (APK) générés automatiquement à chaque mise à jour.</li>
+          <li>Artefacts téléchargeables directement, sans compilation locale.</li>
+      </ul>
+    </section>
+    <section id="build-3" class="build">
+      <h3>Build 3 — APK allégé <span class="date">· 5 novembre 2025</span></h3>
+      <ul>
+          <li>APK découpé par architecture : chaque téléphone ne télécharge que la version dont il a besoin.</li>
+          <li>Téléchargement plus léger et installation plus rapide sur arm64.</li>
+      </ul>
+    </section>
+  </section>
+  <section class="phase" id="automatisation-et-donnees-de-marche">
+    <h2>Automatisation et données de marché</h2>
+    <section id="build-4" class="build">
+      <h3>Build 4 — Prix de marché en euros <span class="date">· 5 novembre 2025</span></h3>
+      <ul>
+          <li>Rafraîchissement automatique des cours via Yahoo Finance.</li>
+          <li>Conversion automatique en euros (taux EUR/USD) et bouton de rafraîchissement manuel.</li>
+      </ul>
+    </section>
+    <section id="build-5" class="build">
+      <h3>Build 5 — Repli CoinGecko pour les cryptos <span class="date">· 5 novembre 2025</span></h3>
+      <ul>
+          <li>CoinGecko prend le relais quand Yahoo Finance ne connaît pas une crypto.</li>
+          <li>Les petites capitalisations (ex. ZAMA) sont désormais valorisées correctement.</li>
+      </ul>
+    </section>
+    <section id="build-6" class="build">
+      <h3>Build 6 — Immobilier locatif détaillé <span class="date">· 5 novembre 2025</span></h3>
+      <ul>
+          <li>Fiche location : loyer, charges, crédit, rendement brut et net, cashflow.</li>
+          <li>Pièces jointes (bail, diagnostics…) et édition des actifs comme des passifs.</li>
+      </ul>
+    </section>
+  </section>
+  <section class="phase" id="startups-et-analyse">
+    <h2>Startups et analyse</h2>
+    <section id="build-7" class="build">
+      <h3>Build 7 — Startups non cotées <span class="date">· 5 novembre 2025</span></h3>
+      <ul>
+          <li>Section startups à mise à jour manuelle, avec KPIs pro : PV latente, MOIC, TRI, exit.</li>
+          <li>Info-bulles sur les calculs internes, filtre par catégorie et réorganisation par glisser-déposer.</li>
+      </ul>
+    </section>
+    <section id="build-8" class="build">
+      <h3>Build 8 — Courbe d&#x27;évolution et import CSV <span class="date">· 5 novembre 2025</span></h3>
+      <ul>
+          <li>Courbe d&#x27;évolution du patrimoine dans le temps.</li>
+          <li>Import CSV pour l&#x27;immobilier et les startups, avec modèle fourni.</li>
+      </ul>
+    </section>
+    <section id="build-9" class="build">
+      <h3>Build 9 — Catégorie startups et import Blast <span class="date">· 6 novembre 2025</span></h3>
+      <ul>
+          <li>Champ catégorie sur chaque startup pour classer le portefeuille.</li>
+          <li>Import CSV Blast : les colonnes Blast sont reconnues sans retraitement.</li>
+      </ul>
+    </section>
+    <section id="build-10" class="build">
+      <h3>Build 10 — Onglet Startups avancé <span class="date">· 6 novembre 2025</span></h3>
+      <ul>
+          <li>Trois sous-onglets : Synthèse, Liste et Sorties.</li>
+          <li>Filtres par catégorie, année et statut.</li>
+          <li>KPIs pro (capital investi, valorisation, PV latente, MOIC, TRI, PV réalisée), répartitions par catégorie et vintage, top 5 valorisation.</li>
+      </ul>
+    </section>
+  </section>
+  <section class="phase" id="fiabilite-et-confort-dusage">
+    <h2>Fiabilité et confort d&#x27;usage</h2>
+    <section id="build-11" class="build">
+      <h3>Build 11 — Import sans doublons <span class="date">· 6 novembre 2025</span></h3>
+      <ul>
+          <li>Déduplication à l&#x27;import CSV : ré-importer met à jour les lignes existantes au lieu de les dupliquer.</li>
+          <li>Prix actuel par défaut à 1 €/action pour les lignes sans cours.</li>
+      </ul>
+    </section>
+    <section id="build-12" class="build">
+      <h3>Build 12 — KPI frais et recherche <span class="date">· 6 novembre 2025</span></h3>
+      <ul>
+          <li>KPI « Frais total » dans la Synthèse.</li>
+          <li>Recherche par nom, insensible à la casse et aux accents.</li>
+      </ul>
+    </section>
+    <section id="build-13" class="build">
+      <h3>Build 13 — Frais par catégorie et blocs réordonnables <span class="date">· 6 novembre 2025</span></h3>
+      <ul>
+          <li>Colonne « Frais » dans la synthèse par catégorie.</li>
+          <li>Onglets Synthèse, Liste et Sorties remontés en haut de l&#x27;écran.</li>
+          <li>Blocs (onglets, filtres) réordonnables par glisser-déposer, ordre conservé d&#x27;une session à l&#x27;autre.</li>
+      </ul>
+    </section>
+    <section id="build-14" class="build">
+      <h3>Build 14 — Startups multi-tours <span class="date">· 7 novembre 2025</span></h3>
+      <ul>
+          <li>Détection des suffixes de tour (ROUND 2, Tranche 2, R2…).</li>
+          <li>Fusion automatique à l&#x27;import : prix moyen pondéré net, frais cumulés, valorisation du dernier tour.</li>
+          <li>Liste des levées de fonds, tour par tour.</li>
+      </ul>
+    </section>
+  </section>
+  </main>
+</div>
+<footer>Application de suivi de patrimoine personnel — mise à jour continue.</footer>
+</body>
+</html>
