@@ -11,6 +11,7 @@ import 'blast_market_screen.dart';
 import 'blast_screen.dart';
 import 'dashboard_screen.dart';
 import 'startups_screen.dart';
+import '../csv_actions.dart';
 
 /// Structure d'un onglet principal : libellé + écran conservé dans
 /// l'IndexedStack (l'état de chaque onglet survit au changement d'onglet).
@@ -84,6 +85,11 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Patrimoine'),
         actions: [
+          IconButton(
+            onPressed: () => importCsvFromPicker(context),
+            tooltip: 'Importer un CSV',
+            icon: const Icon(Icons.file_upload_outlined),
+          ),
           IconButton(
             onPressed: _refreshing ? null : _refreshPrices,
             tooltip: 'Actualiser les prix',
