@@ -1,5 +1,6 @@
 import 'package:csv/csv.dart';
 
+import '../domain/startup_rounds.dart';
 import '../models/asset_type.dart';
 import '../models/rental.dart';
 import '../models/startup.dart';
@@ -174,6 +175,10 @@ CsvParseResult parseRealEstateCsv(String input) {
 /// `montant_investi_eur`, `prix_entree_eur`, `valorisation_entree_eur`,
 /// `valorisation_entree`, `lien_blast`). Les colonnes historiques restent
 /// prioritaires lorsqu'elles sont renseignées.
+///
+/// Les lignes d'une même société portant un suffixe de tour (« KEEWE »,
+/// « KEEWE ROUND 2 »…) sont fusionnées en une seule fiche (voir
+/// [mergeStartupRows]).
 CsvParseResult parseStartupCsv(String input) {
   final table = _decodeTable(input);
   if (table == null) return const CsvParseResult(rows: [], skipped: 0);
@@ -254,7 +259,7 @@ CsvParseResult parseStartupCsv(String input) {
       ),
     );
   }
-  return CsvParseResult(rows: rows, skipped: skipped);
+  return CsvParseResult(rows: mergeStartupRows(rows), skipped: skipped);
 }
 
 /// Traduit l'instrument d'un export Blast (`SAFE`, `Actions`) vers le
