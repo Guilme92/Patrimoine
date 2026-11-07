@@ -40,6 +40,31 @@ final String _blastCsv = [
   'Qonto,Licornes pre-IPO,Actions,50,,2023-06-15,,,en portefeuille,',
 ].join('\n');
 
+/// Export « Excel FR » : séparateur `;`, décimales à virgule et colonne
+/// `levees` citée — elle contient elle-même des `;` (séparateur de tours) et
+/// des virgules (décimales), d'où les guillemets obligatoires.
+final String _keeweQuotedCsv = [
+  'nom;etablissement;quantite;prix_entree;date_investissement;levees',
+  'KEEWE;;100;290,16;2024-03-01;'
+      '"2024-03-01|290,16|10000000|1,0000;2026-04-30|520,00|26000000|1,0000"',
+].join('\n');
+
+/// Même startup, fichier à séparateur `,` (en-tête du modèle) et levées citées.
+final String _keeweV1 = [
+  startupCsvHeader,
+  'KEEWE,,,actions,100,290.16,0,2023-06-01,serie_a,500,2026-04-30,26000000,'
+      'en portefeuille,,,,"2023-06-01|150,00|5000000|0,5000"',
+].join('\n');
+
+/// Ré-import : trois tours, dont deux nouveaux, et l'ancien tour (2023-06-01)
+/// qui doit disparaître.
+final String _keeweV2 = [
+  startupCsvHeader,
+  'KEEWE,,,actions,120,290.16,0,2024-03-01,serie_a,520,2026-04-30,26000000,'
+      'en portefeuille,,,,"2024-03-01|290,16|10000000|1,0000;'
+      '2025-09-15|400,00|18000000|1,5000;2026-04-30|520,00|26000000|1,0000"',
+].join('\n');
+
 void main() {
   group('conversions élémentaires', () {
     test('nombres : virgule, espaces, milliers, symboles', () {
@@ -223,6 +248,31 @@ void main() {
           hasLength(1));
     });
 
+    test('colonne levees citée (séparateur « ; », décimales à virgule)',
+        () {
+      // Le champ cité contient des « ; » : il ne doit pas être découpé en
+      // colonnes, et les tours restent séparés par « ; » dans la valeur.
+      expect(detectCsvAssetType(_keeweQuotedCsv), AssetType.startup);
+      final parsed = parseStartupCsv(_keeweQuotedCsv);
+      expect(parsed.skipped, 0);
+      expect(parsed.rows, hasLength(1));
+
+      final row = parsed.rows.single;
+      expect(row.name, 'KEEWE');
+      expect(row.startup!.quantite, 100);
+      expect(row.startup!.prixEntree, closeTo(290.16, 1e-9));
+
+      expect(row.rounds, hasLength(2));
+      expect(row.rounds.first.date, DateTime(2024, 3, 1));
+      expect(row.rounds.first.montantLeve, closeTo(290.16, 1e-9));
+      expect(row.rounds.first.valorisationPostMoney, 10000000);
+      expect(row.rounds.first.prixParAction, 1);
+      expect(row.rounds.last.date, DateTime(2026, 4, 30));
+      expect(row.rounds.last.montantLeve, closeTo(520, 1e-9));
+      expect(row.rounds.last.valorisationPostMoney, 26000000);
+      expect(row.rounds.last.prixParAction, 1);
+    });
+
     test('export Blast enrichi : catégorie, instrument, montant, lien', () {
       expect(detectCsvAssetType(_blastCsv), AssetType.startup);
       final parsed = parseStartupCsv(_blastCsv);
@@ -379,6 +429,77 @@ void main() {
 
       final assets = await db.allAssets();
       expect(assets, hasLength(2));
+    });
+
+    test('ré-import : les levées de fonds sont remplacées, sans orpheline',
+        () async {
+      final first = await controller.importCsv(
+        csv: _keeweV1,
+        type: AssetType.startup,
+      );
+      expect(first.imported, 1);
+      expect(first.updated, 0);
+
+      final assets = await db.allAssets();
+      expect(assets, hasLength(1));
+      final assetId = assets.single.id;
+      final initial = await db.fundingRoundsFor(assetId);
+      expect(initial, hasLength(1));
+      expect(initial.single.date, DateTime(2023, 6, 1));
+
+      // Ré-import de la MÊME startup : la fiche est mise à jour et les tours
+      // remplacés (l'ancien tour du 01/06/2023 ne doit pas subsister).
+      final second = await controller.importCsv(
+        csv: _keeweV2,
+        type: AssetType.startup,
+      );
+      expect(second.imported, 0);
+      expect(second.updated, 1);
+      expect(await db.allAssets(), hasLength(1));
+
+      final detail = await db.startupDetailsFor(assetId);
+      expect(detail!.quantite, 120);
+
+      final rounds = await db.fundingRoundsFor(assetId);
+      expect(rounds, hasLength(3));
+      expect(rounds.map((r) => r.date).toList(), [
+        DateTime(2026, 4, 30),
+        DateTime(2025, 9, 15),
+        DateTime(2024, 3, 1),
+      ]);
+      expect(rounds[0].montantLeve, closeTo(520, 1e-9));
+      expect(rounds[0].valorisationPostMoney, closeTo(26000000, 1e-9));
+      expect(rounds[1].montantLeve, closeTo(400, 1e-9));
+      expect(rounds[1].valorisationPostMoney, closeTo(18000000, 1e-9));
+      expect(rounds[1].prixParAction, closeTo(1.5, 1e-9));
+      expect(rounds[2].montantLeve, closeTo(290.16, 1e-9));
+
+      // Aucune levée orpheline : la table ne contient que ces trois tours.
+      final all = await db.allFundingRounds();
+      expect(all, hasLength(3));
+      expect(all.every((r) => r.assetId == assetId), isTrue);
+      expect(all.where((r) => r.date == DateTime(2023, 6, 1)), isEmpty);
+    });
+
+    test('ré-import sans levées : les tours existants sont conservés', () async {
+      await controller.importCsv(csv: _keeweV2, type: AssetType.startup);
+      final assetId = (await db.allAssets()).single.id;
+      expect(await db.fundingRoundsFor(assetId), hasLength(3));
+
+      // Fiche mise à jour, colonne `levees` vide : on ne supprime rien.
+      final noRounds = [
+        startupCsvHeader,
+        'KEEWE,,,actions,150,290.16,0,2024-03-01,serie_a,520,2026-04-30,'
+            '26000000,en portefeuille,,,,',
+      ].join('\n');
+      final result = await controller.importCsv(
+        csv: noRounds,
+        type: AssetType.startup,
+      );
+      expect(result.imported, 0);
+      expect(result.updated, 1);
+      expect((await db.startupDetailsFor(assetId))!.quantite, 150);
+      expect(await db.fundingRoundsFor(assetId), hasLength(3));
     });
 
     test('un fichier vide ou sans nom n\'insère rien', () async {

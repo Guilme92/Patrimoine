@@ -407,6 +407,11 @@ class AppDatabase extends _$AppDatabase {
   Future<void> deleteFundingRound(int id) =>
       (delete(fundingRounds)..where((t) => t.id.equals(id))).go();
 
+  /// Supprime toutes les levées de fonds d'un actif (remplacement en bloc lors
+  /// d'un ré-import CSV).
+  Future<void> deleteFundingRounds(int assetId) =>
+      (delete(fundingRounds)..where((t) => t.assetId.equals(assetId))).go();
+
   // ---- Préférences ----
   /// Valeur d'une préférence d'affichage, ou null si la clé est absente.
   Future<String?> preferenceValue(String key) async {

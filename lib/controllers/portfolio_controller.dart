@@ -537,10 +537,17 @@ class PortfolioController extends ChangeNotifier {
         if (startup != null) {
           await db.saveStartupDetails(startup.toCompanion(assetId));
         }
-        if (isNew) {
+        // Levées de fonds : la colonne `levees` fait foi, à la création comme
+        // au ré-import. On remplace les tours existants pour ne pas conserver
+        // de levée obsolète ; une colonne vide laisse les tours en place
+        // (saisies manuelles préservées).
+        if (row.rounds.isNotEmpty) {
+          await db.deleteFundingRounds(assetId);
           for (final round in row.rounds) {
             await db.addFundingRound(round.toCompanion(assetId));
           }
+        }
+        if (isNew) {
           imported++;
         } else {
           updated++;
