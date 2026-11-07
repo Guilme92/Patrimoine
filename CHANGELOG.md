@@ -22,6 +22,7 @@ Les 14 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : 
   - [Build 12 — KPI frais et recherche (6 novembre 2025)](#build-12--kpi-frais-et-recherche-6-novembre-2025)
   - [Build 13 — Frais par catégorie et blocs réordonnables (6 novembre 2025)](#build-13--frais-par-catégorie-et-blocs-réordonnables-6-novembre-2025)
   - [Build 14 — Startups multi-tours (7 novembre 2025)](#build-14--startups-multi-tours-7-novembre-2025)
+  - [Build 15 — Levées de fonds synchronisées au ré-import (7 novembre 2025)](#build-15--levées-de-fonds-synchronisées-au-ré-import-7-novembre-2025)
 
 ## Phase 1 — Fondations
 
@@ -104,3 +105,7 @@ Les 14 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : 
 - Détection des suffixes de tour (ROUND 2, Tranche 2, R2…).
 - Fusion automatique à l'import : prix moyen pondéré net, frais cumulés, valorisation du dernier tour.
 - Liste des levées de fonds, tour par tour.
+
+### Build 15 — Levées de fonds synchronisées au ré-import (7 novembre 2025)
+
+- Les levées de fonds (tours) sont synchronisées lors d'un ré-import CSV, plus seulement à la création d'une startup.

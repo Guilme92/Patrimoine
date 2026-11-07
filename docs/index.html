@@ -5,45 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Notes de version — Patrimoine</title>
 <style>
-  :root {
-    --bg: #0d1117; --panel: #161b22; --border: #30363d;
-    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff; --positive: #3fb950;
-  }
+  :root { --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff; }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    line-height: 1.6; }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; }
+  a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
   header { padding: 40px 24px 24px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg,#161b22,#0d1117); }
-  header h1 { margin: 0 0 8px; font-size: 28px; }
-  header p { margin: 0; color: var(--muted); }
+  header h1 { margin: 0 0 8px; font-size: 28px; } header p { margin: 0; color: var(--muted); }
   .layout { display: flex; gap: 24px; max-width: 1080px; margin: 0 auto; padding: 24px; }
   nav.toc { flex: 0 0 260px; position: sticky; top: 24px; align-self: flex-start; max-height: calc(100vh - 48px); overflow: auto; }
   nav.toc h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 12px; }
-  nav.toc ul { list-style: none; margin: 0; padding: 0; }
-  nav.toc li { margin: 6px 0; }
+  nav.toc ul { list-style: none; margin: 0; padding: 0; } nav.toc li { margin: 6px 0; }
   nav.toc .phase-link > a { font-weight: 600; color: var(--text); }
-  nav.toc .sub { padding-left: 14px; margin: 4px 0 8px; }
-  nav.toc .sub a { font-size: 13px; color: var(--muted); }
+  nav.toc .sub { padding-left: 14px; margin: 4px 0 8px; } nav.toc .sub a { font-size: 13px; color: var(--muted); }
   main { flex: 1; min-width: 0; }
   section.phase h2 { font-size: 20px; padding-bottom: 8px; border-bottom: 1px solid var(--border); margin: 32px 0 16px; }
   section.build { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin: 12px 0; }
-  section.build h3 { margin: 0 0 10px; font-size: 17px; }
-  section.build .date { color: var(--muted); font-weight: 400; font-size: 13px; }
-  section.build ul { margin: 0; padding-left: 20px; }
-  section.build li { margin: 4px 0; }
+  section.build h3 { margin: 0 0 10px; font-size: 17px; } section.build .date { color: var(--muted); font-weight: 400; font-size: 13px; }
+  section.build ul { margin: 0; padding-left: 20px; } section.build li { margin: 4px 0; }
   footer { text-align: center; color: var(--muted); font-size: 13px; padding: 24px; }
-  @media (max-width: 760px) {
-    .layout { flex-direction: column; }
-    nav.toc { position: static; flex: none; max-height: none; }
-  }
+  @media (max-width: 760px) { .layout { flex-direction: column; } nav.toc { position: static; flex: none; max-height: none; } }
 </style>
 </head>
 <body>
 <header>
   <h1>Notes de version — Patrimoine</h1>
-  <p>Les 14 builds de Patrimoine, du premier MVP au suivi multi-tours des startups.</p>
+  <p>Les 15 builds de Patrimoine, du premier MVP au suivi multi-tours des startups.</p>
 </header>
 <div class="layout">
   <nav class="toc">
@@ -59,7 +45,7 @@
         <ul class="sub"><li><a href="#build-7">Build 7 — Startups non cotées</a></li><li><a href="#build-8">Build 8 — Courbe d&#x27;évolution et import CSV</a></li><li><a href="#build-9">Build 9 — Catégorie startups et import Blast</a></li><li><a href="#build-10">Build 10 — Onglet Startups avancé</a></li></ul>
       </li>
       <li class="phase-link"><a href="#fiabilite-et-confort-dusage">Fiabilité et confort d&#x27;usage</a>
-        <ul class="sub"><li><a href="#build-11">Build 11 — Import sans doublons</a></li><li><a href="#build-12">Build 12 — KPI frais et recherche</a></li><li><a href="#build-13">Build 13 — Frais par catégorie et blocs réordonnables</a></li><li><a href="#build-14">Build 14 — Startups multi-tours</a></li></ul>
+        <ul class="sub"><li><a href="#build-11">Build 11 — Import sans doublons</a></li><li><a href="#build-12">Build 12 — KPI frais et recherche</a></li><li><a href="#build-13">Build 13 — Frais par catégorie et blocs réordonnables</a></li><li><a href="#build-14">Build 14 — Startups multi-tours</a></li><li><a href="#build-15">Build 15 — Levées de fonds synchronisées au ré-import</a></li></ul>
       </li>
     </ul>
   </nav>
@@ -175,6 +161,12 @@
           <li>Détection des suffixes de tour (ROUND 2, Tranche 2, R2…).</li>
           <li>Fusion automatique à l&#x27;import : prix moyen pondéré net, frais cumulés, valorisation du dernier tour.</li>
           <li>Liste des levées de fonds, tour par tour.</li>
+      </ul>
+    </section>
+    <section id="build-15" class="build">
+      <h3>Build 15 — Levées de fonds synchronisées au ré-import <span class="date">· 7 novembre 2025</span></h3>
+      <ul>
+          <li>Les levées de fonds (tours) sont synchronisées lors d&#x27;un ré-import CSV, plus seulement à la création d&#x27;une startup.</li>
       </ul>
     </section>
   </section>
