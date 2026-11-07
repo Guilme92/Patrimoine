@@ -167,8 +167,15 @@ class _StartupsScreenState extends State<StartupsScreen> {
     if (controller.loading) {
       return const Center(child: CircularProgressIndicator());
     }
-    final all = controller.startupEntries;
-    if (all.isEmpty) return const _NoStartupState();
+    final everyStartup = controller.startupEntries;
+    if (everyStartup.isEmpty) return const _NoStartupState();
+
+    // Onglet « Startup » : uniquement les startups catégorisées. Celles sans
+    // catégorie (portefeuille Blast) vivent dans l'onglet « Blast ».
+    final all = everyStartup
+        .where((e) => hasStartupCategory(e.detail.categorie))
+        .toList();
+    if (all.isEmpty) return const _NoCategorizedState();
 
     final years =
         all
@@ -368,7 +375,7 @@ class _FiltersCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final categoryKeys = <String>[...startupCategories, 'Sans catégorie'];
+    final categoryKeys = <String>[...startupCategories];
 
     return _Card(
       Column(
@@ -1575,6 +1582,46 @@ class _NoStartupState extends StatelessWidget {
                 'Créez un actif de type Startups avec le bouton +, '
                 'puis renseignez sa fiche pour suivre capital, valorisation, '
                 'MOIC et TRI.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NoCategorizedState extends StatelessWidget {
+  const _NoCategorizedState();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.category_outlined,
+                size: 44,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Aucune startup catégorisée',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Les startups sans catégorie sont regroupées dans l\'onglet '
+                'Blast. Renseignez une catégorie dans leur fiche pour les '
+                'faire apparaître ici.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodySmall,
               ),

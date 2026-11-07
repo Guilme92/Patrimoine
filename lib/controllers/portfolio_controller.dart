@@ -59,6 +59,7 @@ class PortfolioController extends ChangeNotifier {
   Map<int, Rental> _rentals = {};
   Map<int, StartupDetail> _startups = {};
   Map<int, List<FundingRound>> _fundingRounds = {};
+  Map<int, List<SecondaryTransaction>> _secondaryTransactions = {};
   Map<int, List<AssetDocument>> _documents = {};
   Map<String, double> _prices = {};
   DateTime? _lastPriceUpdate;
@@ -143,6 +144,11 @@ class PortfolioController extends ChangeNotifier {
   List<FundingRound> fundingRoundsOf(int assetId) =>
       _fundingRounds[assetId] ?? const [];
 
+  /// Transactions de marché secondaire d'un actif, de la plus ancienne à la
+  /// plus récente.
+  List<SecondaryTransaction> secondaryTransactionsOf(int assetId) =>
+      _secondaryTransactions[assetId] ?? const [];
+
   /// Valeur d'un actif (positions × prix, fiche startup, ou valeur manuelle).
   double valueOf(Asset asset) => assetValue(
     asset: asset,
@@ -208,6 +214,12 @@ class PortfolioController extends ChangeNotifier {
       });
     }
     _fundingRounds = rounds;
+
+    final secondary = <int, List<SecondaryTransaction>>{};
+    for (final t in await db.allSecondaryTransactions()) {
+      secondary.putIfAbsent(t.assetId, () => []).add(t);
+    }
+    _secondaryTransactions = secondary;
 
     final docs = <int, List<AssetDocument>>{};
     for (final d in await db.allDocuments()) {
@@ -316,6 +328,22 @@ class PortfolioController extends ChangeNotifier {
     await load();
   }
 
+  /// Supprime tous les actifs d'une catégorie (positions, fiches, documents,
+  /// levées et transactions secondaires compris). Renvoie le nombre d'actifs
+  /// supprimés.
+  Future<int> deleteAssetsOfType(AssetType type) async {
+    final docs = [
+      for (final a in _assets)
+        if (assetTypeFrom(a.type) == type) ...documentsOf(a.id),
+    ];
+    final deleted = await db.deleteAssetsOfType(type.name);
+    for (final d in docs) {
+      await documentStore.deleteFile(d.filePath);
+    }
+    await load();
+    return deleted;
+  }
+
   Future<void> addPosition({
     required int assetId,
     required String symbol,
@@ -388,6 +416,19 @@ class PortfolioController extends ChangeNotifier {
 
   Future<void> deleteFundingRound(int id) async {
     await db.deleteFundingRound(id);
+    await load();
+  }
+
+  Future<void> addSecondaryTransaction({
+    required int assetId,
+    required SecondaryTransactionDraft draft,
+  }) async {
+    await db.addSecondaryTransaction(draft.toCompanion(assetId));
+    await load();
+  }
+
+  Future<void> deleteSecondaryTransaction(int id) async {
+    await db.deleteSecondaryTransaction(id);
     await load();
   }
 
@@ -545,6 +586,14 @@ class PortfolioController extends ChangeNotifier {
           await db.deleteFundingRounds(assetId);
           for (final round in row.rounds) {
             await db.addFundingRound(round.toCompanion(assetId));
+          }
+        }
+        // Marché secondaire : même règle que les levées — la colonne fait foi
+        // quand elle est renseignée, une colonne vide ne supprime rien.
+        if (row.secondaryTransactions.isNotEmpty) {
+          await db.deleteSecondaryTransactions(assetId);
+          for (final tx in row.secondaryTransactions) {
+            await db.addSecondaryTransaction(tx.toCompanion(assetId));
           }
         }
         if (isNew) {

@@ -54,6 +54,13 @@ String startupCategoryLabel(String? c) {
   return (t == null || t.isEmpty) ? 'Non renseigné' : t;
 }
 
+/// Une startup rangée dans l'onglet « Startup » possède une catégorie ;
+/// celles qui n'en ont pas vont dans l'onglet « Blast ».
+bool hasStartupCategory(String? c) {
+  final t = c?.trim();
+  return t != null && t.isNotEmpty;
+}
+
 /// Valeurs de `StartupDetails.stade`.
 const List<String> startupStages = [
   'seed',
@@ -245,5 +252,44 @@ class FundingRoundDraft {
         valorisationPostMoney: Value(valorisationPostMoney),
         prixParAction: Value(prixParAction),
         note: Value(_blankToNull(note)),
+      );
+}
+
+/// Types d'une transaction de marché secondaire.
+const List<String> secondaryTransactionTypes = ['achat', 'revente'];
+
+String secondaryTransactionTypeLabel(String? s) {
+  switch (s) {
+    case 'achat':
+      return 'Achat';
+    case 'revente':
+      return 'Revente';
+    default:
+      return 'Non renseigné';
+  }
+}
+
+/// Normalise le type (« Achat », « REVENTE » -> `achat` / `revente`).
+String? normalizeSecondaryTransactionType(String? raw) =>
+    matchChoice(raw, secondaryTransactionTypes, secondaryTransactionTypeLabel);
+
+/// Transaction secondaire saisie ou importée (colonne `marche_secondaire`).
+class SecondaryTransactionDraft {
+  final DateTime? date;
+  final String type;
+  final double montant;
+
+  const SecondaryTransactionDraft({
+    this.date,
+    required this.type,
+    this.montant = 0,
+  });
+
+  SecondaryTransactionsCompanion toCompanion(int assetId) =>
+      SecondaryTransactionsCompanion.insert(
+        assetId: assetId,
+        type: type,
+        date: Value(date),
+        montant: Value(montant),
       );
 }

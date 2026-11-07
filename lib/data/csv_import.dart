@@ -34,6 +34,7 @@ class CsvImportRow {
   final RentalDraft? rental;
   final StartupDraft? startup;
   final List<FundingRoundDraft> rounds;
+  final List<SecondaryTransactionDraft> secondaryTransactions;
 
   const CsvImportRow({
     required this.name,
@@ -44,6 +45,7 @@ class CsvImportRow {
     this.rental,
     this.startup,
     this.rounds = const [],
+    this.secondaryTransactions = const [],
   });
 }
 
@@ -256,6 +258,9 @@ CsvParseResult parseStartupCsv(String input) {
           note: note,
         ),
         rounds: parseFundingRounds(row.text('levees')),
+        secondaryTransactions: parseSecondaryTransactions(
+          row.text('marche_secondaire'),
+        ),
       ),
     );
   }
@@ -293,6 +298,33 @@ List<FundingRoundDraft> parseFundingRounds(String? raw) {
     );
   }
   return rounds;
+}
+
+/// Décode la colonne `marche_secondaire` : transactions séparées par « ; »,
+/// chacune au format `date|type|montant` (type : achat | revente).
+///
+/// Ex. `2026-01-29|achat|600,00;2026-01-29|achat|700,00`.
+/// Les fragments vides et les types non reconnus sont ignorés ; une date
+/// invalide donne une transaction non datée.
+List<SecondaryTransactionDraft> parseSecondaryTransactions(String? raw) {
+  if (raw == null || raw.trim().isEmpty) return const [];
+  final transactions = <SecondaryTransactionDraft>[];
+  for (final chunk in raw.split(';')) {
+    if (chunk.trim().isEmpty) continue;
+    final parts = chunk.split('|').map((e) => e.trim()).toList();
+    final type = normalizeSecondaryTransactionType(
+      parts.length > 1 ? parts[1] : null,
+    );
+    if (type == null) continue;
+    transactions.add(
+      SecondaryTransactionDraft(
+        date: parseCsvDate(parts.isNotEmpty ? parts[0] : null),
+        type: type,
+        montant: parseCsvNumber(parts.length > 2 ? parts[2] : null) ?? 0,
+      ),
+    );
+  }
+  return transactions;
 }
 
 // ---------------------------------------------------------------------------

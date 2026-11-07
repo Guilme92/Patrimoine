@@ -5109,6 +5109,352 @@ class FundingRoundsCompanion extends UpdateCompanion<FundingRound> {
   }
 }
 
+class $SecondaryTransactionsTable extends SecondaryTransactions
+    with TableInfo<$SecondaryTransactionsTable, SecondaryTransaction> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SecondaryTransactionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _assetIdMeta = const VerificationMeta(
+    'assetId',
+  );
+  @override
+  late final GeneratedColumn<int> assetId = GeneratedColumn<int>(
+    'asset_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES assets (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dateMeta = const VerificationMeta('date');
+  @override
+  late final GeneratedColumn<DateTime> date = GeneratedColumn<DateTime>(
+    'date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _montantMeta = const VerificationMeta(
+    'montant',
+  );
+  @override
+  late final GeneratedColumn<double> montant = GeneratedColumn<double>(
+    'montant',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, assetId, type, date, montant];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'secondary_transactions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SecondaryTransaction> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('asset_id')) {
+      context.handle(
+        _assetIdMeta,
+        assetId.isAcceptableOrUnknown(data['asset_id']!, _assetIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_assetIdMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('date')) {
+      context.handle(
+        _dateMeta,
+        date.isAcceptableOrUnknown(data['date']!, _dateMeta),
+      );
+    }
+    if (data.containsKey('montant')) {
+      context.handle(
+        _montantMeta,
+        montant.isAcceptableOrUnknown(data['montant']!, _montantMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SecondaryTransaction map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SecondaryTransaction(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      assetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}asset_id'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      date: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}date'],
+      ),
+      montant: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}montant'],
+      )!,
+    );
+  }
+
+  @override
+  $SecondaryTransactionsTable createAlias(String alias) {
+    return $SecondaryTransactionsTable(attachedDatabase, alias);
+  }
+}
+
+class SecondaryTransaction extends DataClass
+    implements Insertable<SecondaryTransaction> {
+  final int id;
+  final int assetId;
+
+  /// achat | revente
+  final String type;
+  final DateTime? date;
+  final double montant;
+  const SecondaryTransaction({
+    required this.id,
+    required this.assetId,
+    required this.type,
+    this.date,
+    required this.montant,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['asset_id'] = Variable<int>(assetId);
+    map['type'] = Variable<String>(type);
+    if (!nullToAbsent || date != null) {
+      map['date'] = Variable<DateTime>(date);
+    }
+    map['montant'] = Variable<double>(montant);
+    return map;
+  }
+
+  SecondaryTransactionsCompanion toCompanion(bool nullToAbsent) {
+    return SecondaryTransactionsCompanion(
+      id: Value(id),
+      assetId: Value(assetId),
+      type: Value(type),
+      date: date == null && nullToAbsent ? const Value.absent() : Value(date),
+      montant: Value(montant),
+    );
+  }
+
+  factory SecondaryTransaction.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SecondaryTransaction(
+      id: serializer.fromJson<int>(json['id']),
+      assetId: serializer.fromJson<int>(json['assetId']),
+      type: serializer.fromJson<String>(json['type']),
+      date: serializer.fromJson<DateTime?>(json['date']),
+      montant: serializer.fromJson<double>(json['montant']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'assetId': serializer.toJson<int>(assetId),
+      'type': serializer.toJson<String>(type),
+      'date': serializer.toJson<DateTime?>(date),
+      'montant': serializer.toJson<double>(montant),
+    };
+  }
+
+  SecondaryTransaction copyWith({
+    int? id,
+    int? assetId,
+    String? type,
+    Value<DateTime?> date = const Value.absent(),
+    double? montant,
+  }) => SecondaryTransaction(
+    id: id ?? this.id,
+    assetId: assetId ?? this.assetId,
+    type: type ?? this.type,
+    date: date.present ? date.value : this.date,
+    montant: montant ?? this.montant,
+  );
+  SecondaryTransaction copyWithCompanion(SecondaryTransactionsCompanion data) {
+    return SecondaryTransaction(
+      id: data.id.present ? data.id.value : this.id,
+      assetId: data.assetId.present ? data.assetId.value : this.assetId,
+      type: data.type.present ? data.type.value : this.type,
+      date: data.date.present ? data.date.value : this.date,
+      montant: data.montant.present ? data.montant.value : this.montant,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SecondaryTransaction(')
+          ..write('id: $id, ')
+          ..write('assetId: $assetId, ')
+          ..write('type: $type, ')
+          ..write('date: $date, ')
+          ..write('montant: $montant')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, assetId, type, date, montant);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SecondaryTransaction &&
+          other.id == this.id &&
+          other.assetId == this.assetId &&
+          other.type == this.type &&
+          other.date == this.date &&
+          other.montant == this.montant);
+}
+
+class SecondaryTransactionsCompanion
+    extends UpdateCompanion<SecondaryTransaction> {
+  final Value<int> id;
+  final Value<int> assetId;
+  final Value<String> type;
+  final Value<DateTime?> date;
+  final Value<double> montant;
+  const SecondaryTransactionsCompanion({
+    this.id = const Value.absent(),
+    this.assetId = const Value.absent(),
+    this.type = const Value.absent(),
+    this.date = const Value.absent(),
+    this.montant = const Value.absent(),
+  });
+  SecondaryTransactionsCompanion.insert({
+    this.id = const Value.absent(),
+    required int assetId,
+    required String type,
+    this.date = const Value.absent(),
+    this.montant = const Value.absent(),
+  }) : assetId = Value(assetId),
+       type = Value(type);
+  static Insertable<SecondaryTransaction> custom({
+    Expression<int>? id,
+    Expression<int>? assetId,
+    Expression<String>? type,
+    Expression<DateTime>? date,
+    Expression<double>? montant,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (assetId != null) 'asset_id': assetId,
+      if (type != null) 'type': type,
+      if (date != null) 'date': date,
+      if (montant != null) 'montant': montant,
+    });
+  }
+
+  SecondaryTransactionsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? assetId,
+    Value<String>? type,
+    Value<DateTime?>? date,
+    Value<double>? montant,
+  }) {
+    return SecondaryTransactionsCompanion(
+      id: id ?? this.id,
+      assetId: assetId ?? this.assetId,
+      type: type ?? this.type,
+      date: date ?? this.date,
+      montant: montant ?? this.montant,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (assetId.present) {
+      map['asset_id'] = Variable<int>(assetId.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<DateTime>(date.value);
+    }
+    if (montant.present) {
+      map['montant'] = Variable<double>(montant.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SecondaryTransactionsCompanion(')
+          ..write('id: $id, ')
+          ..write('assetId: $assetId, ')
+          ..write('type: $type, ')
+          ..write('date: $date, ')
+          ..write('montant: $montant')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $PreferencesTable extends Preferences
     with TableInfo<$PreferencesTable, Preference> {
   @override
@@ -5328,6 +5674,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $DocumentsTable documents = $DocumentsTable(this);
   late final $StartupDetailsTable startupDetails = $StartupDetailsTable(this);
   late final $FundingRoundsTable fundingRounds = $FundingRoundsTable(this);
+  late final $SecondaryTransactionsTable secondaryTransactions =
+      $SecondaryTransactionsTable(this);
   late final $PreferencesTable preferences = $PreferencesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -5342,6 +5690,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     documents,
     startupDetails,
     fundingRounds,
+    secondaryTransactions,
     preferences,
   ];
   @override
@@ -5380,6 +5729,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('funding_rounds', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'assets',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('secondary_transactions', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -5497,6 +5853,31 @@ final class $$AssetsTableReferences
     ).filter((f) => f.assetId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_fundingRoundsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $SecondaryTransactionsTable,
+    List<SecondaryTransaction>
+  >
+  _secondaryTransactionsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.secondaryTransactions,
+        aliasName: 'assets__id__secondary_transactions__asset_id',
+      );
+
+  $$SecondaryTransactionsTableProcessedTableManager
+  get secondaryTransactionsRefs {
+    final manager = $$SecondaryTransactionsTableTableManager(
+      $_db,
+      $_db.secondaryTransactions,
+    ).filter((f) => f.assetId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _secondaryTransactionsRefsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -5679,6 +6060,32 @@ class $$AssetsTableFilterComposer
                 $removeJoinBuilderFromRootComposer,
           ),
     );
+    return f(composer);
+  }
+
+  Expression<bool> secondaryTransactionsRefs(
+    Expression<bool> Function($$SecondaryTransactionsTableFilterComposer f) f,
+  ) {
+    final $$SecondaryTransactionsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.secondaryTransactions,
+          getReferencedColumn: (t) => t.assetId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$SecondaryTransactionsTableFilterComposer(
+                $db: $db,
+                $table: $db.secondaryTransactions,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
     return f(composer);
   }
 }
@@ -5900,6 +6307,32 @@ class $$AssetsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> secondaryTransactionsRefs<T extends Object>(
+    Expression<T> Function($$SecondaryTransactionsTableAnnotationComposer a) f,
+  ) {
+    final $$SecondaryTransactionsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.secondaryTransactions,
+          getReferencedColumn: (t) => t.assetId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$SecondaryTransactionsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.secondaryTransactions,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$AssetsTableTableManager
@@ -5921,6 +6354,7 @@ class $$AssetsTableTableManager
             bool documentsRefs,
             bool startupDetailsRefs,
             bool fundingRoundsRefs,
+            bool secondaryTransactionsRefs,
           })
         > {
   $$AssetsTableTableManager(_$AppDatabase db, $AssetsTable table)
@@ -5993,6 +6427,7 @@ class $$AssetsTableTableManager
                 documentsRefs = false,
                 startupDetailsRefs = false,
                 fundingRoundsRefs = false,
+                secondaryTransactionsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -6002,6 +6437,7 @@ class $$AssetsTableTableManager
                     if (documentsRefs) db.documents,
                     if (startupDetailsRefs) db.startupDetails,
                     if (fundingRoundsRefs) db.fundingRounds,
+                    if (secondaryTransactionsRefs) db.secondaryTransactions,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -6106,6 +6542,26 @@ class $$AssetsTableTableManager
                           referencedColumn: 'asset_id',
                           typedResults: items,
                         ),
+                      if (secondaryTransactionsRefs)
+                        await $_getPrefetchedDataByColumns<
+                          Asset,
+                          $AssetsTable,
+                          SecondaryTransaction,
+                          $SecondaryTransactionsTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AssetsTableReferences
+                              ._secondaryTransactionsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AssetsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).secondaryTransactionsRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'asset_id',
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -6132,6 +6588,7 @@ typedef $$AssetsTableProcessedTableManager =
         bool documentsRefs,
         bool startupDetailsRefs,
         bool fundingRoundsRefs,
+        bool secondaryTransactionsRefs,
       })
     >;
 typedef $$PositionsTableCreateCompanionBuilder = PositionsCompanion Function({
@@ -8920,6 +9377,338 @@ typedef $$FundingRoundsTableProcessedTableManager =
       FundingRound,
       PrefetchHooks Function({bool assetId})
     >;
+typedef $$SecondaryTransactionsTableCreateCompanionBuilder =
+    SecondaryTransactionsCompanion Function({
+      Value<int> id,
+      required int assetId,
+      required String type,
+      Value<DateTime?> date,
+      Value<double> montant,
+    });
+typedef $$SecondaryTransactionsTableUpdateCompanionBuilder =
+    SecondaryTransactionsCompanion Function({
+      Value<int> id,
+      Value<int> assetId,
+      Value<String> type,
+      Value<DateTime?> date,
+      Value<double> montant,
+    });
+
+final class $$SecondaryTransactionsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $SecondaryTransactionsTable,
+          SecondaryTransaction
+        > {
+  $$SecondaryTransactionsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $AssetsTable _assetIdTable(_$AppDatabase db) =>
+      db.assets.createAlias('secondary_transactions__asset_id__assets__id');
+
+  $$AssetsTableProcessedTableManager get assetId {
+    final $_column = $_itemColumn<int>('asset_id')!;
+
+    final manager = $$AssetsTableTableManager(
+      $_db,
+      $_db.assets,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_assetIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$SecondaryTransactionsTableFilterComposer
+    extends Composer<_$AppDatabase, $SecondaryTransactionsTable> {
+  $$SecondaryTransactionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get montant => $composableBuilder(
+    column: $table.montant,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$AssetsTableFilterComposer get assetId {
+    final $$AssetsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.assetId,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableFilterComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SecondaryTransactionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SecondaryTransactionsTable> {
+  $$SecondaryTransactionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get montant => $composableBuilder(
+    column: $table.montant,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$AssetsTableOrderingComposer get assetId {
+    final $$AssetsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.assetId,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableOrderingComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SecondaryTransactionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SecondaryTransactionsTable> {
+  $$SecondaryTransactionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<double> get montant =>
+      $composableBuilder(column: $table.montant, builder: (column) => column);
+
+  $$AssetsTableAnnotationComposer get assetId {
+    final $$AssetsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.assetId,
+      referencedTable: $db.assets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AssetsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.assets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SecondaryTransactionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SecondaryTransactionsTable,
+          SecondaryTransaction,
+          $$SecondaryTransactionsTableFilterComposer,
+          $$SecondaryTransactionsTableOrderingComposer,
+          $$SecondaryTransactionsTableAnnotationComposer,
+          $$SecondaryTransactionsTableCreateCompanionBuilder,
+          $$SecondaryTransactionsTableUpdateCompanionBuilder,
+          (SecondaryTransaction, $$SecondaryTransactionsTableReferences),
+          SecondaryTransaction,
+          PrefetchHooks Function({bool assetId})
+        > {
+  $$SecondaryTransactionsTableTableManager(
+    _$AppDatabase db,
+    $SecondaryTransactionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SecondaryTransactionsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$SecondaryTransactionsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$SecondaryTransactionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> assetId = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<DateTime?> date = const Value.absent(),
+                Value<double> montant = const Value.absent(),
+              }) => SecondaryTransactionsCompanion(
+                id: id,
+                assetId: assetId,
+                type: type,
+                date: date,
+                montant: montant,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int assetId,
+                required String type,
+                Value<DateTime?> date = const Value.absent(),
+                Value<double> montant = const Value.absent(),
+              }) => SecondaryTransactionsCompanion.insert(
+                id: id,
+                assetId: assetId,
+                type: type,
+                date: date,
+                montant: montant,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $SecondaryTransactionsTable,
+                    SecondaryTransaction
+                  >(table),
+                  $$SecondaryTransactionsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({assetId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (assetId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.assetId,
+                        referencedTable: $$SecondaryTransactionsTableReferences
+                            ._assetIdTable(db),
+                        referencedColumn: $$SecondaryTransactionsTableReferences
+                            ._assetIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$SecondaryTransactionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SecondaryTransactionsTable,
+      SecondaryTransaction,
+      $$SecondaryTransactionsTableFilterComposer,
+      $$SecondaryTransactionsTableOrderingComposer,
+      $$SecondaryTransactionsTableAnnotationComposer,
+      $$SecondaryTransactionsTableCreateCompanionBuilder,
+      $$SecondaryTransactionsTableUpdateCompanionBuilder,
+      (SecondaryTransaction, $$SecondaryTransactionsTableReferences),
+      SecondaryTransaction,
+      PrefetchHooks Function({bool assetId})
+    >;
 typedef $$PreferencesTableCreateCompanionBuilder =
     PreferencesCompanion Function({
       required String key,
@@ -9087,6 +9876,8 @@ class $AppDatabaseManager {
       $$StartupDetailsTableTableManager(_db, _db.startupDetails);
   $$FundingRoundsTableTableManager get fundingRounds =>
       $$FundingRoundsTableTableManager(_db, _db.fundingRounds);
+  $$SecondaryTransactionsTableTableManager get secondaryTransactions =>
+      $$SecondaryTransactionsTableTableManager(_db, _db.secondaryTransactions);
   $$PreferencesTableTableManager get preferences =>
       $$PreferencesTableTableManager(_db, _db.preferences);
 }

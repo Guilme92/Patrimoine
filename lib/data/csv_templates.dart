@@ -19,7 +19,7 @@ const String startupCsvHeader =
     'nom,etablissement,note,type_titre,quantite,prix_entree,frais,'
     'date_investissement,stade,prix_actuel,date_valorisation,'
     'valorisation_entreprise,statut,date_sortie,produit_sortie,mode_sortie,'
-    'levees';
+    'levees,marche_secondaire';
 
 const String realEstateTemplateName = 'modele_immobilier.csv';
 const String startupTemplateName = 'modele_startups.csv';

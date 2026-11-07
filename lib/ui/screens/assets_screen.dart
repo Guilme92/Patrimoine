@@ -10,13 +10,20 @@ import '../../data/csv_import.dart';
 import '../../data/csv_templates.dart';
 import '../../data/database.dart';
 import '../../models/asset_type.dart';
+import '../../theme/app_theme.dart';
 import '../../theme/palette.dart';
 import '../widgets/asset_tile.dart';
 
 /// Liste des actifs : filtre par catégorie et deux modes d'affichage
 /// (« Par type » ou « Ordre manuel » avec drag & drop).
+///
+/// [types] restreint l'écran à un sous-ensemble de catégories (onglets
+/// « Immobilier », « Bourse et Crypto », « Autres ») : les actifs des autres
+/// types sont masqués et les FilterChip de type disparaissent.
 class AssetsScreen extends StatefulWidget {
-  const AssetsScreen({super.key});
+  final Set<AssetType>? types;
+
+  const AssetsScreen({super.key, this.types});
 
   @override
   State<AssetsScreen> createState() => _AssetsScreenState();
@@ -26,9 +33,29 @@ class _AssetsScreenState extends State<AssetsScreen> {
   bool _manualOrder = false;
   final Set<AssetType> _selectedTypes = <AssetType>{};
 
-  bool _matches(Asset a) =>
-      _selectedTypes.isEmpty ||
-      _selectedTypes.contains(assetTypeFrom(a.type));
+  /// Écran restreint à un ou plusieurs types (pas de filtre manuel).
+  bool get _restricted => widget.types != null;
+
+  bool _matches(Asset a) {
+    final type = assetTypeFrom(a.type);
+    if (widget.types != null && !widget.types!.contains(type)) return false;
+    return _selectedTypes.isEmpty || _selectedTypes.contains(type);
+  }
+
+  /// Types supprimables depuis cet onglet : ceux du périmètre qui ont au
+  /// moins un actif.
+  List<(AssetType, int)> _deletableTypes(PortfolioController controller) {
+    final counts = <AssetType, int>{};
+    for (final a in controller.assets) {
+      final type = assetTypeFrom(a.type);
+      if (widget.types != null && !widget.types!.contains(type)) continue;
+      counts[type] = (counts[type] ?? 0) + 1;
+    }
+    return [
+      for (final t in AssetType.values)
+        if ((counts[t] ?? 0) > 0) (t, counts[t]!),
+    ];
+  }
 
   void _snack(String message) {
     if (!mounted) return;
@@ -106,6 +133,46 @@ class _AssetsScreenState extends State<AssetsScreen> {
     );
   }
 
+  /// Demande confirmation puis supprime tous les actifs du type donné.
+  Future<void> _confirmDeleteType(
+    PortfolioController controller,
+    AssetType type,
+    int count,
+  ) async {
+    final label = assetTypeLabel(type);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text('Supprimer « $label » ?'),
+        content: Text(
+          '$count actif${count > 1 ? 's' : ''} de cette catégorie '
+          '${count > 1 ? 'seront supprimés' : 'sera supprimé'} avec leurs '
+          'positions, leur fiche, leurs levées, leurs transactions '
+          'secondaires et leurs documents. Cette action est irréversible.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final deleted = await controller.deleteAssetsOfType(type);
+    _snack(
+      deleted == 1
+          ? '1 actif supprimé ($label)'
+          : '$deleted actifs supprimés ($label)',
+    );
+  }
+
   Future<void> _reorder(
     PortfolioController controller,
     List<Asset> visible,
@@ -147,6 +214,7 @@ class _AssetsScreenState extends State<AssetsScreen> {
     }
     final all = controller.assets;
     final visible = all.where(_matches).toList();
+    final deletable = _deletableTypes(controller);
 
     return SafeArea(
       child: Column(
@@ -211,56 +279,104 @@ class _AssetsScreenState extends State<AssetsScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 44,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
+                if (deletable.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: FilterChip(
-                          label: const Text('Tous'),
-                          selected: _selectedTypes.isEmpty,
-                          onSelected: (_) =>
-                              setState(() => _selectedTypes.clear()),
+                      Expanded(
+                        child: Text(
+                          'Supprimer une catégorie',
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ),
-                      for (final t in AssetType.values)
+                      PopupMenuButton<(AssetType, int)>(
+                        tooltip: 'Supprimer une catégorie',
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          size: 20,
+                          color: AppColors.textSecondary,
+                        ),
+                        onSelected: (entry) =>
+                            _confirmDeleteType(controller, entry.$1, entry.$2),
+                        itemBuilder: (_) => [
+                          for (final entry in deletable)
+                            PopupMenuItem<(AssetType, int)>(
+                              value: entry,
+                              child: ListTile(
+                                dense: true,
+                                contentPadding: EdgeInsets.zero,
+                                leading: Icon(
+                                  assetTypeIcon(entry.$1),
+                                  size: 18,
+                                  color: assetTypeColors[entry.$1],
+                                ),
+                                title: Text(
+                                  'Supprimer ${assetTypeLabel(entry.$1)}',
+                                ),
+                                subtitle: Text(
+                                  '${entry.$2} actif${entry.$2 > 1 ? 's' : ''}',
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+                if (!_restricted) ...[
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 44,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
                         Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: FilterChip(
-                            avatar: Icon(
-                              assetTypeIcon(t),
-                              size: 16,
-                              color: assetTypeColors[t],
-                            ),
-                            label: Text(assetTypeLabel(t)),
-                            selected: _selectedTypes.contains(t),
-                            onSelected: (selected) => setState(() {
-                              if (selected) {
-                                _selectedTypes.add(t);
-                              } else {
-                                _selectedTypes.remove(t);
-                              }
-                            }),
+                            label: const Text('Tous'),
+                            selected: _selectedTypes.isEmpty,
+                            onSelected: (_) =>
+                                setState(() => _selectedTypes.clear()),
                           ),
                         ),
-                    ],
+                        for (final t in AssetType.values)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: FilterChip(
+                              avatar: Icon(
+                                assetTypeIcon(t),
+                                size: 16,
+                                color: assetTypeColors[t],
+                              ),
+                              label: Text(assetTypeLabel(t)),
+                              selected: _selectedTypes.contains(t),
+                              onSelected: (selected) => setState(() {
+                                if (selected) {
+                                  _selectedTypes.add(t);
+                                } else {
+                                  _selectedTypes.remove(t);
+                                }
+                              }),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
           Expanded(
-            child: all.isEmpty
-                ? const Center(child: Text('Aucun actif'))
-                : visible.isEmpty
+            child: visible.isEmpty
                 ? Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24),
                       child: Text(
-                        'Aucun actif dans ces catégories.',
+                        _restricted
+                            ? 'Aucun actif dans cet onglet'
+                            : all.isEmpty
+                            ? 'Aucun actif'
+                            : 'Aucun actif dans ces catégories.',
                         style: Theme.of(context).textTheme.bodySmall,
                         textAlign: TextAlign.center,
                       ),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrimoine/controllers/portfolio_controller.dart';
 import 'package:patrimoine/data/database.dart';
+import 'package:patrimoine/models/asset_type.dart';
 import 'package:patrimoine/theme/app_theme.dart';
 import 'package:patrimoine/ui/screens/assets_screen.dart';
 import 'package:provider/provider.dart';
@@ -31,7 +32,10 @@ void main() {
     }
   }
 
-  Future<void> pumpScreen(WidgetTester tester) async {
+  Future<void> pumpScreen(
+    WidgetTester tester, {
+    Widget screen = const AssetsScreen(),
+  }) async {
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -40,7 +44,7 @@ void main() {
         value: controller,
         child: MaterialApp(
           theme: buildDarkTheme(),
-          home: const Scaffold(body: AssetsScreen()),
+          home: Scaffold(body: screen),
         ),
       ),
     );
@@ -174,4 +178,69 @@ void main() {
       'Livret A',
     ]);
   });
+
+  testWidgets('le paramètre types restreint les actifs et masque les chips', (
+    tester,
+  ) async {
+    await seed(tester);
+
+    // Onglet « Bourse et Crypto » : PEA + Bitcoin, pas les liquidités.
+    await pumpScreen(
+      tester,
+      screen: const AssetsScreen(
+        types: {AssetType.investment, AssetType.crypto},
+      ),
+    );
+    expect(find.text('PEA'), findsOneWidget);
+    expect(find.text('Bitcoin'), findsOneWidget);
+    expect(find.text('Livret A'), findsNothing);
+    // Aucun FilterChip de type dans un onglet restreint.
+    expect(find.byType(FilterChip), findsNothing);
+
+    // Onglet « Immobilier » : aucun actif de ce type.
+    await pumpScreen(
+      tester,
+      screen: const AssetsScreen(types: {AssetType.realEstate}),
+    );
+    expect(find.text('Aucun actif dans cet onglet'), findsOneWidget);
+    expect(find.text('Livret A'), findsNothing);
+  });
+
+  testWidgets(
+    'supprimer une catégorie demande confirmation puis vide le type',
+    (tester) async {
+      await seed(tester);
+      await pumpScreen(
+        tester,
+        screen: const AssetsScreen(
+          types: {AssetType.cash, AssetType.other, AssetType.loan},
+        ),
+      );
+
+      expect(find.text('Livret A'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Supprimer une catégorie'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Supprimer Liquidités'));
+      await tester.pumpAndSettle();
+
+      // Confirmation explicite.
+      expect(find.text('Supprimer « Liquidités » ?'), findsOneWidget);
+      await tester.tap(find.text('Annuler'));
+      await tester.pumpAndSettle();
+      expect(controller.assets.map((a) => a.name), contains('Livret A'));
+
+      await tester.tap(find.byTooltip('Supprimer une catégorie'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Supprimer Liquidités'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Supprimer'));
+      await tester.pumpAndSettle();
+
+      expect(controller.assets.map((a) => a.name), isNot(contains('Livret A')));
+      expect(controller.assets.where((a) => a.type == 'cash'), isEmpty);
+      expect(find.text('Aucun actif dans cet onglet'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

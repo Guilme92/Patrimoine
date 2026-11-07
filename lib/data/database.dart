@@ -177,6 +177,20 @@ class FundingRounds extends Table {
   TextColumn get note => text().nullable()();
 }
 
+/// Transaction passée sur le marché secondaire d'une startup
+/// (achat ou revente de titres).
+@DataClassName('SecondaryTransaction')
+class SecondaryTransactions extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get assetId =>
+      integer().references(Assets, #id, onDelete: KeyAction.cascade)();
+
+  /// achat | revente
+  TextColumn get type => text()();
+  DateTimeColumn get date => dateTime().nullable()();
+  RealColumn get montant => real().withDefault(const Constant(0))();
+}
+
 /// Préférences d'affichage clé/valeur (ex. ordre des blocs du dashboard
 /// startups). Petite table dédiée pour éviter un couplage aux tables métier.
 @DataClassName('Preference')
@@ -198,6 +212,7 @@ class Preferences extends Table {
     Documents,
     StartupDetails,
     FundingRounds,
+    SecondaryTransactions,
     Preferences,
   ],
 )
@@ -208,7 +223,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -231,6 +246,15 @@ class AppDatabase extends _$AppDatabase {
         // Préférences d'affichage (ordre des blocs du dashboard startups).
         await m.createTable(preferences);
       }
+      if (from < 6) {
+        // Marché secondaire des startups (migration purement additive).
+        await m.createTable(secondaryTransactions);
+      }
+    },
+    beforeOpen: (details) async {
+      // Cascade des suppressions (positions, fiches, documents, levées,
+      // transactions secondaires) : SQLite ne l'active pas par défaut.
+      await customStatement('PRAGMA foreign_keys = ON');
     },
   );
 
@@ -245,8 +269,45 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> updateAsset(Asset asset) => update(assets).replace(asset);
 
-  Future<void> deleteAsset(int id) =>
-      (delete(assets)..where((t) => t.id.equals(id))).go();
+  /// Supprime un actif et toutes ses données rattachées.
+  ///
+  /// Les enfants sont supprimés explicitement (et non seulement par la
+  /// cascade SQLite) pour rester correct même si `PRAGMA foreign_keys` est
+  /// désactivé sur la connexion.
+  Future<void> deleteAsset(int id) async {
+    await transaction(() async {
+      await _deleteAssetChildren(id);
+      await (delete(assets)..where((t) => t.id.equals(id))).go();
+    });
+  }
+
+  /// Supprime tous les actifs d'un type (`AssetType.name`) et leurs données
+  /// rattachées. Renvoie le nombre d'actifs supprimés.
+  Future<int> deleteAssetsOfType(String type) async {
+    final rows = await (select(
+      assets,
+    )..where((t) => t.type.equals(type))).get();
+    await transaction(() async {
+      for (final row in rows) {
+        await _deleteAssetChildren(row.id);
+        await (delete(assets)..where((t) => t.id.equals(row.id))).go();
+      }
+    });
+    return rows.length;
+  }
+
+  Future<void> _deleteAssetChildren(int assetId) async {
+    await (delete(positions)..where((t) => t.assetId.equals(assetId))).go();
+    await (delete(rentals)..where((t) => t.assetId.equals(assetId))).go();
+    await (delete(documents)..where((t) => t.assetId.equals(assetId))).go();
+    await (delete(
+      startupDetails,
+    )..where((t) => t.assetId.equals(assetId))).go();
+    await (delete(fundingRounds)..where((t) => t.assetId.equals(assetId))).go();
+    await (delete(
+      secondaryTransactions,
+    )..where((t) => t.assetId.equals(assetId))).go();
+  }
 
   /// Prochaine position libre de l'ordre manuel (max + 1).
   Future<int> nextAssetSortOrder() async {
@@ -412,6 +473,41 @@ class AppDatabase extends _$AppDatabase {
   Future<void> deleteFundingRounds(int assetId) =>
       (delete(fundingRounds)..where((t) => t.assetId.equals(assetId))).go();
 
+  // ---- Marché secondaire ----
+
+  /// Transactions secondaires d'un actif, de la plus ancienne à la plus
+  /// récente (les dates inconnues passent en dernier).
+  Future<List<SecondaryTransaction>> secondaryTransactionsFor(
+    int assetId,
+  ) async {
+    final rows = await (select(
+      secondaryTransactions,
+    )..where((t) => t.assetId.equals(assetId))).get();
+    rows.sort(_compareSecondary);
+    return rows;
+  }
+
+  Future<List<SecondaryTransaction>> allSecondaryTransactions() async {
+    final rows = await select(secondaryTransactions).get();
+    rows.sort((a, b) {
+      final cmp = _compareSecondary(a, b);
+      return cmp != 0 ? cmp : a.assetId.compareTo(b.assetId);
+    });
+    return rows;
+  }
+
+  Future<int> addSecondaryTransaction(SecondaryTransactionsCompanion entry) =>
+      into(secondaryTransactions).insert(entry);
+
+  Future<void> deleteSecondaryTransaction(int id) =>
+      (delete(secondaryTransactions)..where((t) => t.id.equals(id))).go();
+
+  /// Supprime toutes les transactions secondaires d'un actif (remplacement en
+  /// bloc lors d'un ré-import CSV).
+  Future<void> deleteSecondaryTransactions(int assetId) => (delete(
+    secondaryTransactions,
+  )..where((t) => t.assetId.equals(assetId))).go();
+
   // ---- Préférences ----
   /// Valeur d'une préférence d'affichage, ou null si la clé est absente.
   Future<String?> preferenceValue(String key) async {
@@ -426,6 +522,18 @@ class AppDatabase extends _$AppDatabase {
       into(preferences).insertOnConflictUpdate(
         PreferencesCompanion.insert(key: key, value: value),
       );
+}
+
+/// Ordre d'affichage des transactions secondaires : date croissante, dates
+/// inconnues en dernier, puis identifiant (ordre de saisie).
+int _compareSecondary(SecondaryTransaction a, SecondaryTransaction b) {
+  final da = a.date;
+  final db = b.date;
+  if (da == null && db == null) return a.id.compareTo(b.id);
+  if (da == null) return 1;
+  if (db == null) return -1;
+  final cmp = da.compareTo(db);
+  return cmp != 0 ? cmp : a.id.compareTo(b.id);
 }
 
 LazyDatabase _openConnection() {

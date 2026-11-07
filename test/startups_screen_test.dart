@@ -108,14 +108,15 @@ void main() {
     expect(find.text('Répartition par catégorie'), findsOneWidget);
     expect(find.text('Par catégorie'), findsOneWidget);
     expect(find.text('Top 5 par valorisation'), findsOneWidget);
-    // Compteurs : 2 actives (Alpha, Beta), 1 sortie (Gamma), 1 radiée (Delta).
-    expect(find.text('2 actives · 1 sortie · 1 radiée'), findsOneWidget);
+    // Compteurs : 2 actives (Alpha, Beta), 1 sortie (Gamma) — Delta, sans
+    // catégorie, appartient à l'onglet Blast et n'est pas comptée ici.
+    expect(find.text('2 actives · 1 sortie · 0 radiée'), findsOneWidget);
 
     // Sous-onglet Liste.
     await tester.tap(find.text('Liste'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    expect(find.text('Startups (4)'), findsOneWidget);
+    expect(find.text('Startups (3)'), findsOneWidget);
     expect(find.text('Nom'), findsOneWidget);
 
     // Filtre catégorie : il ne reste qu'Europe Multi-Stage.
@@ -128,7 +129,7 @@ void main() {
     // Réinitialisation.
     await tester.tap(find.text('Réinitialiser'));
     await tester.pumpAndSettle();
-    expect(find.text('Startups (4)'), findsOneWidget);
+    expect(find.text('Startups (3)'), findsOneWidget);
 
     // Filtre année : seules les lignes datées 2022 restent.
     await tester.tap(find.text('Toutes les années'));
@@ -226,7 +227,7 @@ void main() {
     expect(find.text(formatEuro(25)), findsWidgets);
     await tester.tap(find.text('Liste'));
     await tester.pumpAndSettle();
-    expect(find.text('Startups (4)'), findsOneWidget);
+    expect(find.text('Startups (3)'), findsOneWidget);
 
     // Une recherche sans résultat affiche l'état vide.
     await tester.enterText(find.byType(TextField), 'zzz');
@@ -238,7 +239,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('« Startups » est la 3e destination de la barre de navigation', (
+  testWidgets('onglets principaux en haut : ordre, Startup et Blast', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(360, 1400);
@@ -255,23 +256,110 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(NavigationDestination), findsNWidgets(4));
-    final destinations = tester
-        .widgetList<NavigationDestination>(find.byType(NavigationDestination))
-        .map((d) => d.label)
-        .toList();
-    expect(destinations, ['Tableau de bord', 'Actifs', 'Startups', 'Analyses']);
+    // Plus de barre de navigation basse : les onglets sont sous l'AppBar.
+    expect(find.byType(NavigationBar), findsNothing);
+    const labels = [
+      'Tableau de bord',
+      'Immobilier',
+      'Bourse et Crypto',
+      'Startup',
+      'Blast',
+      'Blast Market',
+      'Analyse',
+      'Autres',
+    ];
+    for (final label in labels) {
+      expect(find.text(label), findsOneWidget, reason: 'onglet $label absent');
+    }
+    // Ordre horizontal des libellés.
+    for (var i = 1; i < labels.length; i++) {
+      expect(
+        tester.getTopLeft(find.text(labels[i - 1])).dx,
+        lessThan(tester.getTopLeft(find.text(labels[i])).dx),
+      );
+    }
 
-    await tester.tap(
-      find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.text('Startups'),
-      ),
-    );
-    await tester.pumpAndSettle();
+    // La barre est défilable : on amène l'onglet dans la vue avant d'appuyer.
+    Future<void> tapTab(String label) async {
+      final finder = find.text(label);
+      await tester.ensureVisible(finder);
+      await tester.pumpAndSettle();
+      await tester.tap(finder);
+      await tester.pumpAndSettle();
+    }
 
+    // Onglet Startup : uniquement les startups catégorisées.
+    await tapTab('Startup');
     expect(tester.takeException(), isNull);
     expect(find.text('Capital investi'), findsOneWidget);
+    await tester.tap(find.text('Liste'));
+    await tester.pumpAndSettle();
+    expect(find.text('Startups (3)'), findsOneWidget);
+    expect(find.text('Delta'), findsNothing);
+
+    // Onglet Blast : la startup sans catégorie.
+    await tapTab('Blast');
+    expect(tester.takeException(), isNull);
+    expect(find.text('Blast (1)'), findsOneWidget);
+    expect(find.text('Delta'), findsOneWidget);
+    expect(find.text('Alpha'), findsNothing);
+  });
+
+  testWidgets('les startups sans catégorie sont exclues de l\'onglet Startup', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    Future<void> add(String name, String? categorie) async {
+      final id = await db.addAsset(
+        AssetsCompanion.insert(name: name, type: 'startup'),
+      );
+      await db.saveStartupDetails(
+        StartupDraft(
+          categorie: categorie,
+          quantite: 10,
+          prixEntree: 5,
+          prixActuel: 6,
+        ).toCompanion(id),
+      );
+    }
+
+    await add('Catégorisée', 'Licornes pre-IPO');
+    await add('Blanche', '   ');
+    await add('SansCategorie', null);
+
+    await pumpScreen(tester);
+    await tester.tap(find.text('Liste'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Startups (1)'), findsOneWidget);
+    expect(find.text('Catégorisée'), findsOneWidget);
+    expect(find.text('Blanche'), findsNothing);
+    expect(find.text('SansCategorie'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('aucune startup catégorisée : renvoi vers l\'onglet Blast', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final id = await db.addAsset(
+      AssetsCompanion.insert(name: 'BlastOnly', type: 'startup'),
+    );
+    await db.saveStartupDetails(
+      const StartupDraft(quantite: 10, prixEntree: 5).toCompanion(id),
+    );
+
+    await pumpScreen(tester);
+
+    expect(find.text('Aucune startup catégorisée'), findsOneWidget);
+    expect(find.textContaining('onglet Blast'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('colonne « Frais » dans la synthèse par catégorie', (

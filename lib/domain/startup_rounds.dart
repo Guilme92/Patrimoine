@@ -127,6 +127,12 @@ CsvImportRow mergeStartupTours(List<CsvImportRow> rows) {
     return da.compareTo(db);
   });
 
+  // Transactions secondaires : concaténées dans l'ordre chronologique des
+  // lignes fusionnées (elles ne suivent pas les tours).
+  final secondaryTransactions = <SecondaryTransactionDraft>[
+    for (final row in ordered) ...row.secondaryTransactions,
+  ];
+
   final mergedDraft = StartupDraft(
     typeTitre: _latestNonNull(ordered, (d) => d.typeTitre),
     categorie: _latestNonNull(ordered, (d) => d.categorie),
@@ -153,6 +159,7 @@ CsvImportRow mergeStartupTours(List<CsvImportRow> rows) {
     note: _firstNonNull(rows, (r) => r.note),
     startup: mergedDraft,
     rounds: rounds,
+    secondaryTransactions: secondaryTransactions,
   );
 }
 
