@@ -301,11 +301,17 @@ List<FundingRoundDraft> parseFundingRounds(String? raw) {
 }
 
 /// Décode la colonne `marche_secondaire` : transactions séparées par « ; »,
-/// chacune au format `date|type|montant` (type : achat | revente).
+/// chacune au format `date|type|actions|prix|frais|commission_pv`
+/// (type : achat | revente).
 ///
-/// Ex. `2026-01-29|achat|600,00;2026-01-29|achat|700,00`.
-/// Les fragments vides et les types non reconnus sont ignorés ; une date
-/// invalide donne une transaction non datée.
+/// Ex. `2025-10-27|revente|500|3,29|0,00|229,00`.
+///
+/// Tolérances :
+/// - champ absent ou vide → 0 (frais et commission sont souvent omis) ;
+/// - date invalide → transaction conservée, non datée ;
+/// - type inconnu ou vide → transaction ignorée ;
+/// - ancien format `date|type|montant` (3 champs) → le 3e champ est interprété
+///   comme le montant payé/reçu, sans détail chiffré.
 List<SecondaryTransactionDraft> parseSecondaryTransactions(String? raw) {
   if (raw == null || raw.trim().isEmpty) return const [];
   final transactions = <SecondaryTransactionDraft>[];
@@ -316,11 +322,30 @@ List<SecondaryTransactionDraft> parseSecondaryTransactions(String? raw) {
       parts.length > 1 ? parts[1] : null,
     );
     if (type == null) continue;
+
+    final montantOuActions = parseCsvNumber(
+      parts.length > 2 ? parts[2] : null,
+    );
+    // Un 4e champ (prix) signe le format enrichi ; sinon on retombe sur
+    // l'ancien format où le 3e champ était le montant global.
+    final hasDetail = parts.length > 3;
+    final prix = hasDetail ? parseCsvNumber(parts[3]) ?? 0 : 0.0;
+    final frais = hasDetail
+        ? (parts.length > 4 ? parseCsvNumber(parts[4]) ?? 0 : 0.0)
+        : 0.0;
+    final commissionPv = hasDetail
+        ? (parts.length > 5 ? parseCsvNumber(parts[5]) ?? 0 : 0.0)
+        : 0.0;
+
     transactions.add(
       SecondaryTransactionDraft(
         date: parseCsvDate(parts.isNotEmpty ? parts[0] : null),
         type: type,
-        montant: parseCsvNumber(parts.length > 2 ? parts[2] : null) ?? 0,
+        actions: hasDetail ? (montantOuActions ?? 0).round() : 0,
+        prix: prix,
+        frais: frais,
+        commissionPv: commissionPv,
+        montant: hasDetail ? null : montantOuActions,
       ),
     );
   }

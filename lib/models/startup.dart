@@ -273,23 +273,73 @@ String secondaryTransactionTypeLabel(String? s) {
 String? normalizeSecondaryTransactionType(String? raw) =>
     matchChoice(raw, secondaryTransactionTypes, secondaryTransactionTypeLabel);
 
+/// Montant payé (achat) ou reçu (vente) d'une transaction secondaire, recalculé
+/// depuis son détail chiffré : achat = actions × prix + frais ;
+/// vente = actions × prix − commission PV.
+double secondaryTransactionMontant(
+  String type,
+  double actions,
+  double prix,
+  double frais,
+  double commissionPv,
+) => type == 'revente'
+    ? actions * prix - commissionPv
+    : actions * prix + frais;
+
 /// Transaction secondaire saisie ou importée (colonne `marche_secondaire`).
+///
+/// Le format enrichi est `date|type|actions|prix|frais|commission_pv` ; les
+/// champs absents valent 0. L'ancien format `date|type|montant` reste accepté :
+/// le montant est alors porté tel quel par [montant] (aucun détail chiffré).
 class SecondaryTransactionDraft {
   final DateTime? date;
   final String type;
-  final double montant;
+  final int actions;
+  final double prix;
+  final double frais;
+  final double commissionPv;
+
+  /// Montant explicite (ancien format). Ignoré dès que [actions] et [prix]
+  /// sont renseignés : le montant est alors recalculé.
+  final double? _montantExplicite;
 
   const SecondaryTransactionDraft({
     this.date,
     required this.type,
-    this.montant = 0,
-  });
+    this.actions = 0,
+    this.prix = 0,
+    this.frais = 0,
+    this.commissionPv = 0,
+    double? montant,
+  }) : _montantExplicite = montant;
+
+  /// Vrai si la transaction porte un détail chiffré (nombre d'actions et prix).
+  bool get hasDetail => actions > 0 && prix > 0;
+
+  /// Montant payé (achat) ou reçu (vente).
+  ///
+  /// Recalculé depuis `actions`, `prix`, `frais` et `commissionPv` quand le
+  /// détail est disponible, sinon montant fourni à la construction (0 par
+  /// défaut).
+  double get montant => hasDetail
+      ? secondaryTransactionMontant(
+          type,
+          actions.toDouble(),
+          prix,
+          frais,
+          commissionPv,
+        )
+      : (_montantExplicite ?? 0);
 
   SecondaryTransactionsCompanion toCompanion(int assetId) =>
       SecondaryTransactionsCompanion.insert(
         assetId: assetId,
         type: type,
         date: Value(date),
+        actions: Value(actions),
+        prix: Value(prix),
+        frais: Value(frais),
+        commissionPv: Value(commissionPv),
         montant: Value(montant),
       );
 }

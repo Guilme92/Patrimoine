@@ -188,6 +188,24 @@ class SecondaryTransactions extends Table {
   /// achat | revente
   TextColumn get type => text()();
   DateTimeColumn get date => dateTime().nullable()();
+
+  /// Nombre de titres échangés.
+  IntColumn get actions => integer().withDefault(const Constant(0))();
+
+  /// Prix unitaire de la transaction (€/action).
+  RealColumn get prix => real().withDefault(const Constant(0))();
+
+  /// Frais de courtage / de transfert payés sur la transaction.
+  RealColumn get frais => real().withDefault(const Constant(0))();
+
+  /// Commission de plus-value prélevée par la plateforme (ventes).
+  RealColumn get commissionPv => real().withDefault(const Constant(0))();
+
+  /// Montant payé (achat) ou reçu (vente), recalculé depuis `actions`, `prix`,
+  /// `frais` et `commissionPv` : achat = actions × prix + frais ;
+  /// vente = actions × prix − commissionPv.
+  /// Conservé en base pour les transactions importées sans détail (ancien
+  /// format `date|type|montant`).
   RealColumn get montant => real().withDefault(const Constant(0))();
 }
 
@@ -223,7 +241,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -249,6 +267,18 @@ class AppDatabase extends _$AppDatabase {
       if (from < 6) {
         // Marché secondaire des startups (migration purement additive).
         await m.createTable(secondaryTransactions);
+      }
+      if (from >= 6 && from < 7) {
+        // Détail chiffré des transactions secondaires (actions, prix, frais,
+        // commission de plus-value). `createTable` ci-dessus crée déjà les
+        // colonnes courantes : l'ajout ne concerne que les bases déjà en v6.
+        await m.addColumn(secondaryTransactions, secondaryTransactions.actions);
+        await m.addColumn(secondaryTransactions, secondaryTransactions.prix);
+        await m.addColumn(secondaryTransactions, secondaryTransactions.frais);
+        await m.addColumn(
+          secondaryTransactions,
+          secondaryTransactions.commissionPv,
+        );
       }
     },
     beforeOpen: (details) async {

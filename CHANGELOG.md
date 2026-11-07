@@ -24,6 +24,7 @@ Les 14 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : 
   - [Build 14 — Startups multi-tours (7 novembre 2025)](#build-14--startups-multi-tours-7-novembre-2025)
   - [Build 15 — Levées de fonds synchronisées au ré-import (7 novembre 2025)](#build-15--levées-de-fonds-synchronisées-au-ré-import-7-novembre-2025)
   - [Build 16 — Refonte de la navigation et Blast Market (7 novembre 2025)](#build-16--refonte-de-la-navigation-et-blast-market-7-novembre-2025)
+  - [Build 17 — Blast Market détaillé (PV + filtres) (7 novembre 2025)](#build-17--blast-market-détaillé-pv--filtres-7-novembre-2025)
 
 ## Phase 1 — Fondations
 
@@ -117,3 +118,9 @@ Les 14 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : 
 - Onglets dédiés par type d'actif : Immobilier, Bourse et Crypto, Autres.
 - Onglet Blast (investissements dans Blast) et Blast Market (marché secondaire : achats + reventes).
 - Suppression d'une catégorie d'actif.
+
+### Build 17 — Blast Market détaillé (PV + filtres) (7 novembre 2025)
+
+- Détail par transaction : nb actions, prix unitaire, frais, commission de plus-value.
+- Plus-value brute et nette calculées sur les ventes (flat tax 30 %).
+- Filtre achats/ventes et recherche par startup.

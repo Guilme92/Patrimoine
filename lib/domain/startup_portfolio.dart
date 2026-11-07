@@ -1,4 +1,5 @@
 import '../data/database.dart';
+import '../models/startup.dart';
 import '../utils/choice.dart';
 import 'startup.dart';
 
@@ -84,6 +85,90 @@ class StartupPortfolioSummary {
 String startupCategoryKey(String? categorie) {
   final t = categorie?.trim();
   return (t == null || t.isEmpty) ? 'Sans catégorie' : t;
+}
+
+// ---------------------------------------------------------------------------
+// Marché secondaire : montants, plus-values et filtres
+// ---------------------------------------------------------------------------
+
+/// Taux de flat tax (prélèvement forfaitaire unique) appliqué aux plus-values
+/// de cession de titres non cotés.
+const double secondaryFlatTaxRate = 0.30;
+
+/// Vrai si le PRU (prix de revient unitaire) est exploitable, c'est-à-dire
+/// strictement positif. Un PRU nul signifie « inconnu » et interdit tout
+/// calcul de plus-value crédible.
+bool secondaryPruAvailable(double pru) => pru > 0;
+
+/// Montant payé (achat) ou reçu (vente) d'une transaction secondaire :
+/// achat = actions × prix + frais ; vente = actions × prix − commission PV.
+///
+/// Alias de [secondaryTransactionMontant] (défini avec le modèle, pour rester
+/// utilisable aussi depuis les tests de domaine).
+double secondaryMontant(
+  String type,
+  double actions,
+  double prix,
+  double frais,
+  double commissionPv,
+) => secondaryTransactionMontant(type, actions, prix, frais, commissionPv);
+
+/// Plus-value brute d'une revente secondaire : `actions × (prix − PRU)`.
+///
+/// Approximation assumée : le PRU retenu est le prix moyen d'acquisition de la
+/// fiche startup (`StartupDetails.prixEntree`), et non le coût réel des titres
+/// cédés (pas de suivi FIFO des lots). Les frais d'acquisition initiaux ne
+/// sont donc pas réimputés ici : ils le sont au niveau de la ligne de vente via
+/// [secondaryPvNet], qui déduit la commission et les frais de la transaction.
+double secondaryPvBrut(double actions, double prix, double pru) =>
+    actions * (prix - pru);
+
+/// Plus-value nette d'une revente secondaire, flat tax incluse :
+/// PV brute − commission PV − frais, puis flat tax de 30 % sur la base
+/// positive restante.
+///
+/// `base = PV brute − commission − frais` ; `flat tax = 30 % × max(0, base)` ;
+/// `PV nette = PV brute − commission − frais − flat tax`. Une moins-value n'est
+/// pas fiscalisée (flat tax nulle) mais reste imputée en totalité.
+double secondaryPvNet(
+  double actions,
+  double prix,
+  double pru,
+  double commission,
+  double frais,
+) {
+  final brut = secondaryPvBrut(actions, prix, pru);
+  final base = brut - commission - frais;
+  final flatTax = base > 0 ? base * secondaryFlatTaxRate : 0.0;
+  return base - flatTax;
+}
+
+/// Filtre d'affichage des transactions du marché secondaire.
+enum SecondaryTypeFilter { tous, achat, revente }
+
+/// Libellé du filtre (« Tous », « Achats », « Ventes »).
+String secondaryTypeFilterLabel(SecondaryTypeFilter filter) {
+  switch (filter) {
+    case SecondaryTypeFilter.tous:
+      return 'Tous';
+    case SecondaryTypeFilter.achat:
+      return 'Achats';
+    case SecondaryTypeFilter.revente:
+      return 'Ventes';
+  }
+}
+
+/// Vrai si une transaction de type [type] (`achat` | `revente`) passe le
+/// filtre [filter].
+bool secondaryTypeMatches(String type, SecondaryTypeFilter filter) {
+  switch (filter) {
+    case SecondaryTypeFilter.tous:
+      return true;
+    case SecondaryTypeFilter.achat:
+      return type == 'achat';
+    case SecondaryTypeFilter.revente:
+      return type == 'revente';
+  }
 }
 
 /// Normalise un texte pour la recherche par nom : minuscules, sans accents,

@@ -5160,6 +5160,50 @@ class $SecondaryTransactionsTable extends SecondaryTransactions
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _actionsMeta = const VerificationMeta(
+    'actions',
+  );
+  @override
+  late final GeneratedColumn<int> actions = GeneratedColumn<int>(
+    'actions',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _prixMeta = const VerificationMeta('prix');
+  @override
+  late final GeneratedColumn<double> prix = GeneratedColumn<double>(
+    'prix',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _fraisMeta = const VerificationMeta('frais');
+  @override
+  late final GeneratedColumn<double> frais = GeneratedColumn<double>(
+    'frais',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _commissionPvMeta = const VerificationMeta(
+    'commissionPv',
+  );
+  @override
+  late final GeneratedColumn<double> commissionPv = GeneratedColumn<double>(
+    'commission_pv',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _montantMeta = const VerificationMeta(
     'montant',
   );
@@ -5173,7 +5217,17 @@ class $SecondaryTransactionsTable extends SecondaryTransactions
     defaultValue: const Constant(0),
   );
   @override
-  List<GeneratedColumn> get $columns => [id, assetId, type, date, montant];
+  List<GeneratedColumn> get $columns => [
+    id,
+    assetId,
+    type,
+    date,
+    actions,
+    prix,
+    frais,
+    commissionPv,
+    montant,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -5211,6 +5265,33 @@ class $SecondaryTransactionsTable extends SecondaryTransactions
         date.isAcceptableOrUnknown(data['date']!, _dateMeta),
       );
     }
+    if (data.containsKey('actions')) {
+      context.handle(
+        _actionsMeta,
+        actions.isAcceptableOrUnknown(data['actions']!, _actionsMeta),
+      );
+    }
+    if (data.containsKey('prix')) {
+      context.handle(
+        _prixMeta,
+        prix.isAcceptableOrUnknown(data['prix']!, _prixMeta),
+      );
+    }
+    if (data.containsKey('frais')) {
+      context.handle(
+        _fraisMeta,
+        frais.isAcceptableOrUnknown(data['frais']!, _fraisMeta),
+      );
+    }
+    if (data.containsKey('commission_pv')) {
+      context.handle(
+        _commissionPvMeta,
+        commissionPv.isAcceptableOrUnknown(
+          data['commission_pv']!,
+          _commissionPvMeta,
+        ),
+      );
+    }
     if (data.containsKey('montant')) {
       context.handle(
         _montantMeta,
@@ -5242,6 +5323,22 @@ class $SecondaryTransactionsTable extends SecondaryTransactions
         DriftSqlType.dateTime,
         data['${effectivePrefix}date'],
       ),
+      actions: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}actions'],
+      )!,
+      prix: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}prix'],
+      )!,
+      frais: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}frais'],
+      )!,
+      commissionPv: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}commission_pv'],
+      )!,
       montant: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}montant'],
@@ -5263,12 +5360,34 @@ class SecondaryTransaction extends DataClass
   /// achat | revente
   final String type;
   final DateTime? date;
+
+  /// Nombre de titres échangés.
+  final int actions;
+
+  /// Prix unitaire de la transaction (€/action).
+  final double prix;
+
+  /// Frais de courtage / de transfert payés sur la transaction.
+  final double frais;
+
+  /// Commission de plus-value prélevée par la plateforme (ventes).
+  final double commissionPv;
+
+  /// Montant payé (achat) ou reçu (vente), recalculé depuis `actions`, `prix`,
+  /// `frais` et `commissionPv` : achat = actions × prix + frais ;
+  /// vente = actions × prix − commissionPv.
+  /// Conservé en base pour les transactions importées sans détail (ancien
+  /// format `date|type|montant`).
   final double montant;
   const SecondaryTransaction({
     required this.id,
     required this.assetId,
     required this.type,
     this.date,
+    required this.actions,
+    required this.prix,
+    required this.frais,
+    required this.commissionPv,
     required this.montant,
   });
   @override
@@ -5280,6 +5399,10 @@ class SecondaryTransaction extends DataClass
     if (!nullToAbsent || date != null) {
       map['date'] = Variable<DateTime>(date);
     }
+    map['actions'] = Variable<int>(actions);
+    map['prix'] = Variable<double>(prix);
+    map['frais'] = Variable<double>(frais);
+    map['commission_pv'] = Variable<double>(commissionPv);
     map['montant'] = Variable<double>(montant);
     return map;
   }
@@ -5290,6 +5413,10 @@ class SecondaryTransaction extends DataClass
       assetId: Value(assetId),
       type: Value(type),
       date: date == null && nullToAbsent ? const Value.absent() : Value(date),
+      actions: Value(actions),
+      prix: Value(prix),
+      frais: Value(frais),
+      commissionPv: Value(commissionPv),
       montant: Value(montant),
     );
   }
@@ -5304,6 +5431,10 @@ class SecondaryTransaction extends DataClass
       assetId: serializer.fromJson<int>(json['assetId']),
       type: serializer.fromJson<String>(json['type']),
       date: serializer.fromJson<DateTime?>(json['date']),
+      actions: serializer.fromJson<int>(json['actions']),
+      prix: serializer.fromJson<double>(json['prix']),
+      frais: serializer.fromJson<double>(json['frais']),
+      commissionPv: serializer.fromJson<double>(json['commissionPv']),
       montant: serializer.fromJson<double>(json['montant']),
     );
   }
@@ -5315,6 +5446,10 @@ class SecondaryTransaction extends DataClass
       'assetId': serializer.toJson<int>(assetId),
       'type': serializer.toJson<String>(type),
       'date': serializer.toJson<DateTime?>(date),
+      'actions': serializer.toJson<int>(actions),
+      'prix': serializer.toJson<double>(prix),
+      'frais': serializer.toJson<double>(frais),
+      'commissionPv': serializer.toJson<double>(commissionPv),
       'montant': serializer.toJson<double>(montant),
     };
   }
@@ -5324,12 +5459,20 @@ class SecondaryTransaction extends DataClass
     int? assetId,
     String? type,
     Value<DateTime?> date = const Value.absent(),
+    int? actions,
+    double? prix,
+    double? frais,
+    double? commissionPv,
     double? montant,
   }) => SecondaryTransaction(
     id: id ?? this.id,
     assetId: assetId ?? this.assetId,
     type: type ?? this.type,
     date: date.present ? date.value : this.date,
+    actions: actions ?? this.actions,
+    prix: prix ?? this.prix,
+    frais: frais ?? this.frais,
+    commissionPv: commissionPv ?? this.commissionPv,
     montant: montant ?? this.montant,
   );
   SecondaryTransaction copyWithCompanion(SecondaryTransactionsCompanion data) {
@@ -5338,6 +5481,12 @@ class SecondaryTransaction extends DataClass
       assetId: data.assetId.present ? data.assetId.value : this.assetId,
       type: data.type.present ? data.type.value : this.type,
       date: data.date.present ? data.date.value : this.date,
+      actions: data.actions.present ? data.actions.value : this.actions,
+      prix: data.prix.present ? data.prix.value : this.prix,
+      frais: data.frais.present ? data.frais.value : this.frais,
+      commissionPv: data.commissionPv.present
+          ? data.commissionPv.value
+          : this.commissionPv,
       montant: data.montant.present ? data.montant.value : this.montant,
     );
   }
@@ -5349,13 +5498,27 @@ class SecondaryTransaction extends DataClass
           ..write('assetId: $assetId, ')
           ..write('type: $type, ')
           ..write('date: $date, ')
+          ..write('actions: $actions, ')
+          ..write('prix: $prix, ')
+          ..write('frais: $frais, ')
+          ..write('commissionPv: $commissionPv, ')
           ..write('montant: $montant')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, assetId, type, date, montant);
+  int get hashCode => Object.hash(
+    id,
+    assetId,
+    type,
+    date,
+    actions,
+    prix,
+    frais,
+    commissionPv,
+    montant,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5364,6 +5527,10 @@ class SecondaryTransaction extends DataClass
           other.assetId == this.assetId &&
           other.type == this.type &&
           other.date == this.date &&
+          other.actions == this.actions &&
+          other.prix == this.prix &&
+          other.frais == this.frais &&
+          other.commissionPv == this.commissionPv &&
           other.montant == this.montant);
 }
 
@@ -5373,12 +5540,20 @@ class SecondaryTransactionsCompanion
   final Value<int> assetId;
   final Value<String> type;
   final Value<DateTime?> date;
+  final Value<int> actions;
+  final Value<double> prix;
+  final Value<double> frais;
+  final Value<double> commissionPv;
   final Value<double> montant;
   const SecondaryTransactionsCompanion({
     this.id = const Value.absent(),
     this.assetId = const Value.absent(),
     this.type = const Value.absent(),
     this.date = const Value.absent(),
+    this.actions = const Value.absent(),
+    this.prix = const Value.absent(),
+    this.frais = const Value.absent(),
+    this.commissionPv = const Value.absent(),
     this.montant = const Value.absent(),
   });
   SecondaryTransactionsCompanion.insert({
@@ -5386,6 +5561,10 @@ class SecondaryTransactionsCompanion
     required int assetId,
     required String type,
     this.date = const Value.absent(),
+    this.actions = const Value.absent(),
+    this.prix = const Value.absent(),
+    this.frais = const Value.absent(),
+    this.commissionPv = const Value.absent(),
     this.montant = const Value.absent(),
   }) : assetId = Value(assetId),
        type = Value(type);
@@ -5394,6 +5573,10 @@ class SecondaryTransactionsCompanion
     Expression<int>? assetId,
     Expression<String>? type,
     Expression<DateTime>? date,
+    Expression<int>? actions,
+    Expression<double>? prix,
+    Expression<double>? frais,
+    Expression<double>? commissionPv,
     Expression<double>? montant,
   }) {
     return RawValuesInsertable({
@@ -5401,6 +5584,10 @@ class SecondaryTransactionsCompanion
       if (assetId != null) 'asset_id': assetId,
       if (type != null) 'type': type,
       if (date != null) 'date': date,
+      if (actions != null) 'actions': actions,
+      if (prix != null) 'prix': prix,
+      if (frais != null) 'frais': frais,
+      if (commissionPv != null) 'commission_pv': commissionPv,
       if (montant != null) 'montant': montant,
     });
   }
@@ -5410,6 +5597,10 @@ class SecondaryTransactionsCompanion
     Value<int>? assetId,
     Value<String>? type,
     Value<DateTime?>? date,
+    Value<int>? actions,
+    Value<double>? prix,
+    Value<double>? frais,
+    Value<double>? commissionPv,
     Value<double>? montant,
   }) {
     return SecondaryTransactionsCompanion(
@@ -5417,6 +5608,10 @@ class SecondaryTransactionsCompanion
       assetId: assetId ?? this.assetId,
       type: type ?? this.type,
       date: date ?? this.date,
+      actions: actions ?? this.actions,
+      prix: prix ?? this.prix,
+      frais: frais ?? this.frais,
+      commissionPv: commissionPv ?? this.commissionPv,
       montant: montant ?? this.montant,
     );
   }
@@ -5436,6 +5631,18 @@ class SecondaryTransactionsCompanion
     if (date.present) {
       map['date'] = Variable<DateTime>(date.value);
     }
+    if (actions.present) {
+      map['actions'] = Variable<int>(actions.value);
+    }
+    if (prix.present) {
+      map['prix'] = Variable<double>(prix.value);
+    }
+    if (frais.present) {
+      map['frais'] = Variable<double>(frais.value);
+    }
+    if (commissionPv.present) {
+      map['commission_pv'] = Variable<double>(commissionPv.value);
+    }
     if (montant.present) {
       map['montant'] = Variable<double>(montant.value);
     }
@@ -5449,6 +5656,10 @@ class SecondaryTransactionsCompanion
           ..write('assetId: $assetId, ')
           ..write('type: $type, ')
           ..write('date: $date, ')
+          ..write('actions: $actions, ')
+          ..write('prix: $prix, ')
+          ..write('frais: $frais, ')
+          ..write('commissionPv: $commissionPv, ')
           ..write('montant: $montant')
           ..write(')'))
         .toString();
@@ -9383,6 +9594,10 @@ typedef $$SecondaryTransactionsTableCreateCompanionBuilder =
       required int assetId,
       required String type,
       Value<DateTime?> date,
+      Value<int> actions,
+      Value<double> prix,
+      Value<double> frais,
+      Value<double> commissionPv,
       Value<double> montant,
     });
 typedef $$SecondaryTransactionsTableUpdateCompanionBuilder =
@@ -9391,6 +9606,10 @@ typedef $$SecondaryTransactionsTableUpdateCompanionBuilder =
       Value<int> assetId,
       Value<String> type,
       Value<DateTime?> date,
+      Value<int> actions,
+      Value<double> prix,
+      Value<double> frais,
+      Value<double> commissionPv,
       Value<double> montant,
     });
 
@@ -9449,6 +9668,26 @@ class $$SecondaryTransactionsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get actions => $composableBuilder(
+    column: $table.actions,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get prix => $composableBuilder(
+    column: $table.prix,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get frais => $composableBuilder(
+    column: $table.frais,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get commissionPv => $composableBuilder(
+    column: $table.commissionPv,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<double> get montant => $composableBuilder(
     column: $table.montant,
     builder: (column) => ColumnFilters(column),
@@ -9502,6 +9741,26 @@ class $$SecondaryTransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get actions => $composableBuilder(
+    column: $table.actions,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get prix => $composableBuilder(
+    column: $table.prix,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get frais => $composableBuilder(
+    column: $table.frais,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get commissionPv => $composableBuilder(
+    column: $table.commissionPv,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get montant => $composableBuilder(
     column: $table.montant,
     builder: (column) => ColumnOrderings(column),
@@ -9548,6 +9807,20 @@ class $$SecondaryTransactionsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get date =>
       $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<int> get actions =>
+      $composableBuilder(column: $table.actions, builder: (column) => column);
+
+  GeneratedColumn<double> get prix =>
+      $composableBuilder(column: $table.prix, builder: (column) => column);
+
+  GeneratedColumn<double> get frais =>
+      $composableBuilder(column: $table.frais, builder: (column) => column);
+
+  GeneratedColumn<double> get commissionPv => $composableBuilder(
+    column: $table.commissionPv,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<double> get montant =>
       $composableBuilder(column: $table.montant, builder: (column) => column);
@@ -9619,12 +9892,20 @@ class $$SecondaryTransactionsTableTableManager
                 Value<int> assetId = const Value.absent(),
                 Value<String> type = const Value.absent(),
                 Value<DateTime?> date = const Value.absent(),
+                Value<int> actions = const Value.absent(),
+                Value<double> prix = const Value.absent(),
+                Value<double> frais = const Value.absent(),
+                Value<double> commissionPv = const Value.absent(),
                 Value<double> montant = const Value.absent(),
               }) => SecondaryTransactionsCompanion(
                 id: id,
                 assetId: assetId,
                 type: type,
                 date: date,
+                actions: actions,
+                prix: prix,
+                frais: frais,
+                commissionPv: commissionPv,
                 montant: montant,
               ),
           createCompanionCallback:
@@ -9633,12 +9914,20 @@ class $$SecondaryTransactionsTableTableManager
                 required int assetId,
                 required String type,
                 Value<DateTime?> date = const Value.absent(),
+                Value<int> actions = const Value.absent(),
+                Value<double> prix = const Value.absent(),
+                Value<double> frais = const Value.absent(),
+                Value<double> commissionPv = const Value.absent(),
                 Value<double> montant = const Value.absent(),
               }) => SecondaryTransactionsCompanion.insert(
                 id: id,
                 assetId: assetId,
                 type: type,
                 date: date,
+                actions: actions,
+                prix: prix,
+                frais: frais,
+                commissionPv: commissionPv,
                 montant: montant,
               ),
           withReferenceMapper: (p0) => p0
