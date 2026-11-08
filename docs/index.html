@@ -29,7 +29,7 @@
 <body>
 <header>
   <h1>Notes de version — Patrimoine</h1>
-  <p>Les 22 builds de Patrimoine, du premier MVP au suivi multi-tours des startups.</p>
+  <p>Les 23 builds de Patrimoine, du premier MVP au suivi multi-tours des startups.</p>
 </header>
 <div class="layout">
   <nav class="toc">
@@ -45,7 +45,7 @@
         <ul class="sub"><li><a href="#build-7">Build 7 — Startups non cotées</a></li><li><a href="#build-8">Build 8 — Courbe d&#x27;évolution et import CSV</a></li><li><a href="#build-9">Build 9 — Catégorie startups et import Blast</a></li><li><a href="#build-10">Build 10 — Onglet Startups avancé</a></li></ul>
       </li>
       <li class="phase-link"><a href="#fiabilite-et-confort-dusage">Fiabilité et confort d&#x27;usage</a>
-        <ul class="sub"><li><a href="#build-11">Build 11 — Import sans doublons</a></li><li><a href="#build-12">Build 12 — KPI frais et recherche</a></li><li><a href="#build-13">Build 13 — Frais par catégorie et blocs réordonnables</a></li><li><a href="#build-14">Build 14 — Startups multi-tours</a></li><li><a href="#build-15">Build 15 — Levées de fonds synchronisées au ré-import</a></li><li><a href="#build-16">Build 16 — Refonte de la navigation et Blast Market</a></li><li><a href="#build-17">Build 17 — Blast Market détaillé (PV + filtres)</a></li><li><a href="#build-18">Build 18 — Blast Market compact + emplacement des documents</a></li><li><a href="#build-19">Build 19 — Cashflow immobilier : charges locatives en revenu</a></li><li><a href="#build-20">Build 20 — Onglets actifs simplifiés + type Bourse</a></li><li><a href="#build-21">Build 21 — Positions boursières modifiables et recherche de symbole</a></li><li><a href="#build-22">Build 22 — Capital investi fiabilisé et onglet Startup compacté</a></li></ul>
+        <ul class="sub"><li><a href="#build-11">Build 11 — Import sans doublons</a></li><li><a href="#build-12">Build 12 — KPI frais et recherche</a></li><li><a href="#build-13">Build 13 — Frais par catégorie et blocs réordonnables</a></li><li><a href="#build-14">Build 14 — Startups multi-tours</a></li><li><a href="#build-15">Build 15 — Levées de fonds synchronisées au ré-import</a></li><li><a href="#build-16">Build 16 — Refonte de la navigation et Blast Market</a></li><li><a href="#build-17">Build 17 — Blast Market détaillé (PV + filtres)</a></li><li><a href="#build-18">Build 18 — Blast Market compact + emplacement des documents</a></li><li><a href="#build-19">Build 19 — Cashflow immobilier : charges locatives en revenu</a></li><li><a href="#build-20">Build 20 — Onglets actifs simplifiés + type Bourse</a></li><li><a href="#build-21">Build 21 — Positions boursières modifiables et recherche de symbole</a></li><li><a href="#build-22">Build 22 — Capital investi fiabilisé et onglet Startup compacté</a></li><li><a href="#build-23">Build 23 — Capital investi sans double comptage</a></li></ul>
       </li>
     </ul>
   </nav>
@@ -223,6 +223,13 @@
           <li>KPI « Capital investi » consolidé : startups de toutes catégories (Startup + Blast) + achats du marché secondaire (Blast Market).</li>
           <li>Filtres de l&#x27;onglet Startup condensés sur une seule ligne (menus compacts, multi-sélection des catégories conservée).</li>
           <li>« Répartition par catégorie » et « Valorisation par année d&#x27;investissement » côte à côte sur écran large.</li>
+      </ul>
+    </section>
+    <section id="build-23" class="build">
+      <h3>Build 23 — Capital investi sans double comptage <span class="date">· 8 novembre 2026</span></h3>
+      <ul>
+          <li>Correction : la Synthèse « Capital investi » ne double-compte plus les achats du marché secondaire (déjà inclus dans le montant investi de chaque startup).</li>
+          <li>Capital investi total exact : primaire + achats secondaires, sans ré-ajouter le Blast Market.</li>
       </ul>
     </section>
   </section>

@@ -42,16 +42,14 @@ double _entryInvested(StartupEntry e) => investedCapital(e.detail);
 /// Gain de la ligne : valeur − capital investi (négatif pour une radiation).
 double _entryPnl(StartupEntry e) => lineValue(e.detail) - _entryInvested(e);
 
-/// Capital investi total du portefeuille : toutes les startups (catégorisées
-/// et Blast) + achats sur le marché secondaire (onglet Blast Market).
+/// Capital investi total du portefeuille : somme du capital investi de chaque
+/// startup. `montant_investi_eur` contient déjà le primaire **et** les achats
+/// du marché secondaire, donc il ne faut PAS ré-ajouter les achats secondaires
+/// ici (sinon double comptage du Blast Market).
 double _totalInvestedGlobal(PortfolioController controller) {
   var total = 0.0;
   for (final e in controller.startupEntries) {
     total += investedCapital(e.detail);
-    total += SecondaryMarketSummary.of(
-      controller.secondaryTransactionsOf(e.asset.id),
-      pru: e.detail.prixEntree,
-    ).totalAchat;
   }
   return total;
 }
