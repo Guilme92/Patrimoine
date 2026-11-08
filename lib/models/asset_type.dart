@@ -21,7 +21,7 @@ String assetTypeLabel(AssetType t) {
     case AssetType.cash:
       return 'Liquidités';
     case AssetType.investment:
-      return 'Investissements';
+      return 'Bourse';
     case AssetType.crypto:
       return 'Crypto';
     case AssetType.realEstate:

@@ -39,7 +39,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.byType(SegmentedButton<bool>), findsOneWidget);
     expect(find.byIcon(Icons.more_vert), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.more_vert));

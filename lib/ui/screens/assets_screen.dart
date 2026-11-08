@@ -14,8 +14,7 @@ import '../../theme/app_theme.dart';
 import '../../theme/palette.dart';
 import '../widgets/asset_tile.dart';
 
-/// Liste des actifs : filtre par catégorie et deux modes d'affichage
-/// (« Par type » ou « Ordre manuel » avec drag & drop).
+/// Liste des actifs : filtre par catégorie, groupés par type.
 ///
 /// [types] restreint l'écran à un sous-ensemble de catégories (onglets
 /// « Immobilier », « Bourse et Crypto », « Autres ») : les actifs des autres
@@ -30,7 +29,6 @@ class AssetsScreen extends StatefulWidget {
 }
 
 class _AssetsScreenState extends State<AssetsScreen> {
-  bool _manualOrder = false;
   final Set<AssetType> _selectedTypes = <AssetType>{};
 
   /// Écran restreint à un ou plusieurs types (pas de filtre manuel).
@@ -173,39 +171,6 @@ class _AssetsScreenState extends State<AssetsScreen> {
     );
   }
 
-  Future<void> _reorder(
-    PortfolioController controller,
-    List<Asset> visible,
-    int oldIndex,
-    int newIndex,
-  ) async {
-    final ids = visible.map((a) => a.id).toList();
-    final moved = ids.removeAt(oldIndex);
-    ids.insert(newIndex.clamp(0, ids.length), moved);
-    await controller.reorderAssets(_mergeOrder(controller.assets, visible, ids));
-  }
-
-  /// Replace les identifiants visibles réordonnés dans la liste complète,
-  /// en conservant la position relative des actifs masqués par le filtre.
-  static List<int> _mergeOrder(
-    List<Asset> all,
-    List<Asset> visible,
-    List<int> reorderedVisibleIds,
-  ) {
-    final visibleIds = visible.map((a) => a.id).toSet();
-    final iterator = reorderedVisibleIds.iterator;
-    final result = <int>[];
-    for (final a in all) {
-      if (visibleIds.contains(a.id)) {
-        iterator.moveNext();
-        result.add(iterator.current);
-      } else {
-        result.add(a.id);
-      }
-    }
-    return result;
-  }
-
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<PortfolioController>();
@@ -225,27 +190,8 @@ class _AssetsScreenState extends State<AssetsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Expanded(
-                      child: SegmentedButton<bool>(
-                        segments: const [
-                          ButtonSegment(
-                            value: false,
-                            label: Text('Par type'),
-                            icon: Icon(Icons.category_outlined, size: 18),
-                          ),
-                          ButtonSegment(
-                            value: true,
-                            label: Text('Ordre manuel'),
-                            icon: Icon(Icons.drag_indicator, size: 18),
-                          ),
-                        ],
-                        selected: {_manualOrder},
-                        showSelectedIcon: false,
-                        onSelectionChanged: (selection) =>
-                            setState(() => _manualOrder = selection.first),
-                      ),
-                    ),
                     PopupMenuButton<String>(
                       tooltip: 'Import et modèles CSV',
                       icon: const Icon(Icons.more_vert),
@@ -382,32 +328,10 @@ class _AssetsScreenState extends State<AssetsScreen> {
                       ),
                     ),
                   )
-                : _manualOrder
-                ? _buildManualList(controller, visible)
                 : _buildGroupedList(controller, visible),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildManualList(PortfolioController controller, List<Asset> visible) {
-    return ReorderableListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-      buildDefaultDragHandles: true,
-      itemCount: visible.length,
-      onReorderItem: (oldIndex, newIndex) =>
-          _reorder(controller, visible, oldIndex, newIndex),
-      itemBuilder: (context, index) {
-        final a = visible[index];
-        return AssetTile(
-          key: ValueKey<int>(a.id),
-          asset: a,
-          positions: controller.positionsOf(a.id),
-          prices: controller.prices,
-          startup: controller.startupOf(a.id),
-        );
-      },
     );
   }
 

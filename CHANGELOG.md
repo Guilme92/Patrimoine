@@ -27,6 +27,7 @@ Les 14 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : 
   - [Build 17 — Blast Market détaillé (PV + filtres) (7 novembre 2026)](#build-17--blast-market-détaillé-pv--filtres-7-novembre-2026)
   - [Build 18 — Blast Market compact + emplacement des documents (8 novembre 2026)](#build-18--blast-market-compact--emplacement-des-documents-8-novembre-2026)
   - [Build 19 — Cashflow immobilier : charges locatives en revenu (8 novembre 2026)](#build-19--cashflow-immobilier--charges-locatives-en-revenu-8-novembre-2026)
+  - [Build 20 — Onglets actifs simplifiés + type Bourse (8 novembre 2026)](#build-20--onglets-actifs-simplifiés--type-bourse-8-novembre-2026)
 
 ## Phase 1 — Fondations
 
@@ -137,3 +138,8 @@ Les 14 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : 
 
 - Charges locatives refacturées au locataire : comptées comme revenu, plus comme dépense.
 - Nouveau calcul : cashflow = loyer + charges locatives − charges du propriétaire − mensualité de crédit.
+
+### Build 20 — Onglets actifs simplifiés + type Bourse (8 novembre 2026)
+
+- Onglets Immobilier / Bourse et Crypto / Autres : suppression du tri « Par type / Ordre manuel » (liste simple groupée par type).
+- Type « Investissements » renommé « Bourse » : créer une action cotée reliée à Yahoo Finance via son symbole.
