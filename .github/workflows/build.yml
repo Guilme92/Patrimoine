@@ -30,11 +30,11 @@ jobs:
           exit 1
       - name: Build APK
         run: |
-          for i in 1 2 3 4 5 6; do
-            echo "Tentative $i/6"
+          for i in $(seq 1 30); do
+            echo "Tentative $i/30"
             if flutter build apk --release --split-per-abi; then exit 0; fi
-            echo "Échec (probable 504 GitHub releases), nouvel essai dans 30 s..."
-            sleep 30
+            echo "Échec (probable 504 GitHub releases), nouvel essai dans 15 s..."
+            sleep 15
           done
           exit 1
 
