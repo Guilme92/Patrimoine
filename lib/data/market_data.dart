@@ -14,6 +14,25 @@ class MarketQuote {
   });
 }
 
+/// Résultat de la recherche d'un symbole boursier.
+class SymbolSearchResult {
+  final String symbol;
+  final String name;
+  final String exchange;
+  final String type;
+
+  /// Prix actuel converti en EUR (null si la cotation est indisponible).
+  double? priceEur;
+
+  SymbolSearchResult({
+    required this.symbol,
+    required this.name,
+    required this.exchange,
+    required this.type,
+    this.priceEur,
+  });
+}
+
 /// Récupération des prix de marché.
 ///
 /// - Yahoo Finance (non officiel) pour actions, ETF, devises, grandes cryptos :
@@ -56,6 +75,72 @@ class MarketDataService {
       if (q != null) map[q.symbol] = q;
     }
     return map;
+  }
+
+  /// Recherche un symbole boursier par nom (ex. « hermes » → RMS.PA).
+  ///
+  /// Interroge la recherche Yahoo Finance puis enrichit chaque résultat avec
+  /// son prix actuel converti en EUR quand la cotation est disponible.
+  /// Les symboles sans cotation (fonds non référencés, titres retirés) sont
+  /// renvoyés sans prix. Retourne une liste vide en cas d'échec.
+  Future<List<SymbolSearchResult>> searchSymbols(String query) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return const [];
+    final uri = Uri.parse(
+      'https://query1.finance.yahoo.com/v1/finance/search'
+      '?q=${Uri.encodeComponent(trimmed)}'
+      '&quotesCount=8&newsCount=0&listsCount=0',
+    );
+    try {
+      final res = await http
+          .get(uri, headers: const {'User-Agent': 'Mozilla/5.0'})
+          .timeout(const Duration(seconds: 12));
+      if (res.statusCode != 200) return const [];
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      final quotes = (data['quotes'] as List?) ?? const [];
+      final results = <SymbolSearchResult>[];
+      for (final q in quotes) {
+        if (q is! Map<String, dynamic>) continue;
+        final symbol = (q['symbol'] as String?)?.trim() ?? '';
+        if (symbol.isEmpty || q['isYahooFinance'] != true) continue;
+        results.add(
+          SymbolSearchResult(
+            symbol: symbol,
+            name: _nameOrFallback(q['shortname'] as String?, symbol),
+            exchange: (q['exchDisp'] as String?) ??
+                (q['exchange'] as String?) ??
+                '',
+            type: (q['typeDisp'] as String?) ??
+                (q['quoteType'] as String?) ??
+                '',
+          ),
+        );
+      }
+      await _attachPrices(results);
+      return results;
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Remplit `priceEur` de chaque résultat (cotation convertie en EUR).
+  Future<void> _attachPrices(List<SymbolSearchResult> results) async {
+    final quotesMap = await fetchQuotes(results.map((r) => r.symbol));
+    final rates = <String, double>{};
+    for (final r in results) {
+      final q = quotesMap[r.symbol];
+      if (q == null || q.price <= 0) continue;
+      var price = q.price;
+      if (q.currency != 'EUR') {
+        if (!rates.containsKey(q.currency)) {
+          final rate = await eurRateFor(q.currency);
+          rates[q.currency] = rate ?? 0;
+        }
+        final rate = rates[q.currency]!;
+        if (rate > 0) price = q.price * rate;
+      }
+      r.priceEur = price;
+    }
   }
 
   /// Taux de conversion « 1 `currency` = X EUR ». Retourne null si indisponible.
@@ -115,4 +200,9 @@ class MarketDataService {
     }
     return bestId;
   }
+}
+
+String _nameOrFallback(String? name, String symbol) {
+  final n = name?.trim();
+  return (n == null || n.isEmpty) ? symbol : n;
 }

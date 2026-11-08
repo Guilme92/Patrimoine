@@ -62,6 +62,7 @@ class PortfolioController extends ChangeNotifier {
   Map<int, List<SecondaryTransaction>> _secondaryTransactions = {};
   Map<int, List<AssetDocument>> _documents = {};
   Map<String, double> _prices = {};
+  Set<String> _failedSymbols = {};
   DateTime? _lastPriceUpdate;
   List<NetWorthSnapshot> _snapshots = [];
   List<String> _startupBlockOrder = List.unmodifiable(startupBlockIds);
@@ -161,6 +162,11 @@ class PortfolioController extends ChangeNotifier {
       _documents[assetId] ?? const [];
 
   Map<String, double> get prices => _prices;
+
+  /// Symboles pour lesquels la dernière tentative de rafraîchissement n'a
+  /// remonté aucune cotation (Yahoo ni CoinGecko). Sert à signaler dans l'UI
+  /// les positions dont le code boursier est probablement incorrect.
+  Set<String> get failedSymbols => _failedSymbols;
 
   Future<void> load() async {
     _loading = true;
@@ -369,6 +375,11 @@ class PortfolioController extends ChangeNotifier {
     await load();
   }
 
+  Future<void> updatePosition(Position position) async {
+    await db.updatePosition(position);
+    await load();
+  }
+
   Future<void> deletePosition(int id) async {
     await db.deletePosition(id);
     await load();
@@ -507,6 +518,7 @@ class PortfolioController extends ChangeNotifier {
     }
 
     await _reload();
+    _failedSymbols = symbols.difference(quotes.keys.toSet());
     notifyListeners();
     return PriceRefreshResult(
       updated: updated,

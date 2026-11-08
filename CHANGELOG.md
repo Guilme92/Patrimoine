@@ -1,6 +1,6 @@
 # Notes de version — Patrimoine
 
-Les 14 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : un historique complet des fonctionnalités livrées, build par build.
+Les 21 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : un historique complet des fonctionnalités livrées, build par build.
 
 ## Table des matières
 
@@ -28,6 +28,7 @@ Les 14 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : 
   - [Build 18 — Blast Market compact + emplacement des documents (8 novembre 2026)](#build-18--blast-market-compact--emplacement-des-documents-8-novembre-2026)
   - [Build 19 — Cashflow immobilier : charges locatives en revenu (8 novembre 2026)](#build-19--cashflow-immobilier--charges-locatives-en-revenu-8-novembre-2026)
   - [Build 20 — Onglets actifs simplifiés + type Bourse (8 novembre 2026)](#build-20--onglets-actifs-simplifiés--type-bourse-8-novembre-2026)
+  - [Build 21 — Positions boursières modifiables et recherche de symbole (8 novembre 2026)](#build-21--positions-boursières-modifiables-et-recherche-de-symbole-8-novembre-2026)
 
 ## Phase 1 — Fondations
 
@@ -143,3 +144,9 @@ Les 14 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : 
 
 - Onglets Immobilier / Bourse et Crypto / Autres : suppression du tri « Par type / Ordre manuel » (liste simple groupée par type).
 - Type « Investissements » renommé « Bourse » : créer une action cotée reliée à Yahoo Finance via son symbole.
+
+### Build 21 — Positions boursières modifiables et recherche de symbole (8 novembre 2026)
+
+- Modification et suppression d'une position depuis la fiche de l'actif (menu ⋮ sur chaque ligne), pour corriger un symbole sans tout ressaisir.
+- Recherche de symbole dans le champ « Symbole » : taper un nom (ex. « hermes ») affiche les codes boursiers correspondants avec leur prix actuel en euros ; un clic remplit le symbole et le nom.
+- Avertissement « Cours introuvable — vérifiez le symbole » sur une position dont le code ne remonte aucune cotation.

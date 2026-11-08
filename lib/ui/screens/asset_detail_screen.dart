@@ -190,6 +190,17 @@ class AssetDetailScreen extends StatelessWidget {
                 (p) => _PositionTile(
                   position: p,
                   price: controller.prices[p.symbol],
+                  missing: controller.failedSymbols.contains(p.symbol),
+                  onEdit: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AddPositionScreen(
+                        asset: current,
+                        position: p,
+                      ),
+                    ),
+                  ),
+                  onDelete: () => _confirmDeletePosition(context, p),
                 ),
               ),
           ],
@@ -256,6 +267,34 @@ class AssetDetailScreen extends StatelessWidget {
     if (ok == true) {
       await controller.deleteAsset(asset.id);
       if (context.mounted) Navigator.pop(context);
+    }
+  }
+
+  Future<void> _confirmDeletePosition(
+    BuildContext context,
+    Position position,
+  ) async {
+    final controller = context.read<PortfolioController>();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Supprimer la position ?'),
+        content: Text('« ${position.name} » sera retirée du portefeuille.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await controller.deletePosition(position.id);
+      if (context.mounted) _snack(context, 'Position supprimée.');
     }
   }
 
@@ -929,7 +968,16 @@ class _DocumentLabelDialogState extends State<_DocumentLabelDialog> {
 class _PositionTile extends StatelessWidget {
   final Position position;
   final double? price;
-  const _PositionTile({required this.position, this.price});
+  final bool missing;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  const _PositionTile({
+    required this.position,
+    this.price,
+    this.missing = false,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -941,7 +989,7 @@ class _PositionTile extends StatelessWidget {
     return Container(
       decoration: cardDecoration(),
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
       child: Row(
         children: [
           Expanded(
@@ -959,6 +1007,32 @@ class _PositionTile extends StatelessWidget {
                   '${_fmtQty(position.quantity)} × ${formatEuro(position.unitCost, cents: true)}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
+                if (missing)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.search_off,
+                          size: 14,
+                          color: Colors.amber,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            'Cours introuvable — vérifiez le symbole',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: Colors.amber),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -979,6 +1053,33 @@ class _PositionTile extends StatelessWidget {
                   ),
                   const InfoHint('Quantité × (prix − PRU)', size: 12),
                 ],
+              ),
+            ],
+          ),
+          PopupMenuButton<String>(
+            tooltip: 'Actions',
+            onSelected: (v) {
+              if (v == 'edit') onEdit();
+              if (v == 'delete') onDelete();
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'edit',
+                child: ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.edit_outlined),
+                  title: Text('Modifier'),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'delete',
+                child: ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.delete_outline),
+                  title: Text('Supprimer'),
+                ),
               ),
             ],
           ),

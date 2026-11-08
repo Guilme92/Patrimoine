@@ -365,6 +365,9 @@ class AppDatabase extends _$AppDatabase {
   Future<int> addPosition(PositionsCompanion entry) =>
       into(positions).insert(entry);
 
+  Future<void> updatePosition(Position position) =>
+      update(positions).replace(position);
+
   Future<void> deletePosition(int id) =>
       (delete(positions)..where((t) => t.id.equals(id))).go();
 
