@@ -67,29 +67,58 @@ void main() {
 
     test('charges annuelles et mensualisées', () {
       final r = _rental();
-      // 50*12 + 1200 + 240 + 600 + 300 + 60*12 = 3660
-      expect(annualOwnerCharges(r), 3660);
-      expect(monthlyOwnerCharges(r), closeTo(305, 1e-9));
+      // 1200 + 240 + 600 + 300 + 60*12 = 3060 (charges locatives exclues)
+      expect(annualOwnerCharges(r), 3060);
+      expect(monthlyOwnerCharges(r), closeTo(255, 1e-9));
+      expect(monthlyRentalIncome(r), 950);
     });
 
     test('cashflow mensuel avec crédit', () {
       final r = _rental();
-      // 900 - 305 - (700 + 30)
+      // 900 + 50 - 255 - (700 + 30)
       expect(monthlyLoanPayment(r), 730);
-      expect(monthlyCashflow(r), closeTo(-135, 1e-9));
-      expect(annualCashflow(r), closeTo(-1620, 1e-9));
+      expect(monthlyCashflow(r), closeTo(-35, 1e-9));
+      expect(annualCashflow(r), closeTo(-420, 1e-9));
     });
 
     test('cashflow mensuel sans crédit', () {
       final r = _rental(aUnCredit: false);
       expect(monthlyLoanPayment(r), 0);
-      expect(monthlyCashflow(r), closeTo(595, 1e-9));
+      expect(monthlyCashflow(r), closeTo(695, 1e-9));
       expect(outstandingLoan(r), 0);
+    });
+
+    test('les charges locatives augmentent le cashflow', () {
+      final sans = _rental(
+        loyerHc: 1000,
+        chargesLocatives: 0,
+        chargesCopropriete: 100,
+        taxeFonciere: 0,
+        assurancePno: 0,
+        travauxEntretien: 0,
+        fraisGestion: 0,
+        aUnCredit: false,
+      );
+      final avec = _rental(
+        loyerHc: 1000,
+        chargesLocatives: 200,
+        chargesCopropriete: 100,
+        taxeFonciere: 0,
+        assurancePno: 0,
+        travauxEntretien: 0,
+        fraisGestion: 0,
+        aUnCredit: false,
+      );
+      // 1000 + 200 - 100/12, et non 1000 - 200 - 100/12
+      expect(monthlyCashflow(avec), closeTo(1000 + 200 - 100 / 12, 1e-9));
+      expect(monthlyCashflow(avec) - monthlyCashflow(sans), closeTo(200, 1e-9));
+      // Les charges locatives ne sont pas des charges du propriétaire.
+      expect(monthlyOwnerCharges(avec), closeTo(100 / 12, 1e-9));
     });
 
     test('rendement net de charges', () {
       final r = _rental();
-      expect(netYieldPct(r, 200000), closeTo(3.57, 1e-9));
+      expect(netYieldPct(r, 200000), closeTo(3.87, 1e-9));
     });
   });
 

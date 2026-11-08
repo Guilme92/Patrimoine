@@ -26,6 +26,7 @@ Les 14 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : 
   - [Build 16 — Refonte de la navigation et Blast Market (7 novembre 2026)](#build-16--refonte-de-la-navigation-et-blast-market-7-novembre-2026)
   - [Build 17 — Blast Market détaillé (PV + filtres) (7 novembre 2026)](#build-17--blast-market-détaillé-pv--filtres-7-novembre-2026)
   - [Build 18 — Blast Market compact + emplacement des documents (8 novembre 2026)](#build-18--blast-market-compact--emplacement-des-documents-8-novembre-2026)
+  - [Build 19 — Cashflow immobilier : charges locatives en revenu (8 novembre 2026)](#build-19--cashflow-immobilier--charges-locatives-en-revenu-8-novembre-2026)
 
 ## Phase 1 — Fondations
 
@@ -131,3 +132,8 @@ Les 14 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : 
 - Blast Market : grille compacte (3 à 4 startups par ligne), carte récapitulative (totaux + P.U. moyen), détail ligne par ligne au clic.
 - KPIs plus-value brute et plus-value nette totales.
 - Documents : option « Ouvrir l'emplacement du dossier » (explorateur de fichiers).
+
+### Build 19 — Cashflow immobilier : charges locatives en revenu (8 novembre 2026)
+
+- Charges locatives refacturées au locataire : comptées comme revenu, plus comme dépense.
+- Nouveau calcul : cashflow = loyer + charges locatives − charges du propriétaire − mensualité de crédit.

@@ -408,7 +408,8 @@ class _RentalFormScreenState extends State<RentalFormScreen> {
             const SizedBox(height: 8),
             Text(
               'Rendement brut = loyer annuel hors charges / valeur du bien. '
-              'Cashflow = loyer − charges − mensualité de crédit.',
+              'Cashflow = loyer + charges locatives − charges du '
+              'propriétaire − mensualité de crédit.',
               style: Theme.of(context).textTheme.bodySmall
                   ?.copyWith(color: AppColors.textSecondary),
             ),

@@ -534,8 +534,8 @@ class _RentalCard extends StatelessWidget {
                   Expanded(
                     child: _Metric(
                       label: 'Cashflow / mois',
-                      hint: 'Loyer − charges du propriétaire − mensualité '
-                          'de crédit',
+                      hint: 'Loyer + charges locatives − charges du '
+                          'propriétaire − mensualité de crédit',
                       value: formatSignedEuro(cashflow),
                       color: cashflowColor,
                     ),
@@ -573,8 +573,12 @@ class _RentalCard extends StatelessWidget {
                     : rentalManagementModeLabel(r.modeGestion),
               ),
               InfoRow(
-                label: 'Charges locatives',
+                label: 'Charges locatives (refacturées)',
                 value: '${formatEuro(r.chargesLocatives)} / mois',
+              ),
+              InfoRow(
+                label: 'Revenu locatif (loyer + charges)',
+                value: '${formatEuro(monthlyRentalIncome(r))} / mois',
               ),
               InfoRow(
                 label: 'Dépôt de garantie',

@@ -9,8 +9,10 @@ import '../data/database.dart';
 double annualGrossRent(Rental r) => r.loyerHc * 12;
 
 /// Charges annuelles supportées par le propriétaire.
+///
+/// Les charges locatives sont exclues : elles sont refacturées au locataire
+/// et comptent donc comme un revenu, pas comme une charge du propriétaire.
 double annualOwnerCharges(Rental r) =>
-    r.chargesLocatives * 12 +
     r.taxeFonciere +
     r.assurancePno +
     r.chargesCopropriete +
@@ -24,9 +26,14 @@ double monthlyOwnerCharges(Rental r) => annualOwnerCharges(r) / 12;
 double monthlyLoanPayment(Rental r) =>
     r.aUnCredit ? r.mensualiteCredit + r.assuranceEmprunteur : 0;
 
-/// Cashflow mensuel : loyer − charges − mensualité de crédit.
+/// Revenu locatif mensuel encaissé : loyer hors charges + charges locatives
+/// refacturées au locataire.
+double monthlyRentalIncome(Rental r) => r.loyerHc + r.chargesLocatives;
+
+/// Cashflow mensuel : revenu locatif − charges du propriétaire − mensualité
+/// de crédit.
 double monthlyCashflow(Rental r) =>
-    r.loyerHc - monthlyOwnerCharges(r) - monthlyLoanPayment(r);
+    monthlyRentalIncome(r) - monthlyOwnerCharges(r) - monthlyLoanPayment(r);
 
 double annualCashflow(Rental r) => monthlyCashflow(r) * 12;
 
