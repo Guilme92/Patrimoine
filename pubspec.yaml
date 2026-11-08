@@ -21,6 +21,14 @@ version: 1.0.0+1
 environment:
   sdk: ^3.13.7
 
+# Télécharge les binaires SQLite pré-compilés depuis le dépôt (vendor/sqlite3/)
+# au lieu de github.com/.../releases/download/, qui subit des pannes 504.
+hooks:
+  user_defines:
+    sqlite3:
+      source: sqlite3
+      url_pattern: "https://raw.githubusercontent.com/Guilme92/Patrimoine/main/vendor/sqlite3/$FILENAME"
+
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,

@@ -59,6 +59,7 @@ jobs:
 
       - run: flutter pub get
       - name: Build Windows
+        shell: bash
         run: |
           for i in 1 2 3 4 5 6; do
             echo "Tentative $i/6"
