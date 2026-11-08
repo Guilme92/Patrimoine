@@ -12,6 +12,7 @@ import 'package:patrimoine/models/asset_type.dart';
 import 'package:patrimoine/models/startup.dart';
 import 'package:patrimoine/theme/app_theme.dart';
 import 'package:patrimoine/utils/format.dart';
+import 'package:patrimoine/ui/screens/blast_market_detail_screen.dart';
 import 'package:patrimoine/ui/screens/blast_market_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite;
@@ -497,6 +498,102 @@ void main() {
     });
   });
 
+  group('agrégats du marché secondaire', () {
+    SecondaryTransaction tx({
+      String type = 'achat',
+      int actions = 0,
+      double prix = 0,
+      double frais = 0,
+      double commissionPv = 0,
+      double? montant,
+    }) => SecondaryTransaction(
+      id: 0,
+      assetId: 1,
+      type: type,
+      date: null,
+      actions: actions,
+      prix: prix,
+      frais: frais,
+      commissionPv: commissionPv,
+      montant:
+          montant ??
+          (type == 'revente'
+              ? actions * prix - commissionPv
+              : actions * prix + frais),
+    );
+
+    test('totaux, P.U. moyen pondéré et PV par type', () {
+      final summary = SecondaryMarketSummary.of(
+        [
+          tx(actions: 10, prix: 2),
+          tx(actions: 30, prix: 4, frais: 5),
+          tx(
+            type: 'revente',
+            actions: 50,
+            prix: 20,
+            frais: 2,
+            commissionPv: 10,
+          ),
+        ],
+        pru: 10,
+      );
+
+      expect(summary.totalAchat, closeTo(20 + 125, 1e-9));
+      expect(summary.actionsAchat, 40);
+      // (10×2 + 30×4) / 40 = 3,50 € — les frais ne polluent pas le P.U.
+      expect(summary.puMoyenAchat, closeTo(3.5, 1e-9));
+      expect(summary.totalRevente, closeTo(990, 1e-9));
+      expect(summary.actionsVente, 50);
+      expect(summary.puMoyenVente, closeTo(20, 1e-9));
+      expect(summary.pvBrute, closeTo(500, 1e-9));
+      expect(summary.pvNette, closeTo(341.6, 1e-9));
+      expect(summary.ventesEvaluees, 1);
+      expect(summary.pvPartielle, isFalse);
+      expect(summary.pvIndisponible, isFalse);
+    });
+
+    test('PV ignorée quand le PRU est inconnu ; P.U. à 0 sans détail', () {
+      final summary = SecondaryMarketSummary.of(
+        [
+          tx(type: 'revente', actions: 10, prix: 5),
+          tx(type: 'revente', montant: 300),
+        ],
+        pru: 0,
+      );
+      expect(summary.totalRevente, closeTo(350, 1e-9));
+      expect(summary.pvBrute, 0);
+      expect(summary.pvNette, 0);
+      expect(summary.ventesEvaluees, 0);
+      expect(summary.ventesNonEvaluees, 2);
+      expect(summary.pvPartielle, isTrue);
+      expect(summary.pvIndisponible, isTrue);
+      // P.U. moyen calculé sur la seule vente détaillée.
+      expect(summary.puMoyenVente, closeTo(5, 1e-9));
+
+      // Agrégat neutre.
+      expect(SecondaryMarketSummary.empty.totalAchat, 0);
+      expect(SecondaryMarketSummary.empty.pvIndisponible, isFalse);
+    });
+
+    test('somme de deux startups : totaux et PV cumulés', () {
+      final alpha = SecondaryMarketSummary.of(
+        [
+          tx(type: 'revente', actions: 50, prix: 20, commissionPv: 10, frais: 2),
+        ],
+        pru: 10,
+      );
+      final beta = SecondaryMarketSummary.of(
+        [tx(actions: 4, prix: 10)],
+        pru: 10,
+      );
+      final total = SecondaryMarketSummary.empty + alpha + beta;
+      expect(total.pvBrute, closeTo(500, 1e-9));
+      expect(total.pvNette, closeTo(341.6, 1e-9));
+      expect(total.totalAchat, closeTo(40, 1e-9));
+      expect(total.puMoyenAchat, closeTo(10, 1e-9));
+    });
+  });
+
   group('écran Blast Market', () {
     late AppDatabase db;
     late PortfolioController controller;
@@ -508,42 +605,8 @@ void main() {
 
     tearDown(() => db.close());
 
-    testWidgets('affiche totaux achetés/revendus et le détail daté', (
-      tester,
-    ) async {
-      tester.view.physicalSize = const Size(360, 1000);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
-
-      final id = await db.addAsset(
-        AssetsCompanion.insert(name: 'Alpha', type: 'startup'),
-      );
-      await db.saveStartupDetails(
-        const StartupDraft(quantite: 10, prixEntree: 5).toCompanion(id),
-      );
-      await db.addSecondaryTransaction(
-        SecondaryTransactionDraft(
-          date: DateTime(2026, 1, 29),
-          type: 'achat',
-          montant: 600,
-        ).toCompanion(id),
-      );
-      await db.addSecondaryTransaction(
-        SecondaryTransactionDraft(
-          date: DateTime(2026, 2, 10),
-          type: 'revente',
-          montant: 300,
-        ).toCompanion(id),
-      );
-      // Startup sans transaction : hors écran.
-      final other = await db.addAsset(
-        AssetsCompanion.insert(name: 'Beta', type: 'startup'),
-      );
-      await db.saveStartupDetails(
-        const StartupDraft(quantite: 1, prixEntree: 1).toCompanion(other),
-      );
-      await tester.runAsync(() => controller.load());
-
+    /// Monte l'écran et attend le chargement du contrôleur.
+    Future<void> pumpMarket(WidgetTester tester) async {
       await tester.pumpWidget(
         ChangeNotifierProvider.value(
           value: controller,
@@ -554,23 +617,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+    }
 
-      expect(find.text('Marché secondaire (1)'), findsOneWidget);
-      expect(find.text('Alpha'), findsOneWidget);
-      expect(find.text('Beta'), findsNothing);
-      expect(find.text('Total acheté'), findsOneWidget);
-      expect(find.text('Total revendu'), findsOneWidget);
-      expect(find.text('Achat'), findsOneWidget);
-      expect(find.text('Revente'), findsOneWidget);
-      expect(find.text('29/01/2026'), findsOneWidget);
-      expect(find.text('10/02/2026'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('détail chiffré, PV estimée, filtre de type et recherche', (
+    testWidgets('KPIs de PV, grille compacte et P.U. moyen par type', (
       tester,
     ) async {
-      tester.view.physicalSize = const Size(420, 1600);
+      tester.view.physicalSize = const Size(420, 1200);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
 
@@ -580,7 +632,7 @@ void main() {
       await db.saveStartupDetails(
         const StartupDraft(quantite: 100, prixEntree: 10).toCompanion(alpha),
       );
-      // Achat : 100 × 8 + 5 = 805 €.
+      // Achat : 100 × 8 + 5 = 805 € (P.U. 8 €).
       await db.addSecondaryTransaction(
         SecondaryTransactionDraft(
           date: DateTime(2025, 10, 1),
@@ -590,7 +642,8 @@ void main() {
           frais: 5,
         ).toCompanion(alpha),
       );
-      // Vente : 50 × 20 − 10 = 990 € ; PV brute 500 € ; PV nette 341,60 €.
+      // Vente : 50 × 20 − 10 = 990 € (P.U. 20 €) ; PV brute 500 € ;
+      // PV nette 341,60 €.
       await db.addSecondaryTransaction(
         SecondaryTransactionDraft(
           date: DateTime(2025, 10, 27),
@@ -601,8 +654,120 @@ void main() {
           commissionPv: 10,
         ).toCompanion(alpha),
       );
+      // Startup sans transaction : hors écran.
+      final other = await db.addAsset(
+        AssetsCompanion.insert(name: 'Beta', type: 'startup'),
+      );
+      await db.saveStartupDetails(
+        const StartupDraft(quantite: 1, prixEntree: 1).toCompanion(other),
+      );
+      await tester.runAsync(() => controller.load());
 
-      // PRU inconnu : la PV reste affichée « — ».
+      await pumpMarket(tester);
+
+      expect(find.text('Marché secondaire (1)'), findsOneWidget);
+      expect(find.text('Alpha'), findsOneWidget);
+      expect(find.text('Beta'), findsNothing);
+      // Totaux de flux.
+      expect(find.text('Total acheté'), findsOneWidget);
+      expect(find.text('Total revendu'), findsOneWidget);
+      expect(find.text('Solde net'), findsOneWidget);
+      // Nouveaux KPIs de plus-value (ventes du périmètre filtré).
+      expect(find.text('Plus-value brute totale'), findsOneWidget);
+      expect(find.text('Plus-value nette totale'), findsOneWidget);
+      expect(find.text(formatSignedEuro(500, cents: true)), findsOneWidget);
+      expect(find.text(formatSignedEuro(341.6, cents: true)), findsOneWidget);
+      // Grille compacte : montant + actions + P.U. moyen, rien d'autre.
+      expect(find.byKey(const Key('market-grid')), findsOneWidget);
+      expect(find.byKey(ValueKey('market-card-$alpha')), findsOneWidget);
+      expect(
+        find.text('100 act. · PU ${formatEuro(8, cents: true)}'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('50 act. · PU ${formatEuro(20, cents: true)}'),
+        findsOneWidget,
+      );
+      // Le détail ligne par ligne n'est plus dans l'onglet.
+      expect(find.text('Actions'), findsNothing);
+      expect(find.text('Prix unitaire'), findsNothing);
+      expect(find.text('01/10/2025'), findsNothing);
+      expect(find.textContaining('PV brut'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('un clic sur la carte ouvre l\'écran de détail complet', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(420, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final alpha = await db.addAsset(
+        AssetsCompanion.insert(name: 'Alpha', type: 'startup'),
+      );
+      await db.saveStartupDetails(
+        const StartupDraft(quantite: 100, prixEntree: 10).toCompanion(alpha),
+      );
+      await db.addSecondaryTransaction(
+        SecondaryTransactionDraft(
+          date: DateTime(2025, 10, 1),
+          type: 'achat',
+          actions: 100,
+          prix: 8,
+          frais: 5,
+        ).toCompanion(alpha),
+      );
+      await db.addSecondaryTransaction(
+        SecondaryTransactionDraft(
+          date: DateTime(2025, 10, 27),
+          type: 'revente',
+          actions: 50,
+          prix: 20,
+          frais: 2,
+          commissionPv: 10,
+        ).toCompanion(alpha),
+      );
+      await tester.runAsync(() => controller.load());
+
+      await pumpMarket(tester);
+      await tester.tap(find.byKey(ValueKey('market-card-$alpha')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BlastMarketDetailScreen), findsOneWidget);
+      expect(find.text('Transactions (2)'), findsOneWidget);
+      expect(find.text('Actions'), findsNWidgets(2));
+      expect(find.text('100 actions'), findsOneWidget);
+      expect(find.text('50 actions'), findsOneWidget);
+      expect(find.text('Prix unitaire'), findsNWidgets(2));
+      expect(find.text(formatEuro(8, cents: true)), findsOneWidget);
+      expect(find.text(formatEuro(20, cents: true)), findsOneWidget);
+      expect(find.text('Frais'), findsNWidgets(2));
+      expect(find.text(formatEuro(5, cents: true)), findsOneWidget);
+      expect(find.text('Commission PV'), findsOneWidget);
+      expect(find.text(formatEuro(10, cents: true)), findsOneWidget);
+      expect(find.text('PV brute'), findsOneWidget);
+      expect(find.text('PV nette'), findsOneWidget);
+      expect(find.text(formatSignedEuro(500, cents: true)), findsOneWidget);
+      expect(find.text(formatSignedEuro(341.6, cents: true)), findsOneWidget);
+      expect(find.text('01/10/2025'), findsOneWidget);
+      expect(find.text('27/10/2025'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      // Retour à la grille.
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('market-grid')), findsOneWidget);
+      expect(find.text('Marché secondaire (1)'), findsOneWidget);
+    });
+
+    testWidgets('PRU inconnu : KPIs de PV et détail affichent « — »', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(420, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
       final beta = await db.addAsset(
         AssetsCompanion.insert(name: 'Beta', type: 'startup'),
       );
@@ -619,52 +784,112 @@ void main() {
       );
       await tester.runAsync(() => controller.load());
 
-      await tester.pumpWidget(
-        ChangeNotifierProvider.value(
-          value: controller,
-          child: MaterialApp(
-            theme: buildDarkTheme(),
-            home: const Scaffold(body: BlastMarketScreen()),
-          ),
+      await pumpMarket(tester);
+
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('kpi-pv-brute')),
+          matching: find.text('—'),
         ),
+        findsOneWidget,
       );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('kpi-pv-nette')),
+          matching: find.text('—'),
+        ),
+        findsOneWidget,
+      );
+      // Signalement d'une estimation partielle.
+      expect(find.textContaining('sans PRU connu'), findsOneWidget);
+
+      await tester.tap(find.byKey(ValueKey('market-card-$beta')));
       await tester.pumpAndSettle();
-
-      expect(find.text('Marché secondaire (2)'), findsOneWidget);
-
-      final achatDetail =
-          '100 actions · PU ${formatEuro(8, cents: true)} · '
-          'Frais ${formatEuro(5, cents: true)}';
-      expect(find.text(achatDetail), findsOneWidget);
-      expect(find.text(formatEuro(805, cents: true)), findsOneWidget);
-      expect(find.text(formatEuro(990, cents: true)), findsOneWidget);
-      expect(
-        find.textContaining('PV brut ${formatSignedEuro(500, cents: true)}'),
-        findsOneWidget,
-      );
-      expect(
-        find.textContaining('PV net ${formatSignedEuro(341.6, cents: true)}'),
-        findsOneWidget,
-      );
-      // Beta : PRU indisponible, aucun PV trompeur.
-      expect(find.textContaining('PV brut —'), findsOneWidget);
-      expect(find.textContaining('PV net —'), findsOneWidget);
+      expect(find.text('PV brute'), findsOneWidget);
+      expect(find.text('PV nette'), findsOneWidget);
+      expect(find.text('—'), findsNWidgets(3)); // PV nette KPI, PV brute, PV nette
       expect(tester.takeException(), isNull);
+    });
 
-      // Filtre « Ventes » : l'achat d'Alpha disparaît.
+    testWidgets('filtre de type et recherche par nom filtrent la grille', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(420, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final alpha = await db.addAsset(
+        AssetsCompanion.insert(name: 'Alpha', type: 'startup'),
+      );
+      await db.saveStartupDetails(
+        const StartupDraft(quantite: 100, prixEntree: 10).toCompanion(alpha),
+      );
+      await db.addSecondaryTransaction(
+        SecondaryTransactionDraft(
+          date: DateTime(2025, 10, 1),
+          type: 'achat',
+          actions: 100,
+          prix: 8,
+        ).toCompanion(alpha),
+      );
+      await db.addSecondaryTransaction(
+        SecondaryTransactionDraft(
+          date: DateTime(2025, 10, 27),
+          type: 'revente',
+          actions: 50,
+          prix: 20,
+        ).toCompanion(alpha),
+      );
+      final beta = await db.addAsset(
+        AssetsCompanion.insert(name: 'Beta', type: 'startup'),
+      );
+      await db.saveStartupDetails(
+        const StartupDraft(quantite: 10, prixEntree: 5).toCompanion(beta),
+      );
+      await db.addSecondaryTransaction(
+        SecondaryTransactionDraft(
+          date: DateTime(2025, 11, 5),
+          type: 'revente',
+          actions: 10,
+          prix: 5,
+        ).toCompanion(beta),
+      );
+      await tester.runAsync(() => controller.load());
+
+      await pumpMarket(tester);
+      expect(
+        find.text('100 act. · PU ${formatEuro(8, cents: true)}'),
+        findsOneWidget,
+      );
+
+      // Filtre « Ventes » : le bloc achats d'Alpha passe à « — ».
       await tester.tap(find.text('Ventes'));
       await tester.pumpAndSettle();
-      expect(find.text(achatDetail), findsNothing);
-      expect(find.text('Alpha'), findsOneWidget);
-      expect(find.text('Beta'), findsOneWidget);
+      expect(
+        find.text('100 act. · PU ${formatEuro(8, cents: true)}'),
+        findsNothing,
+      );
+      expect(
+        find.text('50 act. · PU ${formatEuro(20, cents: true)}'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('10 act. · PU ${formatEuro(5, cents: true)}'),
+        findsOneWidget,
+      );
+      // KPIs : plus aucun achat dans le périmètre.
+      expect(find.text(formatEuro(0)), findsWidgets);
 
       // Filtre « Achats » : Beta, qui n'a qu'une vente, disparaît.
       await tester.tap(find.text('Achats'));
       await tester.pumpAndSettle();
       expect(find.text('Beta'), findsNothing);
-      expect(find.text(achatDetail), findsOneWidget);
+      expect(
+        find.text('100 act. · PU ${formatEuro(8, cents: true)}'),
+        findsOneWidget,
+      );
 
-      // Retour à « Tous » puis recherche par nom de startup.
+      // Retour à « Tous » puis recherche par nom (accents ignorés).
       await tester.tap(find.text('Tous'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'BÊT');
@@ -677,6 +902,71 @@ void main() {
       expect(find.textContaining('Aucune startup'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('grille responsive : 3 colonnes sur desktop, 2 sur mobile', (
+      tester,
+    ) async {
+      tester.view.devicePixelRatio = 1.0;
+      tester.view.physicalSize = const Size(800, 1200);
+      addTearDown(tester.view.reset);
+
+      // L'écran trie les startups par nom : l'ordre de la grille est connu.
+      const names = ['Deux', 'Quatre', 'Trois', 'Un'];
+      final idsByName = <String, int>{};
+      for (final name in names) {
+        final id = await db.addAsset(
+          AssetsCompanion.insert(name: name, type: 'startup'),
+        );
+        await db.saveStartupDetails(
+          const StartupDraft(quantite: 10, prixEntree: 5).toCompanion(id),
+        );
+        await db.addSecondaryTransaction(
+          SecondaryTransactionDraft(
+            date: DateTime(2025, 10, 1),
+            type: 'achat',
+            actions: 10,
+            prix: 5,
+          ).toCompanion(id),
+        );
+        idsByName[name] = id;
+      }
+      await tester.runAsync(() => controller.load());
+      await pumpMarket(tester);
+
+      // 800 dp → 3 colonnes : les trois premières cartes partagent la même
+      // ordonnée, la quatrième passe à la ligne.
+      List<Offset> topsFor() => [
+        for (final name in names)
+          tester.getTopLeft(
+            find.byKey(ValueKey('market-card-${idsByName[name]}')),
+          ),
+      ];
+      final tops = topsFor();
+      expect(tops[0].dy, tops[1].dy);
+      expect(tops[1].dy, tops[2].dy);
+      expect(tops[3].dy, greaterThan(tops[0].dy));
+      expect(tops[0].dx, lessThan(tops[1].dx));
+      expect(tops[1].dx, lessThan(tops[2].dx));
+
+      // 360 dp → 2 colonnes : la troisième carte passe à la ligne.
+      tester.view.physicalSize = const Size(360, 1600);
+      await tester.pumpAndSettle();
+      final narrow = topsFor();
+      expect(narrow[0].dy, narrow[1].dy);
+      expect(narrow[2].dy, greaterThan(narrow[0].dy));
+
+      // 1200 dp → 4 colonnes : toute la ligne tient sur une seule rangée.
+      tester.view.physicalSize = const Size(1200, 900);
+      await tester.pumpAndSettle();
+      final wide = topsFor();
+      expect(wide[1].dy, wide[0].dy);
+      expect(wide[2].dy, wide[0].dy);
+      expect(wide[3].dy, wide[0].dy);
+      expect(wide[0].dx, lessThan(wide[1].dx));
+      expect(wide[3].dx, greaterThan(wide[2].dx));
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('écran étroit (360 dp) : pas de débordement', (tester) async {
       tester.view.physicalSize = const Size(360, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -698,20 +988,14 @@ void main() {
         ).toCompanion(id),
       );
       await tester.runAsync(() => controller.load());
-
-      await tester.pumpWidget(
-        ChangeNotifierProvider.value(
-          value: controller,
-          child: MaterialApp(
-            theme: buildDarkTheme(),
-            home: const Scaffold(body: BlastMarketScreen()),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await pumpMarket(tester);
 
       expect(find.text('Ventes'), findsOneWidget);
-      expect(find.textContaining('500 actions'), findsOneWidget);
+      expect(
+        find.text('500 act. · PU ${formatEuro(3.29, cents: true)}'),
+        findsOneWidget,
+      );
+      expect(find.text('Plus-value nette totale'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

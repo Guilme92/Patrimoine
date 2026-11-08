@@ -143,6 +143,155 @@ double secondaryPvNet(
   return base - flatTax;
 }
 
+/// Agrégats du marché secondaire pour un lot de transactions.
+///
+/// Les montants [totalAchat] / [totalRevente] somment les `montant` des
+/// transactions (frais inclus à l'achat, commission de PV déduite à la vente)
+/// et ne dépendent donc pas du PRU. Les plus-values, elles, ne sont calculées
+/// que sur les ventes dont le détail chiffré est connu **et** dont le PRU de
+/// la startup est exploitable ; les autres sont comptées dans
+/// [ventesNonEvaluees] pour que l'UI puisse signaler un total partiel plutôt
+/// que d'afficher un chiffre trompeur.
+class SecondaryMarketSummary {
+  final double totalAchat;
+  final double totalRevente;
+  final int actionsAchat;
+  final int actionsVente;
+
+  /// Σ(actions × prix) des achats : base du P.U. moyen d'achat.
+  final double basePrixAchat;
+
+  /// Σ(actions × prix) des ventes : base du P.U. moyen de vente.
+  final double basePrixVente;
+
+  final double pvBrute;
+  final double pvNette;
+
+  /// Ventes effectivement prises en compte dans [pvBrute] / [pvNette].
+  final int ventesEvaluees;
+
+  /// Ventes écartées du calcul de PV (PRU inconnu ou détail absent).
+  final int ventesNonEvaluees;
+
+  const SecondaryMarketSummary({
+    required this.totalAchat,
+    required this.totalRevente,
+    required this.actionsAchat,
+    required this.actionsVente,
+    required this.basePrixAchat,
+    required this.basePrixVente,
+    required this.pvBrute,
+    required this.pvNette,
+    required this.ventesEvaluees,
+    required this.ventesNonEvaluees,
+  });
+
+  /// Agrégat neutre, utilisable comme élément initial d'un `fold`.
+  static const SecondaryMarketSummary empty = SecondaryMarketSummary(
+    totalAchat: 0,
+    totalRevente: 0,
+    actionsAchat: 0,
+    actionsVente: 0,
+    basePrixAchat: 0,
+    basePrixVente: 0,
+    pvBrute: 0,
+    pvNette: 0,
+    ventesEvaluees: 0,
+    ventesNonEvaluees: 0,
+  );
+
+  /// Agrège [transactions] pour une startup dont le PRU est [pru].
+  factory SecondaryMarketSummary.of(
+    Iterable<SecondaryTransaction> transactions, {
+    double pru = 0,
+  }) {
+    var totalAchat = 0.0;
+    var totalRevente = 0.0;
+    var actionsAchat = 0;
+    var actionsVente = 0;
+    var basePrixAchat = 0.0;
+    var basePrixVente = 0.0;
+    var pvBrute = 0.0;
+    var pvNette = 0.0;
+    var ventesEvaluees = 0;
+    var ventesNonEvaluees = 0;
+    final pruConnu = secondaryPruAvailable(pru);
+
+    for (final t in transactions) {
+      if (t.type == 'revente') {
+        totalRevente += t.montant;
+        actionsVente += t.actions;
+        basePrixVente += t.actions * t.prix;
+        if (pruConnu && t.actions > 0 && t.prix > 0) {
+          final actions = t.actions.toDouble();
+          pvBrute += secondaryPvBrut(actions, t.prix, pru);
+          pvNette += secondaryPvNet(
+            actions,
+            t.prix,
+            pru,
+            t.commissionPv,
+            t.frais,
+          );
+          ventesEvaluees += 1;
+        } else {
+          ventesNonEvaluees += 1;
+        }
+      } else {
+        totalAchat += t.montant;
+        actionsAchat += t.actions;
+        basePrixAchat += t.actions * t.prix;
+      }
+    }
+
+    return SecondaryMarketSummary(
+      totalAchat: totalAchat,
+      totalRevente: totalRevente,
+      actionsAchat: actionsAchat,
+      actionsVente: actionsVente,
+      basePrixAchat: basePrixAchat,
+      basePrixVente: basePrixVente,
+      pvBrute: pvBrute,
+      pvNette: pvNette,
+      ventesEvaluees: ventesEvaluees,
+      ventesNonEvaluees: ventesNonEvaluees,
+    );
+  }
+
+  SecondaryMarketSummary operator +(SecondaryMarketSummary other) =>
+      SecondaryMarketSummary(
+        totalAchat: totalAchat + other.totalAchat,
+        totalRevente: totalRevente + other.totalRevente,
+        actionsAchat: actionsAchat + other.actionsAchat,
+        actionsVente: actionsVente + other.actionsVente,
+        basePrixAchat: basePrixAchat + other.basePrixAchat,
+        basePrixVente: basePrixVente + other.basePrixVente,
+        pvBrute: pvBrute + other.pvBrute,
+        pvNette: pvNette + other.pvNette,
+        ventesEvaluees: ventesEvaluees + other.ventesEvaluees,
+        ventesNonEvaluees: ventesNonEvaluees + other.ventesNonEvaluees,
+      );
+
+  /// Prix unitaire moyen pondéré des achats : Σ(actions × prix) / Σ(actions).
+  /// Vaut 0 quand aucune action n'est connue (ancien format sans détail).
+  double get puMoyenAchat =>
+      actionsAchat > 0 ? basePrixAchat / actionsAchat : 0;
+
+  /// Prix unitaire moyen pondéré des ventes.
+  double get puMoyenVente =>
+      actionsVente > 0 ? basePrixVente / actionsVente : 0;
+
+  bool get aDesAchats => actionsAchat > 0 || totalAchat != 0;
+
+  bool get aDesVentes => actionsVente > 0 || totalRevente != 0;
+
+  /// Vrai si au moins une vente échappe au calcul de plus-value.
+  bool get pvPartielle => ventesNonEvaluees > 0;
+
+  /// Vrai si aucune plus-value n'a pu être calculée alors que des ventes
+  /// existent : l'UI doit afficher « — » plutôt que 0 €.
+  bool get pvIndisponible => ventesEvaluees == 0 && ventesNonEvaluees > 0;
+}
+
 /// Filtre d'affichage des transactions du marché secondaire.
 enum SecondaryTypeFilter { tous, achat, revente }
 

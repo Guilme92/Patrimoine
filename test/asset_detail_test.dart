@@ -8,6 +8,7 @@ import 'package:patrimoine/models/rental.dart';
 import 'package:patrimoine/theme/app_theme.dart';
 import 'package:patrimoine/ui/screens/asset_detail_screen.dart';
 import 'package:patrimoine/ui/screens/edit_asset_screen.dart';
+import 'package:patrimoine/utils/reveal_in_folder.dart';
 import 'package:provider/provider.dart';
 
 /// Écran haut : évite de scroller pour atteindre les sections basses.
@@ -84,6 +85,50 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Taxe foncière (annuelle)'), findsOneWidget);
     expect(find.text('Capital restant dû'), findsOneWidget);
+  });
+
+  testWidgets('le menu d\'un document propose d\'ouvrir son dossier', (
+    tester,
+  ) async {
+    _useTallViewport(tester);
+    final id = await db.addAsset(
+      AssetsCompanion.insert(
+        name: 'Livret A',
+        type: 'cash',
+        value: const Value(5000),
+      ),
+    );
+    await db.addDocument(
+      DocumentsCompanion.insert(
+        assetId: id,
+        label: 'Relevé annuel',
+        fileName: 'releve.pdf',
+        filePath: '/tmp/releve.pdf',
+      ),
+    );
+    await tester.runAsync(() => controller.load());
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: controller,
+        child: MaterialApp(
+          theme: buildDarkTheme(),
+          home: AssetDetailScreen(asset: controller.assetById(id)!),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ouvrir'), findsOneWidget);
+    expect(find.text('Supprimer'), findsOneWidget);
+    // L'entrée n'a de sens que sur desktop : elle est masquée sur mobile.
+    expect(
+      find.text('Ouvrir l\'emplacement du dossier'),
+      supportsRevealInFolder ? findsOneWidget : findsNothing,
+    );
   });
 
   testWidgets('un actif non immobilier n\'affiche pas la section Location', (

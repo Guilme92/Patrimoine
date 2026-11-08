@@ -17,6 +17,7 @@ import '../../models/startup.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/palette.dart';
 import '../../utils/format.dart';
+import '../../utils/reveal_in_folder.dart';
 import '../widgets/form_widgets.dart';
 import '../widgets/info_hint.dart';
 import 'add_position_screen.dart';
@@ -215,6 +216,7 @@ class AssetDetailScreen extends StatelessWidget {
               (d) => _DocumentTile(
                 document: d,
                 onOpen: () => _openDocument(context, d),
+                onReveal: () => _revealDocument(context, d),
                 onDelete: () => _confirmDeleteDocument(context, d),
               ),
             ),
@@ -309,6 +311,20 @@ class AssetDetailScreen extends StatelessWidget {
     final result = await OpenFile.open(doc.filePath);
     if (result.type != ResultType.done && context.mounted) {
       _snack(context, 'Ouverture impossible : ${result.message}');
+    }
+  }
+
+  Future<void> _revealDocument(BuildContext context, AssetDocument doc) async {
+    final exists = await File(doc.filePath).exists();
+    if (!exists) {
+      if (context.mounted) {
+        _snack(context, 'Fichier introuvable sur le disque.');
+      }
+      return;
+    }
+    final revealed = await revealInFolder(doc.filePath);
+    if (!revealed && context.mounted) {
+      _snack(context, 'Impossible d\'ouvrir le dossier du document.');
     }
   }
 
@@ -723,10 +739,12 @@ class _DocumentTile extends StatelessWidget {
   final AssetDocument document;
   final VoidCallback onOpen;
   final VoidCallback onDelete;
+  final VoidCallback? onReveal;
   const _DocumentTile({
     required this.document,
     required this.onOpen,
     required this.onDelete,
+    this.onReveal,
   });
 
   @override
@@ -778,10 +796,11 @@ class _DocumentTile extends StatelessWidget {
               tooltip: 'Actions',
               onSelected: (v) {
                 if (v == 'open') onOpen();
+                if (v == 'reveal') onReveal?.call();
                 if (v == 'delete') onDelete();
               },
-              itemBuilder: (_) => const [
-                PopupMenuItem(
+              itemBuilder: (_) => [
+                const PopupMenuItem(
                   value: 'open',
                   child: ListTile(
                     dense: true,
@@ -790,7 +809,17 @@ class _DocumentTile extends StatelessWidget {
                     title: Text('Ouvrir'),
                   ),
                 ),
-                PopupMenuItem(
+                if (onReveal != null && supportsRevealInFolder)
+                  const PopupMenuItem(
+                    value: 'reveal',
+                    child: ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.folder_open),
+                      title: Text('Ouvrir l\'emplacement du dossier'),
+                    ),
+                  ),
+                const PopupMenuItem(
                   value: 'delete',
                   child: ListTile(
                     dense: true,
