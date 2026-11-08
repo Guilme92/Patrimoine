@@ -33,6 +33,7 @@ StartupDetail _detail(
   quantite: quantite,
   prixEntree: prixEntree,
   frais: frais,
+  montantInvesti: 0,
   dateInvestissement: dateInvestissement,
   stade: 'seed',
   prixActuel: prixActuel,

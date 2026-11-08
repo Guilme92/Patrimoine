@@ -8,8 +8,12 @@ import '../data/database.dart';
 /// une sortie (`statut == 'sorti'`) se valorise au produit de sortie, et
 /// une radiation vaut zéro.
 
-/// Capital investi : quantité × prix d'entrée + frais.
-double investedCapital(StartupDetail s) => s.quantite * s.prixEntree + s.frais;
+/// Capital investi : montant total investi quand il est renseigné
+/// (indépendant du PRU corrigé des ventes), sinon quantité × prix d'entrée
+/// + frais.
+double investedCapital(StartupDetail s) => s.montantInvesti > 0
+    ? s.montantInvesti
+    : s.quantite * s.prixEntree + s.frais;
 
 /// Valeur de la ligne à date.
 double lineValue(StartupDetail s) {

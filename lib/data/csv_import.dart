@@ -246,6 +246,7 @@ CsvParseResult parseStartupCsv(String input) {
           quantite: quantite,
           prixEntree: prixEntree,
           frais: row.number('frais'),
+          montantInvesti: row.number('montant_investi_eur'),
           dateInvestissement: row.date('date_investissement'),
           stade: normalizeStartupStage(row.text('stade')),
           prixActuel: prixActuel,

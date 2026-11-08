@@ -14,6 +14,7 @@ StartupDetail _detail({
   double quantite = 100,
   double prixEntree = 10,
   double frais = 50,
+  double montantInvesti = 0,
   double prixActuel = 25,
   double exitProduit = 0,
   DateTime? dateInvestissement,
@@ -25,6 +26,7 @@ StartupDetail _detail({
   quantite: quantite,
   prixEntree: prixEntree,
   frais: frais,
+  montantInvesti: montantInvesti,
   dateInvestissement: dateInvestissement,
   stade: 'seed',
   prixActuel: prixActuel,
@@ -42,6 +44,10 @@ void main() {
   group('indicateurs startup', () {
     test('capital investi = quantité × prix d\'entrée + frais', () {
       expect(investedCapital(_detail()), 1050);
+    });
+
+    test('capital investi privilégie le montant investi renseigné', () {
+      expect(investedCapital(_detail(montantInvesti: 2080)), 2080);
     });
 
     test('valeur de ligne selon le statut', () {

@@ -39,6 +39,7 @@ class _StartupDetailsFormScreenState extends State<StartupDetailsFormScreen> {
   DateTime? _dateValorisation;
   DateTime? _exitDate;
   bool _saving = false;
+  double _montantInvesti = 0;
 
   @override
   void initState() {
@@ -60,6 +61,7 @@ class _StartupDetailsFormScreenState extends State<StartupDetailsFormScreen> {
     _quantite = TextEditingController(text: amountText(d.quantite));
     _prixEntree = TextEditingController(text: amountText(d.prixEntree));
     _frais = TextEditingController(text: amountText(d.frais));
+    _montantInvesti = d.montantInvesti;
     _prixActuel = TextEditingController(text: amountText(d.prixActuel));
     _valorisationEntreprise = TextEditingController(
       text: amountText(d.valorisationEntreprise),
@@ -111,6 +113,7 @@ class _StartupDetailsFormScreenState extends State<StartupDetailsFormScreen> {
     quantite: parseAmount(_quantite.text),
     prixEntree: parseAmount(_prixEntree.text),
     frais: parseAmount(_frais.text),
+    montantInvesti: _montantInvesti,
     dateInvestissement: _dateInvestissement,
     stade: _nullIfBlank(_stade),
     prixActuel: parseAmount(_prixActuel.text),

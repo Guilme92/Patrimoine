@@ -137,6 +137,10 @@ class StartupDetails extends Table {
   RealColumn get quantite => real().withDefault(const Constant(0))();
   RealColumn get prixEntree => real().withDefault(const Constant(0))();
   RealColumn get frais => real().withDefault(const Constant(0))();
+
+  /// Montant total investi (capital), indépendant du PRU corrigé des ventes.
+  /// 0 = non renseigné : repli sur `quantite × prixEntree + frais`.
+  RealColumn get montantInvesti => real().withDefault(const Constant(0))();
   DateTimeColumn get dateInvestissement => dateTime().nullable()();
 
   /// seed | serie_a | serie_b | serie_c | late_stage | autre
@@ -241,7 +245,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -279,6 +283,12 @@ class AppDatabase extends _$AppDatabase {
           secondaryTransactions,
           secondaryTransactions.commissionPv,
         );
+      }
+      if (from >= 3 && from < 8) {
+        // Montant total investi (capital), séparé du PRU corrigé des ventes.
+        // `from < 3` crée la table via createTable (colonne déjà présente) ;
+        // à partir de v3 la table existe sans cette colonne → addColumn.
+        await m.addColumn(startupDetails, startupDetails.montantInvesti);
       }
     },
     beforeOpen: (details) async {

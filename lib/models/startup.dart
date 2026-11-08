@@ -161,6 +161,7 @@ class StartupDraft {
   final double quantite;
   final double prixEntree;
   final double frais;
+  final double montantInvesti;
   final DateTime? dateInvestissement;
   final String? stade;
   final double prixActuel;
@@ -178,6 +179,7 @@ class StartupDraft {
     this.quantite = 0,
     this.prixEntree = 0,
     this.frais = 0,
+    this.montantInvesti = 0,
     this.dateInvestissement,
     this.stade,
     this.prixActuel = 0,
@@ -196,6 +198,7 @@ class StartupDraft {
     quantite: s.quantite,
     prixEntree: s.prixEntree,
     frais: s.frais,
+    montantInvesti: s.montantInvesti,
     dateInvestissement: s.dateInvestissement,
     stade: s.stade,
     prixActuel: s.prixActuel,
@@ -215,6 +218,7 @@ class StartupDraft {
     quantite: Value(quantite),
     prixEntree: Value(prixEntree),
     frais: Value(frais),
+    montantInvesti: Value(montantInvesti),
     dateInvestissement: Value(dateInvestissement),
     stade: Value(_blankToNull(stade)),
     prixActuel: Value(prixActuel),

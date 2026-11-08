@@ -42,6 +42,20 @@ double _entryInvested(StartupEntry e) => investedCapital(e.detail);
 /// Gain de la ligne : valeur − capital investi (négatif pour une radiation).
 double _entryPnl(StartupEntry e) => lineValue(e.detail) - _entryInvested(e);
 
+/// Capital investi total du portefeuille : toutes les startups (catégorisées
+/// et Blast) + achats sur le marché secondaire (onglet Blast Market).
+double _totalInvestedGlobal(PortfolioController controller) {
+  var total = 0.0;
+  for (final e in controller.startupEntries) {
+    total += investedCapital(e.detail);
+    total += SecondaryMarketSummary.of(
+      controller.secondaryTransactionsOf(e.asset.id),
+      pru: e.detail.prixEntree,
+    ).totalAchat;
+  }
+  return total;
+}
+
 Color _signedColor(double v) =>
     v >= 0 ? AppColors.positive : AppColors.negative;
 
@@ -188,6 +202,7 @@ class _StartupsScreenState extends State<StartupsScreen> {
 
     final filtered = all.where(_matches).toList();
     final summary = summarizeStartups(filtered);
+    final totalInvestedGlobal = _totalInvestedGlobal(controller);
 
     // Le contenu de section est toujours en bas : il reste attaché au
     // sélecteur d'onglets (il suit le choix courant) sans être réordonnable.
@@ -196,6 +211,7 @@ class _StartupsScreenState extends State<StartupsScreen> {
         : switch (_section) {
             _Section.synthesis => _SynthesisTab(
               summary: summary,
+              totalInvestedGlobal: totalInvestedGlobal,
               onOpen: _open,
             ),
             _Section.list => _ListTab(
@@ -339,6 +355,10 @@ class _DragHandle extends StatelessWidget {
 // Filtres
 // ---------------------------------------------------------------------------
 
+/// Barre de filtres condensée sur une seule ligne : recherche, catégories
+/// (multi-sélection), année et statut, puis « Réinitialiser ». Sur un écran
+/// étroit, seule la zone des sélecteurs défile horizontalement ; le bouton
+/// de réinitialisation reste toujours visible dès qu'un filtre est actif.
 class _FiltersCard extends StatelessWidget {
   final List<int> years;
   final Set<String> categories;
@@ -375,172 +395,344 @@ class _FiltersCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final categoryKeys = <String>[...startupCategories];
 
     return _Card(
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text('Filtres', style: theme.textTheme.titleMedium),
-              ),
-              if (hasFilters)
-                TextButton(
-                  onPressed: onReset,
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.tune,
+                    size: 16,
+                    color: AppColors.textSecondary,
                   ),
-                  child: const Text('Réinitialiser'),
-                ),
-              ?dragHandle,
-            ],
-          ),
-          const SizedBox(height: 12),
-          _SearchField(
-            controller: searchController,
-            hasText: query.isNotEmpty,
-            onChanged: onSearchChanged,
-            onClear: onClearSearch,
-          ),
-          const SizedBox(height: 14),
-          Text('Catégorie', style: theme.textTheme.bodySmall),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              _FilterChip(
-                label: 'Toutes',
-                selected: categories.isEmpty,
-                onTap: () {
-                  for (final c in [...categories]) {
-                    onToggleCategory(c);
-                  }
-                },
-              ),
-              for (final c in categoryKeys)
-                _FilterChip(
-                  label: c,
-                  selected: categories.contains(c),
-                  onTap: () => onToggleCategory(c),
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Text('Année', style: theme.textTheme.bodySmall),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceAlt,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.divider),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int>(
-                      value: year,
-                      isDense: true,
-                      isExpanded: true,
-                      dropdownColor: AppColors.surfaceAlt,
-                      borderRadius: BorderRadius.circular(12),
-                      icon: const Icon(
-                        Icons.expand_more,
-                        size: 18,
-                        color: AppColors.textSecondary,
-                      ),
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 13,
-                      ),
-                      items: [
-                        const DropdownMenuItem<int>(
-                          value: 0,
-                          child: Text('Toutes les années'),
-                        ),
-                        for (final y in years)
-                          DropdownMenuItem<int>(value: y, child: Text('$y')),
-                      ],
-                      onChanged: (v) => onYearChanged(v ?? 0),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Filtres',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 180,
+                    child: _SearchField(
+                      controller: searchController,
+                      hasText: query.isNotEmpty,
+                      onChanged: onSearchChanged,
+                      onClear: onClearSearch,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _CategoriesMenu(
+                    options: startupCategories,
+                    selected: categories,
+                    onToggle: onToggleCategory,
+                  ),
+                  const SizedBox(width: 8),
+                  _YearSelector(
+                    years: years,
+                    year: year,
+                    onChanged: onYearChanged,
+                  ),
+                  const SizedBox(width: 8),
+                  _StatusMenu(status: status, onChanged: onStatusChanged),
+                ],
               ),
-            ],
+            ),
           ),
-          const SizedBox(height: 14),
-          Text('Statut', style: theme.textTheme.bodySmall),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              _FilterChip(
-                label: 'Tous',
-                selected: status == 'all',
-                onTap: () => onStatusChanged('all'),
+          if (hasFilters) ...[
+            const SizedBox(width: 4),
+            TextButton(
+              onPressed: onReset,
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                minimumSize: const Size(0, 32),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                textStyle: const TextStyle(fontSize: 12),
               ),
-              _FilterChip(
-                label: 'En portefeuille',
-                selected: status == 'en_portefeuille',
-                onTap: () => onStatusChanged('en_portefeuille'),
-              ),
-              _FilterChip(
-                label: 'Sorties',
-                selected: status == 'sorti',
-                onTap: () => onStatusChanged('sorti'),
-              ),
-              _FilterChip(
-                label: 'Radiées',
-                selected: status == 'radie',
-                onTap: () => onStatusChanged('radie'),
-              ),
-            ],
-          ),
+              child: const Text('Réinitialiser'),
+            ),
+          ],
+          ?dragHandle,
         ],
       ),
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
     );
   }
 }
 
-class _FilterChip extends StatelessWidget {
+/// Style commun des menus de filtres (fond sombre, bordure discrète).
+MenuStyle _filterMenuStyle() => MenuStyle(
+  backgroundColor: const WidgetStatePropertyAll(AppColors.surfaceAlt),
+  surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+  elevation: const WidgetStatePropertyAll(8.0),
+  maximumSize: const WidgetStatePropertyAll(Size(300, 420)),
+  padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(vertical: 4)),
+  shape: WidgetStatePropertyAll(
+    RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: const BorderSide(color: AppColors.divider),
+    ),
+  ),
+);
+
+/// Style compact des entrées de menu (aligné sur le reste de l'écran).
+ButtonStyle _filterMenuItemStyle() => const ButtonStyle(
+  visualDensity: VisualDensity.compact,
+  minimumSize: WidgetStatePropertyAll(Size(0, 36)),
+  padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 12)),
+  textStyle: WidgetStatePropertyAll(TextStyle(fontSize: 12)),
+  foregroundColor: WidgetStatePropertyAll(AppColors.textPrimary),
+);
+
+/// Bouton d'ouverture d'un menu de filtre : libellé court, chevron, et
+/// surbrillance verte quand le filtre est actif.
+class _FilterButton extends StatelessWidget {
+  final IconData icon;
   final String label;
-  final bool selected;
+  final bool active;
+  final String tooltip;
   final VoidCallback onTap;
 
-  const _FilterChip({
+  const _FilterButton({
+    required this.icon,
     required this.label,
-    required this.selected,
+    required this.active,
+    required this.tooltip,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return FilterChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) => onTap(),
-      showCheckmark: false,
-      visualDensity: VisualDensity.compact,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      backgroundColor: AppColors.surfaceAlt,
-      selectedColor: AppColors.primary.withValues(alpha: 0.16),
-      side: BorderSide(color: selected ? AppColors.primary : AppColors.divider),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      labelStyle: TextStyle(
-        fontSize: 12,
-        color: selected ? AppColors.primary : AppColors.textSecondary,
-        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+    final color = active ? AppColors.primary : AppColors.textSecondary;
+
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: active
+            ? AppColors.primary.withValues(alpha: 0.16)
+            : AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: active ? AppColors.primary : AppColors.divider,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 15, color: color),
+                const SizedBox(width: 6),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 160),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: active ? AppColors.primary : AppColors.textPrimary,
+                      fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.expand_more, size: 16, color: color),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 }
 
+/// Sélecteur de catégories : menu à cases à cocher. La multi-sélection est
+/// conservée — le menu reste ouvert d'une case à l'autre.
+class _CategoriesMenu extends StatelessWidget {
+  final List<String> options;
+  final Set<String> selected;
+  final ValueChanged<String> onToggle;
+
+  const _CategoriesMenu({
+    required this.options,
+    required this.selected,
+    required this.onToggle,
+  });
+
+  String get _label {
+    if (selected.isEmpty) return 'Catégories';
+    if (selected.length == 1) return selected.first;
+    return 'Catégories (${selected.length})';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MenuAnchor(
+      style: _filterMenuStyle(),
+      alignmentOffset: const Offset(0, 6),
+      menuChildren: [
+        MenuItemButton(
+          // Décoche toutes les catégories actives (équivalent du chip « Toutes »).
+          onPressed: selected.isEmpty
+              ? null
+              : () {
+                  for (final c in [...selected]) {
+                    onToggle(c);
+                  }
+                },
+          leadingIcon: const Icon(
+            Icons.done_all,
+            size: 16,
+            color: AppColors.textSecondary,
+          ),
+          style: _filterMenuItemStyle(),
+          child: const Text('Toutes les catégories'),
+        ),
+        const Divider(height: 1, color: AppColors.divider),
+        for (final c in options)
+          CheckboxMenuButton(
+            value: selected.contains(c),
+            // Multi-sélection : le menu ne doit pas se refermer à chaque case.
+            closeOnActivate: false,
+            style: _filterMenuItemStyle(),
+            onChanged: (_) => onToggle(c),
+            child: Text(c),
+          ),
+      ],
+      builder: (context, controller, _) => _FilterButton(
+        icon: Icons.category_outlined,
+        label: _label,
+        active: selected.isNotEmpty,
+        tooltip: 'Filtrer par catégorie',
+        onTap: () => controller.isOpen ? controller.close() : controller.open(),
+      ),
+    );
+  }
+}
+
+/// Sélecteur d'année : menu déroulant compact (0 = toutes les années).
+class _YearSelector extends StatelessWidget {
+  final List<int> years;
+  final int year;
+  final ValueChanged<int> onChanged;
+
+  const _YearSelector({
+    required this.years,
+    required this.year,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final active = year != 0;
+
+    return Container(
+      height: 38,
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.only(left: 10, right: 4),
+      decoration: BoxDecoration(
+        color: active
+            ? AppColors.primary.withValues(alpha: 0.16)
+            : AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: active ? AppColors.primary : AppColors.divider,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: year,
+          isDense: true,
+          dropdownColor: AppColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(12),
+          icon: Icon(
+            Icons.expand_more,
+            size: 16,
+            color: active ? AppColors.primary : AppColors.textSecondary,
+          ),
+          style: TextStyle(
+            fontSize: 12,
+            color: active ? AppColors.primary : AppColors.textPrimary,
+            fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+          ),
+          items: [
+            const DropdownMenuItem<int>(
+              value: 0,
+              child: Text('Toutes les années'),
+            ),
+            for (final y in years)
+              DropdownMenuItem<int>(value: y, child: Text('$y')),
+          ],
+          onChanged: (v) => onChanged(v ?? 0),
+        ),
+      ),
+    );
+  }
+}
+
+/// Sélecteur de statut : menu compact à valeur unique.
+class _StatusMenu extends StatelessWidget {
+  final String status;
+  final ValueChanged<String> onChanged;
+
+  const _StatusMenu({required this.status, required this.onChanged});
+
+  static const List<(String, String)> _options = [
+    ('all', 'Tous les statuts'),
+    ('en_portefeuille', 'En portefeuille'),
+    ('sorti', 'Sorties'),
+    ('radie', 'Radiées'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final current = _options.firstWhere(
+      (o) => o.$1 == status,
+      orElse: () => _options.first,
+    );
+
+    return MenuAnchor(
+      style: _filterMenuStyle(),
+      alignmentOffset: const Offset(0, 6),
+      menuChildren: [
+        for (final o in _options)
+          MenuItemButton(
+            onPressed: () => onChanged(o.$1),
+            leadingIcon: Icon(
+              o.$1 == status ? Icons.check : null,
+              size: 16,
+              color: AppColors.primary,
+            ),
+            style: _filterMenuItemStyle(),
+            child: Text(o.$2),
+          ),
+      ],
+      builder: (context, controller, _) => _FilterButton(
+        icon: Icons.filter_alt_outlined,
+        label: current.$2,
+        active: status != 'all',
+        tooltip: 'Filtrer par statut',
+        onTap: () => controller.isOpen ? controller.close() : controller.open(),
+      ),
+    );
+  }
+}
+
+/// Recherche compacte (largeur fixée par la barre de filtres).
 class _SearchField extends StatelessWidget {
   final TextEditingController controller;
   final bool hasText;
@@ -560,43 +752,44 @@ class _SearchField extends StatelessWidget {
       controller: controller,
       onChanged: onChanged,
       textInputAction: TextInputAction.search,
-      style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+      style: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
       cursorColor: AppColors.primary,
       decoration: InputDecoration(
         isDense: true,
-        hintText: 'Rechercher une startup…',
+        hintText: 'Rechercher…',
         hintStyle: const TextStyle(
           color: AppColors.textSecondary,
-          fontSize: 13,
+          fontSize: 12,
         ),
         prefixIcon: const Icon(
           Icons.search,
-          size: 18,
+          size: 16,
           color: AppColors.textSecondary,
         ),
         prefixIconConstraints: const BoxConstraints(
-          minWidth: 36,
-          minHeight: 36,
+          minWidth: 30,
+          minHeight: 30,
         ),
         suffixIcon: hasText
             ? IconButton(
                 onPressed: onClear,
                 tooltip: 'Effacer la recherche',
                 visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
                 icon: const Icon(
                   Icons.close,
-                  size: 16,
+                  size: 15,
                   color: AppColors.textSecondary,
                 ),
               )
             : null,
         suffixIconConstraints: const BoxConstraints(
-          minWidth: 36,
-          minHeight: 36,
+          minWidth: 28,
+          minHeight: 28,
         ),
         filled: true,
         fillColor: AppColors.surfaceAlt,
-        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(vertical: 9),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: AppColors.divider),
@@ -620,9 +813,14 @@ class _SearchField extends StatelessWidget {
 
 class _SynthesisTab extends StatelessWidget {
   final StartupPortfolioSummary summary;
+  final double totalInvestedGlobal;
   final ValueChanged<StartupEntry> onOpen;
 
-  const _SynthesisTab({required this.summary, required this.onOpen});
+  const _SynthesisTab({
+    required this.summary,
+    required this.totalInvestedGlobal,
+    required this.onOpen,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -630,9 +828,9 @@ class _SynthesisTab extends StatelessWidget {
     final kpis = <Widget>[
       _KpiCard(
         label: 'Capital investi',
-        value: formatEuro(summary.totalInvested),
-        hint:
-            'Somme des capitaux investis : quantité × prix d\'entrée + frais.',
+        value: formatEuro(totalInvestedGlobal),
+        hint: 'Capital investi total du portefeuille : startups (toutes '
+            'catégories) + achats sur le marché secondaire.',
       ),
       _KpiCard(
         label: 'Frais total',
@@ -694,9 +892,34 @@ class _SynthesisTab extends StatelessWidget {
         const SizedBox(height: 12),
         _CountersCard(summary: summary),
         const SizedBox(height: 16),
-        _CategoryDonut(values: summary.valueByCategory),
-        const SizedBox(height: 16),
-        _YearBars(values: summary.valueByYear, summary: summary),
+        // Répartition par catégorie et valorisation par année : côte à côte
+        // (deux colonnes égales) sur écran large, empilées sur écran étroit.
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const gap = 16.0;
+            final sideBySide = constraints.maxWidth >= 620;
+            final columnWidth = sideBySide
+                ? (constraints.maxWidth - gap) / 2
+                : constraints.maxWidth;
+            return Wrap(
+              spacing: gap,
+              runSpacing: gap,
+              children: [
+                SizedBox(
+                  width: columnWidth,
+                  child: _CategoryDonut(values: summary.valueByCategory),
+                ),
+                SizedBox(
+                  width: columnWidth,
+                  child: _YearBars(
+                    values: summary.valueByYear,
+                    summary: summary,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
         const SizedBox(height: 16),
         _CategoryTable(summary: summary),
         const SizedBox(height: 16),

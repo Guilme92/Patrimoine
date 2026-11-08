@@ -1,6 +1,6 @@
 # Notes de version — Patrimoine
 
-Les 21 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : un historique complet des fonctionnalités livrées, build par build.
+Les 22 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : un historique complet des fonctionnalités livrées, build par build.
 
 ## Table des matières
 
@@ -29,6 +29,7 @@ Les 21 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : 
   - [Build 19 — Cashflow immobilier : charges locatives en revenu (8 novembre 2026)](#build-19--cashflow-immobilier--charges-locatives-en-revenu-8-novembre-2026)
   - [Build 20 — Onglets actifs simplifiés + type Bourse (8 novembre 2026)](#build-20--onglets-actifs-simplifiés--type-bourse-8-novembre-2026)
   - [Build 21 — Positions boursières modifiables et recherche de symbole (8 novembre 2026)](#build-21--positions-boursières-modifiables-et-recherche-de-symbole-8-novembre-2026)
+  - [Build 22 — Capital investi fiabilisé et onglet Startup compacté (8 novembre 2026)](#build-22--capital-investi-fiabilisé-et-onglet-startup-compacté-8-novembre-2026)
 
 ## Phase 1 — Fondations
 
@@ -150,3 +151,10 @@ Les 21 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : 
 - Modification et suppression d'une position depuis la fiche de l'actif (menu ⋮ sur chaque ligne), pour corriger un symbole sans tout ressaisir.
 - Recherche de symbole dans le champ « Symbole » : taper un nom (ex. « hermes ») affiche les codes boursiers correspondants avec leur prix actuel en euros ; un clic remplit le symbole et le nom.
 - Avertissement « Cours introuvable — vérifiez le symbole » sur une position dont le code ne remonte aucune cotation.
+
+### Build 22 — Capital investi fiabilisé et onglet Startup compacté (8 novembre 2026)
+
+- Capital investi : le montant total investi est désormais stocké séparément du prix de revient (PRU corrigé des ventes) — revendre des actions sur le marché secondaire ne fausse plus le capital investi.
+- KPI « Capital investi » consolidé : startups de toutes catégories (Startup + Blast) + achats du marché secondaire (Blast Market).
+- Filtres de l'onglet Startup condensés sur une seule ligne (menus compacts, multi-sélection des catégories conservée).
+- « Répartition par catégorie » et « Valorisation par année d'investissement » côte à côte sur écran large.

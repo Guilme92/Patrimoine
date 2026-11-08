@@ -3710,6 +3710,18 @@ class $StartupDetailsTable extends StartupDetails
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _montantInvestiMeta = const VerificationMeta(
+    'montantInvesti',
+  );
+  @override
+  late final GeneratedColumn<double> montantInvesti = GeneratedColumn<double>(
+    'montant_investi',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _dateInvestissementMeta =
       const VerificationMeta('dateInvestissement');
   @override
@@ -3840,6 +3852,7 @@ class $StartupDetailsTable extends StartupDetails
     quantite,
     prixEntree,
     frais,
+    montantInvesti,
     dateInvestissement,
     stade,
     prixActuel,
@@ -3903,6 +3916,15 @@ class $StartupDetailsTable extends StartupDetails
       context.handle(
         _fraisMeta,
         frais.isAcceptableOrUnknown(data['frais']!, _fraisMeta),
+      );
+    }
+    if (data.containsKey('montant_investi')) {
+      context.handle(
+        _montantInvestiMeta,
+        montantInvesti.isAcceptableOrUnknown(
+          data['montant_investi']!,
+          _montantInvestiMeta,
+        ),
       );
     }
     if (data.containsKey('date_investissement')) {
@@ -4020,6 +4042,10 @@ class $StartupDetailsTable extends StartupDetails
         DriftSqlType.double,
         data['${effectivePrefix}frais'],
       )!,
+      montantInvesti: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}montant_investi'],
+      )!,
       dateInvestissement: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}date_investissement'],
@@ -4086,6 +4112,10 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
   final double quantite;
   final double prixEntree;
   final double frais;
+
+  /// Montant total investi (capital), indépendant du PRU corrigé des ventes.
+  /// 0 = non renseigné : repli sur `quantite × prixEntree + frais`.
+  final double montantInvesti;
   final DateTime? dateInvestissement;
 
   /// seed | serie_a | serie_b | serie_c | late_stage | autre
@@ -4113,6 +4143,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
     required this.quantite,
     required this.prixEntree,
     required this.frais,
+    required this.montantInvesti,
     this.dateInvestissement,
     this.stade,
     required this.prixActuel,
@@ -4139,6 +4170,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
     map['quantite'] = Variable<double>(quantite);
     map['prix_entree'] = Variable<double>(prixEntree);
     map['frais'] = Variable<double>(frais);
+    map['montant_investi'] = Variable<double>(montantInvesti);
     if (!nullToAbsent || dateInvestissement != null) {
       map['date_investissement'] = Variable<DateTime>(dateInvestissement);
     }
@@ -4178,6 +4210,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
       quantite: Value(quantite),
       prixEntree: Value(prixEntree),
       frais: Value(frais),
+      montantInvesti: Value(montantInvesti),
       dateInvestissement: dateInvestissement == null && nullToAbsent
           ? const Value.absent()
           : Value(dateInvestissement),
@@ -4215,6 +4248,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
       quantite: serializer.fromJson<double>(json['quantite']),
       prixEntree: serializer.fromJson<double>(json['prixEntree']),
       frais: serializer.fromJson<double>(json['frais']),
+      montantInvesti: serializer.fromJson<double>(json['montantInvesti']),
       dateInvestissement: serializer.fromJson<DateTime?>(
         json['dateInvestissement'],
       ),
@@ -4245,6 +4279,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
       'quantite': serializer.toJson<double>(quantite),
       'prixEntree': serializer.toJson<double>(prixEntree),
       'frais': serializer.toJson<double>(frais),
+      'montantInvesti': serializer.toJson<double>(montantInvesti),
       'dateInvestissement': serializer.toJson<DateTime?>(dateInvestissement),
       'stade': serializer.toJson<String?>(stade),
       'prixActuel': serializer.toJson<double>(prixActuel),
@@ -4269,6 +4304,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
     double? quantite,
     double? prixEntree,
     double? frais,
+    double? montantInvesti,
     Value<DateTime?> dateInvestissement = const Value.absent(),
     Value<String?> stade = const Value.absent(),
     double? prixActuel,
@@ -4288,6 +4324,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
     quantite: quantite ?? this.quantite,
     prixEntree: prixEntree ?? this.prixEntree,
     frais: frais ?? this.frais,
+    montantInvesti: montantInvesti ?? this.montantInvesti,
     dateInvestissement: dateInvestissement.present
         ? dateInvestissement.value
         : this.dateInvestissement,
@@ -4316,6 +4353,9 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
           ? data.prixEntree.value
           : this.prixEntree,
       frais: data.frais.present ? data.frais.value : this.frais,
+      montantInvesti: data.montantInvesti.present
+          ? data.montantInvesti.value
+          : this.montantInvesti,
       dateInvestissement: data.dateInvestissement.present
           ? data.dateInvestissement.value
           : this.dateInvestissement,
@@ -4350,6 +4390,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
           ..write('quantite: $quantite, ')
           ..write('prixEntree: $prixEntree, ')
           ..write('frais: $frais, ')
+          ..write('montantInvesti: $montantInvesti, ')
           ..write('dateInvestissement: $dateInvestissement, ')
           ..write('stade: $stade, ')
           ..write('prixActuel: $prixActuel, ')
@@ -4374,6 +4415,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
     quantite,
     prixEntree,
     frais,
+    montantInvesti,
     dateInvestissement,
     stade,
     prixActuel,
@@ -4397,6 +4439,7 @@ class StartupDetail extends DataClass implements Insertable<StartupDetail> {
           other.quantite == this.quantite &&
           other.prixEntree == this.prixEntree &&
           other.frais == this.frais &&
+          other.montantInvesti == this.montantInvesti &&
           other.dateInvestissement == this.dateInvestissement &&
           other.stade == this.stade &&
           other.prixActuel == this.prixActuel &&
@@ -4418,6 +4461,7 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
   final Value<double> quantite;
   final Value<double> prixEntree;
   final Value<double> frais;
+  final Value<double> montantInvesti;
   final Value<DateTime?> dateInvestissement;
   final Value<String?> stade;
   final Value<double> prixActuel;
@@ -4437,6 +4481,7 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
     this.quantite = const Value.absent(),
     this.prixEntree = const Value.absent(),
     this.frais = const Value.absent(),
+    this.montantInvesti = const Value.absent(),
     this.dateInvestissement = const Value.absent(),
     this.stade = const Value.absent(),
     this.prixActuel = const Value.absent(),
@@ -4457,6 +4502,7 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
     this.quantite = const Value.absent(),
     this.prixEntree = const Value.absent(),
     this.frais = const Value.absent(),
+    this.montantInvesti = const Value.absent(),
     this.dateInvestissement = const Value.absent(),
     this.stade = const Value.absent(),
     this.prixActuel = const Value.absent(),
@@ -4477,6 +4523,7 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
     Expression<double>? quantite,
     Expression<double>? prixEntree,
     Expression<double>? frais,
+    Expression<double>? montantInvesti,
     Expression<DateTime>? dateInvestissement,
     Expression<String>? stade,
     Expression<double>? prixActuel,
@@ -4497,6 +4544,7 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
       if (quantite != null) 'quantite': quantite,
       if (prixEntree != null) 'prix_entree': prixEntree,
       if (frais != null) 'frais': frais,
+      if (montantInvesti != null) 'montant_investi': montantInvesti,
       if (dateInvestissement != null) 'date_investissement': dateInvestissement,
       if (stade != null) 'stade': stade,
       if (prixActuel != null) 'prix_actuel': prixActuel,
@@ -4520,6 +4568,7 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
     Value<double>? quantite,
     Value<double>? prixEntree,
     Value<double>? frais,
+    Value<double>? montantInvesti,
     Value<DateTime?>? dateInvestissement,
     Value<String?>? stade,
     Value<double>? prixActuel,
@@ -4540,6 +4589,7 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
       quantite: quantite ?? this.quantite,
       prixEntree: prixEntree ?? this.prixEntree,
       frais: frais ?? this.frais,
+      montantInvesti: montantInvesti ?? this.montantInvesti,
       dateInvestissement: dateInvestissement ?? this.dateInvestissement,
       stade: stade ?? this.stade,
       prixActuel: prixActuel ?? this.prixActuel,
@@ -4578,6 +4628,9 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
     }
     if (frais.present) {
       map['frais'] = Variable<double>(frais.value);
+    }
+    if (montantInvesti.present) {
+      map['montant_investi'] = Variable<double>(montantInvesti.value);
     }
     if (dateInvestissement.present) {
       map['date_investissement'] = Variable<DateTime>(dateInvestissement.value);
@@ -4627,6 +4680,7 @@ class StartupDetailsCompanion extends UpdateCompanion<StartupDetail> {
           ..write('quantite: $quantite, ')
           ..write('prixEntree: $prixEntree, ')
           ..write('frais: $frais, ')
+          ..write('montantInvesti: $montantInvesti, ')
           ..write('dateInvestissement: $dateInvestissement, ')
           ..write('stade: $stade, ')
           ..write('prixActuel: $prixActuel, ')
@@ -8666,6 +8720,7 @@ typedef $$StartupDetailsTableCreateCompanionBuilder =
       Value<double> quantite,
       Value<double> prixEntree,
       Value<double> frais,
+      Value<double> montantInvesti,
       Value<DateTime?> dateInvestissement,
       Value<String?> stade,
       Value<double> prixActuel,
@@ -8687,6 +8742,7 @@ typedef $$StartupDetailsTableUpdateCompanionBuilder =
       Value<double> quantite,
       Value<double> prixEntree,
       Value<double> frais,
+      Value<double> montantInvesti,
       Value<DateTime?> dateInvestissement,
       Value<String?> stade,
       Value<double> prixActuel,
@@ -8762,6 +8818,11 @@ class $$StartupDetailsTableFilterComposer
 
   ColumnFilters<double> get frais => $composableBuilder(
     column: $table.frais,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get montantInvesti => $composableBuilder(
+    column: $table.montantInvesti,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8883,6 +8944,11 @@ class $$StartupDetailsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get montantInvesti => $composableBuilder(
+    column: $table.montantInvesti,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get dateInvestissement => $composableBuilder(
     column: $table.dateInvestissement,
     builder: (column) => ColumnOrderings(column),
@@ -8991,6 +9057,11 @@ class $$StartupDetailsTableAnnotationComposer
   GeneratedColumn<double> get frais =>
       $composableBuilder(column: $table.frais, builder: (column) => column);
 
+  GeneratedColumn<double> get montantInvesti => $composableBuilder(
+    column: $table.montantInvesti,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get dateInvestissement => $composableBuilder(
     column: $table.dateInvestissement,
     builder: (column) => column,
@@ -9095,6 +9166,7 @@ class $$StartupDetailsTableTableManager
                 Value<double> quantite = const Value.absent(),
                 Value<double> prixEntree = const Value.absent(),
                 Value<double> frais = const Value.absent(),
+                Value<double> montantInvesti = const Value.absent(),
                 Value<DateTime?> dateInvestissement = const Value.absent(),
                 Value<String?> stade = const Value.absent(),
                 Value<double> prixActuel = const Value.absent(),
@@ -9114,6 +9186,7 @@ class $$StartupDetailsTableTableManager
                 quantite: quantite,
                 prixEntree: prixEntree,
                 frais: frais,
+                montantInvesti: montantInvesti,
                 dateInvestissement: dateInvestissement,
                 stade: stade,
                 prixActuel: prixActuel,
@@ -9135,6 +9208,7 @@ class $$StartupDetailsTableTableManager
                 Value<double> quantite = const Value.absent(),
                 Value<double> prixEntree = const Value.absent(),
                 Value<double> frais = const Value.absent(),
+                Value<double> montantInvesti = const Value.absent(),
                 Value<DateTime?> dateInvestissement = const Value.absent(),
                 Value<String?> stade = const Value.absent(),
                 Value<double> prixActuel = const Value.absent(),
@@ -9154,6 +9228,7 @@ class $$StartupDetailsTableTableManager
                 quantite: quantite,
                 prixEntree: prixEntree,
                 frais: frais,
+                montantInvesti: montantInvesti,
                 dateInvestissement: dateInvestissement,
                 stade: stade,
                 prixActuel: prixActuel,

@@ -637,6 +637,7 @@ StartupDetail _emptyStartupDetail(Asset asset) => StartupDetail(
   quantite: 0,
   prixEntree: 0,
   frais: 0,
+  montantInvesti: 0,
   prixActuel: 0,
   valorisationEntreprise: 0,
   statut: 'en_portefeuille',

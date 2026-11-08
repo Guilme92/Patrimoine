@@ -334,6 +334,7 @@ void main() {
 
         final raw = sqlite.sqlite3.open(file.path);
         raw.execute('DROP TABLE secondary_transactions');
+        raw.execute('ALTER TABLE startup_details DROP COLUMN montant_investi');
         raw.execute('PRAGMA user_version = 5');
         raw.close();
 
@@ -364,7 +365,7 @@ void main() {
         final version = await db
             .customSelect('PRAGMA user_version')
             .getSingle();
-        expect(version.data.values.first, 7);
+        expect(version.data.values.first, 8);
       },
     );
   });
@@ -395,6 +396,7 @@ void main() {
       for (final column in ['actions', 'prix', 'frais', 'commission_pv']) {
         raw.execute('ALTER TABLE secondary_transactions DROP COLUMN $column');
       }
+      raw.execute('ALTER TABLE startup_details DROP COLUMN montant_investi');
       raw.execute('PRAGMA user_version = 6');
       raw.close();
 
@@ -412,7 +414,7 @@ void main() {
       final version = await db
           .customSelect('PRAGMA user_version')
           .getSingle();
-      expect(version.data.values.first, 7);
+      expect(version.data.values.first, 8);
     });
   });
 

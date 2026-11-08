@@ -1,5 +1,6 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrimoine/controllers/portfolio_controller.dart';
 import 'package:patrimoine/data/database.dart';
@@ -91,6 +92,26 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Amène un contrôle de la barre de filtres dans la zone visible : sur un
+  /// écran étroit, les sélecteurs défilent horizontalement.
+  Future<void> revealFilter(WidgetTester tester, Finder finder) async {
+    await tester.ensureVisible(finder);
+    await tester.pumpAndSettle();
+  }
+
+  /// Ouvre le menu des catégories et coche la catégorie demandée.
+  Future<void> pickCategory(WidgetTester tester, String categorie) async {
+    final bouton = find.byTooltip('Filtrer par catégorie');
+    await revealFilter(tester, bouton);
+    await tester.tap(bouton);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(CheckboxMenuButton, categorie));
+    await tester.pumpAndSettle();
+    // Le menu reste ouvert (multi-sélection) : Échap le referme.
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('synthèse, filtres et liste sans débordement en 360 dp', (
     tester,
   ) async {
@@ -119,12 +140,11 @@ void main() {
     expect(find.text('Startups (3)'), findsOneWidget);
     expect(find.text('Nom'), findsOneWidget);
 
-    // Filtre catégorie : il ne reste qu'Europe Multi-Stage.
-    await tester.tap(
-      find.widgetWithText(FilterChip, 'Europe Multi-Stage').first,
-    );
-    await tester.pumpAndSettle();
+    // Filtre catégorie (menu à cases à cocher) : il ne reste qu'Europe.
+    await pickCategory(tester, 'Europe Multi-Stage');
     expect(find.text('Startups (1)'), findsOneWidget);
+    // Le bouton résume la sélection courante.
+    expect(find.text('Europe Multi-Stage'), findsWidgets);
 
     // Réinitialisation.
     await tester.tap(find.text('Réinitialiser'));
@@ -132,7 +152,9 @@ void main() {
     expect(find.text('Startups (3)'), findsOneWidget);
 
     // Filtre année : seules les lignes datées 2022 restent.
-    await tester.tap(find.text('Toutes les années'));
+    final annee = find.text('Toutes les années');
+    await revealFilter(tester, annee);
+    await tester.tap(annee);
     await tester.pumpAndSettle();
     await tester.tap(find.text('2022').last);
     await tester.pumpAndSettle();
@@ -195,8 +217,7 @@ void main() {
     expect(find.text(formatEuro(25)), findsWidgets);
 
     // Le KPI suit le filtre de catégorie (12 + 8).
-    await tester.tap(find.widgetWithText(FilterChip, 'Licornes pre-IPO').first);
-    await tester.pumpAndSettle();
+    await pickCategory(tester, 'Licornes pre-IPO');
     expect(find.text(formatEuro(20)), findsWidgets);
 
     await tester.tap(find.text('Réinitialiser'));
@@ -221,8 +242,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(formatEuro(5)), findsWidgets);
 
-    // Effacement de la recherche via la croix.
-    await tester.tap(find.byTooltip('Effacer la recherche'));
+    // Effacement de la recherche via la croix. Le RenderBox de l'icône est un
+    // proxy (non testé au hit-test) : on désactive l'avertissement du testeur,
+    // le résultat est vérifié juste après.
+    expect(find.byTooltip('Effacer la recherche'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.close), warnIfMissed: false);
     await tester.pumpAndSettle();
     expect(find.text(formatEuro(25)), findsWidgets);
     await tester.tap(find.text('Liste'));
