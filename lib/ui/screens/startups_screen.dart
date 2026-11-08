@@ -29,7 +29,7 @@ const Map<String, Color> _categoryColors = {
   'Europe Multi-Stage': Color(0xFF3B82F6),
   'Y Combinator Series A': Color(0xFF8B5CF6),
   'Y Combinator Seed Selection': Color(0xFF16C784),
-  'Sans catégorie': Color(0xFF6B7280),
+  'Blast': Color(0xFFF59E0B),
 };
 
 Color _categoryColor(String key) =>
@@ -182,8 +182,9 @@ class _StartupsScreenState extends State<StartupsScreen> {
     final everyStartup = controller.startupEntries;
     if (everyStartup.isEmpty) return const _NoStartupState();
 
-    // Onglet « Startup » : uniquement les startups catégorisées. Celles sans
-    // catégorie (portefeuille Blast) vivent dans l'onglet « Blast ».
+    // Liste de l'onglet « Startup » : uniquement les startups catégorisées.
+    // Celles sans catégorie (portefeuille Blast) vivent dans l'onglet « Blast »,
+    // mais leurs données restent intégrées à la synthèse globale (ci-dessous).
     final all = everyStartup
         .where((e) => hasStartupCategory(e.detail.categorie))
         .toList();
@@ -199,7 +200,9 @@ class _StartupsScreenState extends State<StartupsScreen> {
           ..sort((a, b) => b.compareTo(a));
 
     final filtered = all.where(_matches).toList();
-    final summary = summarizeStartups(filtered);
+    // Synthèse : tout le portefeuille (startups catégorisées + lignes Blast
+    // sans catégorie), indépendamment des filtres appliqués à la liste.
+    final summary = summarizeStartups(everyStartup);
     final totalInvestedGlobal = _totalInvestedGlobal(controller);
 
     // Le contenu de section est toujours en bas : il reste attaché au
@@ -827,8 +830,8 @@ class _SynthesisTab extends StatelessWidget {
       _KpiCard(
         label: 'Capital investi',
         value: formatEuro(totalInvestedGlobal),
-        hint: 'Capital investi total du portefeuille : startups (toutes '
-            'catégories) + achats sur le marché secondaire.',
+        hint: 'Capital investi total du portefeuille : startups de toutes '
+            'catégories, y compris Blast.',
       ),
       _KpiCard(
         label: 'Frais total',
@@ -839,7 +842,7 @@ class _SynthesisTab extends StatelessWidget {
             : null,
         hint:
             'Somme des frais d\'entrée (dossier, commissions) de toutes les '
-            'startups du périmètre filtré, tous statuts confondus.',
+            'startups du portefeuille (y compris Blast), tous statuts confondus.',
       ),
       _KpiCard(
         label: 'Valorisation totale',
@@ -925,7 +928,7 @@ class _SynthesisTab extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           'KPIs calculés sur ${summary.totalCount} startup'
-          '${summary.totalCount > 1 ? 's' : ''} après filtres.',
+          '${summary.totalCount > 1 ? 's' : ''} au total (startups + Blast).',
           style: theme.textTheme.bodySmall,
         ),
       ],

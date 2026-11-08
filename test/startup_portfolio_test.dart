@@ -141,11 +141,11 @@ void main() {
       expect(s.avgTriPct, closeTo(20.091095, 1e-5));
     });
 
-    test('remplit la valeur par catégorie, vide -> « Sans catégorie »', () {
+    test('remplit la valeur par catégorie, vide -> « Blast »', () {
       final s = summarizeStartups(_portfolio(), today: _today);
       expect(s.valueByCategory['Licornes pre-IPO'], 4000);
       expect(s.valueByCategory['Europe Multi-Stage'], 2500);
-      expect(s.valueByCategory['Sans catégorie'], 0);
+      expect(s.valueByCategory['Blast'], 0);
       expect(s.valueByCategory.keys, hasLength(3));
     });
 
@@ -179,13 +179,13 @@ void main() {
       expect(europe.moic, 2.5);
       expect(europe.triPct, closeTo(35.711426, 1e-5));
 
-      final sansCategorie = s.kpiByCategory['Sans catégorie']!;
-      expect(sansCategorie.count, 1);
-      expect(sansCategorie.invested, 500);
-      expect(sansCategorie.value, 0);
-      expect(sansCategorie.realized, 0);
-      expect(sansCategorie.moic, 0);
-      expect(sansCategorie.triPct, 0);
+      final blast = s.kpiByCategory['Blast']!;
+      expect(blast.count, 1);
+      expect(blast.invested, 500);
+      expect(blast.value, 0);
+      expect(blast.realized, 0);
+      expect(blast.moic, 0);
+      expect(blast.triPct, 0);
 
       expect(s.kpiByCategory.keys, hasLength(3));
     });
@@ -221,7 +221,7 @@ void main() {
 
       expect(s.kpiByCategory['Licornes pre-IPO']!.frais, 20);
       expect(s.kpiByCategory['Europe Multi-Stage']!.frais, 20);
-      expect(s.kpiByCategory['Sans catégorie']!.frais, 0);
+      expect(s.kpiByCategory['Blast']!.frais, 0);
       // Les frais d'une catégorie restent inclus dans son capital investi.
       expect(s.kpiByCategory['Licornes pre-IPO']!.invested, 2000 + 20);
 
@@ -306,9 +306,9 @@ void main() {
 
   group('startupCategoryKey', () {
     test('normalise les catégories vides', () {
-      expect(startupCategoryKey(null), 'Sans catégorie');
-      expect(startupCategoryKey(''), 'Sans catégorie');
-      expect(startupCategoryKey('   '), 'Sans catégorie');
+      expect(startupCategoryKey(null), 'Blast');
+      expect(startupCategoryKey(''), 'Blast');
+      expect(startupCategoryKey('   '), 'Blast');
       expect(startupCategoryKey('  Licornes pre-IPO '), 'Licornes pre-IPO');
     });
   });

@@ -31,6 +31,7 @@ Les 22 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : 
   - [Build 21 — Positions boursières modifiables et recherche de symbole (8 novembre 2026)](#build-21--positions-boursières-modifiables-et-recherche-de-symbole-8-novembre-2026)
   - [Build 22 — Capital investi fiabilisé et onglet Startup compacté (8 novembre 2026)](#build-22--capital-investi-fiabilisé-et-onglet-startup-compacté-8-novembre-2026)
   - [Build 23 — Capital investi sans double comptage (8 novembre 2026)](#build-23--capital-investi-sans-double-comptage-8-novembre-2026)
+  - [Build 24 — Lignes Blast intégrées aux KPIs Startup (8 novembre 2026)](#build-24--lignes-blast-intégrées-aux-kpis-startup-8-novembre-2026)
 
 ## Phase 1 — Fondations
 
@@ -164,3 +165,9 @@ Les 22 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : 
 
 - Correction : la Synthèse « Capital investi » ne double-compte plus les achats du marché secondaire (déjà inclus dans le montant investi de chaque startup).
 - Capital investi total exact : primaire + achats secondaires, sans ré-ajouter le Blast Market.
+
+### Build 24 — Lignes Blast intégrées aux KPIs Startup (8 novembre 2026)
+
+- Synthèse Startup : tous les KPIs (valorisation, PV latente, MOIC, TRI, frais, compteurs, top 5) intègrent désormais les lignes Blast sans catégorie.
+- Catégorie « Blast » ajoutée à la répartition et aux KPIs par catégorie (couleur ambre).
+- La synthèse devient une vue globale du portefeuille (indépendante des filtres de la liste).

@@ -81,10 +81,10 @@ class StartupPortfolioSummary {
 }
 
 /// Clé de regroupement d'une catégorie : une catégorie vide ou blanche est
-/// rattachée à « Sans catégorie ».
+/// rattachée à « Blast » (investissements dans les fonds Blast, sans catégorie).
 String startupCategoryKey(String? categorie) {
   final t = categorie?.trim();
-  return (t == null || t.isEmpty) ? 'Sans catégorie' : t;
+  return (t == null || t.isEmpty) ? 'Blast' : t;
 }
 
 // ---------------------------------------------------------------------------

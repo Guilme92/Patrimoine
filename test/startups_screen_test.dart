@@ -129,9 +129,9 @@ void main() {
     expect(find.text('Répartition par catégorie'), findsOneWidget);
     expect(find.text('Par catégorie'), findsOneWidget);
     expect(find.text('Top 5 par valorisation'), findsOneWidget);
-    // Compteurs : 2 actives (Alpha, Beta), 1 sortie (Gamma) — Delta, sans
-    // catégorie, appartient à l'onglet Blast et n'est pas comptée ici.
-    expect(find.text('2 actives · 1 sortie · 0 radiée'), findsOneWidget);
+    // Compteurs : 2 actives (Alpha, Beta), 1 sortie (Gamma), 1 radiée (Delta).
+    // Delta, sans catégorie, est désormais intégrée à la synthèse globale.
+    expect(find.text('2 actives · 1 sortie · 1 radiée'), findsOneWidget);
 
     // Sous-onglet Liste.
     await tester.tap(find.text('Liste'));
