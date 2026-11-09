@@ -26,6 +26,24 @@ void main() {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
+    // Un bien immobilier loué : c'est la carte la plus dense de l'app.
+    final assetId = await db.addAsset(
+      AssetsCompanion.insert(
+        name: 'Appartement Lyon 3e',
+        type: 'realEstate',
+        value: const Value(200000),
+      ),
+    );
+    await db.saveRental(
+      RentalsCompanion.insert(
+        assetId: assetId,
+        statut: const Value('loue'),
+        loyerHc: const Value(900),
+        chargesLocatives: const Value(50),
+        aUnCredit: const Value(true),
+        mensualiteCredit: const Value(700),
+      ),
+    );
     await tester.runAsync(() => controller.load());
     await tester.pumpWidget(
       ChangeNotifierProvider.value(

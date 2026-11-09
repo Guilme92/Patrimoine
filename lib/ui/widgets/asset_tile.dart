@@ -9,12 +9,14 @@ import '../../theme/app_theme.dart';
 import '../../theme/palette.dart';
 import '../../utils/format.dart';
 import '../screens/asset_detail_screen.dart';
+import 'info_hint.dart';
 
 /// Carte d'un actif dans les onglets par type.
 ///
 /// Selon le type, elle enrichit l'en-tête (icône + nom + valeur) d'un corps
 /// spécifique :
-/// - immobilier loué : loyer, charges locataire, rendements, cashflow, crédit ;
+/// - immobilier loué : tout tient sur une seule rangée (nom, loyer, charges,
+///   rendements, cashflow, crédit, valeur), pour rester compact ;
 /// - bourse / crypto : une ligne par position (P.U. actuel, P.U. acheté,
 ///   quantité, PV latente, total) ;
 /// - autres : affichage simple.
@@ -45,14 +47,14 @@ class AssetTile extends StatelessWidget {
     );
     final color = assetTypeColors[type] ?? AppColors.primary;
 
-    final Widget? body;
-    if (type == AssetType.realEstate && rental != null) {
-      body = _RentalBody(rental: rental!, assetValue: value);
-    } else if (positions.isNotEmpty) {
-      body = _PositionsBody(positions: positions, prices: prices);
-    } else {
-      body = null;
-    }
+    // Un bien immobilier loué tient sur une seule rangée : pas d'en-tête
+    // séparé ni de grille de statistiques, donc une carte deux fois moins
+    // haute que les autres.
+    final rented = type == AssetType.realEstate && rental != null;
+
+    final Widget? body = !rented && positions.isNotEmpty
+        ? _PositionsBody(positions: positions, prices: prices)
+        : null;
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
@@ -63,55 +65,69 @@ class AssetTile extends StatelessWidget {
       child: Container(
         decoration: cardDecoration(),
         margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceAlt,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(assetTypeIcon(type), color: color, size: 22),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+        padding: EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: rented ? 10 : 14,
+        ),
+        child: rented
+            ? _RentalRow(
+                asset: asset,
+                rental: rental!,
+                assetValue: value,
+                accent: color,
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Text(
-                        asset.name,
-                        style: Theme.of(context).textTheme.titleMedium,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          assetTypeIcon(type),
+                          color: color,
+                          size: 22,
+                        ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              asset.name,
+                              style: Theme.of(context).textTheme.titleMedium,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _subtitle(type),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       Text(
-                        _subtitle(type),
-                        style: Theme.of(context).textTheme.bodySmall,
+                        formatEuro(value),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  formatEuro(value),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ],
-            ),
-            if (body != null) ...[
-              const SizedBox(height: 10),
-              const Divider(height: 1),
-              const SizedBox(height: 10),
-              body,
-            ],
-          ],
-        ),
+                  if (body != null) ...[
+                    const SizedBox(height: 10),
+                    const Divider(height: 1),
+                    const SizedBox(height: 10),
+                    body,
+                  ],
+                ],
+              ),
       ),
     );
   }
@@ -126,86 +142,240 @@ class AssetTile extends StatelessWidget {
   }
 }
 
-/// Corps d'une tuile immobilier : indicateurs de rentabilité de la location.
-class _RentalBody extends StatelessWidget {
+/// Rangée unique d'un bien immobilier loué.
+///
+/// Pastille de type, nom du bien, puis chaque indicateur en micro-colonne
+/// (libellé au-dessus de la valeur) : le tout sur une seule rangée, sans
+/// en-tête ni grille. Chaque colonne est un `FittedBox` : sur écran étroit
+/// (360 dp) elle rétrécit au lieu de déborder, et rien n'est empilé.
+class _RentalRow extends StatelessWidget {
+  final Asset asset;
   final Rental rental;
   final double assetValue;
+  final Color accent;
 
-  const _RentalBody({required this.rental, required this.assetValue});
+  const _RentalRow({
+    required this.asset,
+    required this.rental,
+    required this.assetValue,
+    required this.accent,
+  });
+
+  /// En dessous, les libellés sont abrégés et les valeurs monétaires
+  /// compactées pour tenir sur 360 dp.
+  static const double _wideBreakpoint = 700;
+
+  /// En dessous, les info-bulles n'apparaissent pas : elles mangeraient la
+  /// place nécessaire aux valeurs.
+  static const double _hintBreakpoint = 1000;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final cashflow = monthlyCashflow(rental);
     final cashflowColor = cashflow > 0
         ? AppColors.positive
         : cashflow < 0
         ? AppColors.negative
         : AppColors.textSecondary;
-    final items = <_StatItem>[
-      _StatItem('Loyer HC', formatEuro(rental.loyerHc)),
-      _StatItem('Charges locataire', formatEuro(rental.chargesLocatives)),
-      _StatItem('Rend. brut', formatPctFixed(grossYieldPct(rental, assetValue))),
-      _StatItem('Rend. net', formatPctFixed(netYieldPct(rental, assetValue))),
-      _StatItem(
-        'Cashflow /mois',
-        formatSignedEuro(cashflow),
-        valueColor: cashflowColor,
-      ),
-      _StatItem('Crédit', rental.aUnCredit ? 'Oui' : 'Non'),
-    ];
-    return Column(
-      children: [
-        for (var i = 0; i < items.length; i += 2)
-          Padding(
-            padding: EdgeInsets.only(bottom: i + 2 < items.length ? 10 : 0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: items[i]),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: i + 1 < items.length
-                      ? items[i + 1]
-                      : const SizedBox(),
-                ),
-              ],
-            ),
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final wide = width >= _wideBreakpoint;
+        final withHints = width >= _hintBreakpoint;
+
+        final metrics = <_Metric>[
+          _Metric(wide ? 'Loyer HC' : 'Loyer', formatEuro(rental.loyerHc)),
+          _Metric(
+            wide ? 'Charges locataire' : 'Charges',
+            formatEuro(rental.chargesLocatives),
           ),
-      ],
+          _Metric(
+            wide ? 'Rend. brut' : 'Brut',
+            formatPctFixed(grossYieldPct(rental, assetValue)),
+            hint: withHints
+                ? 'Loyer annuel hors charges / valeur du bien'
+                : null,
+          ),
+          _Metric(
+            wide ? 'Rend. net' : 'Net',
+            formatPctFixed(netYieldPct(rental, assetValue)),
+            hint: withHints
+                ? 'Loyer annuel − charges du propriétaire, / valeur du bien'
+                : null,
+          ),
+          _Metric(
+            wide ? 'Cashflow /mois' : 'Cash',
+            formatSignedEuro(cashflow),
+            color: cashflowColor,
+            hint: withHints
+                ? 'Loyer + charges refacturées − charges du propriétaire '
+                      '− crédit (assurance incluse)'
+                : null,
+          ),
+          _Metric('Crédit', rental.aUnCredit ? 'Oui' : 'Non'),
+          _Metric(
+            'Valeur',
+            wide ? formatEuro(assetValue) : formatCompactEuro(assetValue),
+            emphasis: true,
+          ),
+        ];
+
+        return Row(
+          // Les colonnes gardent leur largeur naturelle : l'espace restant
+          // est réparti entre elles plutôt que laissé vide à droite.
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            if (wide)
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  assetTypeIcon(AssetType.realEstate),
+                  color: accent,
+                  size: 19,
+                ),
+              )
+            else
+              // Barre d'accent : même repère visuel que l'icône, en 4 dp.
+              Container(
+                width: 4,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: accent,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            SizedBox(width: wide ? 12 : 8),
+            Expanded(
+              flex: wide ? 3 : 5,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    asset.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontSize: wide ? 15 : 12,
+                      height: 1.15,
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    rentalStatusLabel(rental.statut),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: wide ? 10.5 : 8.5,
+                      height: 1.15,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            for (final metric in metrics) ...[
+              SizedBox(width: wide ? 10 : 5),
+              Flexible(
+                flex: 2,
+                child: _MetricCell(
+                  metric: metric,
+                  labelSize: wide ? 9 : 8,
+                  valueSize: wide ? 13 : 10.5,
+                  alignEnd: metric.emphasis,
+                ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }
 
-/// Petite valeur libellée (« Loyer HC / 900 € »).
-class _StatItem extends StatelessWidget {
+/// Indicateur affiché en micro-colonne (libellé + valeur).
+class _Metric {
   final String label;
   final String value;
-  final Color? valueColor;
+  final String? hint;
+  final Color? color;
 
-  const _StatItem(this.label, this.value, {this.valueColor});
+  /// Valeur mise en avant (valeur du bien), alignée à droite de la carte.
+  final bool emphasis;
+
+  const _Metric(
+    this.label,
+    this.value, {
+    this.hint,
+    this.color,
+    this.emphasis = false,
+  });
+}
+
+/// Colonne compacte d'une rangée : libellé (et info-bulle si la place le
+/// permet) au-dessus de la valeur.
+class _MetricCell extends StatelessWidget {
+  final _Metric metric;
+  final double labelSize;
+  final double valueSize;
+  final bool alignEnd;
+
+  const _MetricCell({
+    required this.metric,
+    required this.labelSize,
+    required this.valueSize,
+    this.alignEnd = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(fontSize: 10.5),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 13.5,
-            fontWeight: FontWeight.w600,
-            color: valueColor ?? AppColors.textPrimary,
+    // Pas de Flexible/Expanded ici : le contenu est mesuré sans contrainte
+    // puis réduit par le FittedBox.
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: alignEnd ? Alignment.centerRight : Alignment.centerLeft,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: alignEnd
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                metric.label,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: labelSize,
+                  height: 1.1,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              if (metric.hint != null)
+                InfoHint(metric.hint!, size: labelSize + 3),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 2),
+          Text(
+            metric.value,
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: valueSize,
+              height: 1.15,
+              fontWeight: metric.emphasis ? FontWeight.w700 : FontWeight.w600,
+              color: metric.color ?? AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
