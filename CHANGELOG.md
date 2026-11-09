@@ -1,6 +1,6 @@
 # Notes de version — Patrimoine
 
-Les 25 builds de Patrimoine, du premier MVP au simulateur de sortie Blast : un historique complet des fonctionnalités livrées, build par build.
+Les 26 builds de Patrimoine, du premier MVP au simulateur de sortie Blast : un historique complet des fonctionnalités livrées, build par build.
 
 ## Table des matières
 
@@ -33,6 +33,7 @@ Les 25 builds de Patrimoine, du premier MVP au simulateur de sortie Blast : un h
   - [Build 23 — Capital investi sans double comptage (8 novembre 2026)](#build-23--capital-investi-sans-double-comptage-8-novembre-2026)
   - [Build 24 — Lignes Blast intégrées aux KPIs Startup (8 novembre 2026)](#build-24--lignes-blast-intégrées-aux-kpis-startup-8-novembre-2026)
   - [Build 25 — Immobilier et Bourse détaillés + simulateur de sortie Blast (9 novembre 2026)](#build-25--immobilier-et-bourse-détaillés--simulateur-de-sortie-blast-9-novembre-2026)
+  - [Build 26 — Immobilier compact + PV latente fiabilisée (9 novembre 2026)](#build-26--immobilier-compact--pv-latente-fiabilisée-9-novembre-2026)
 
 ## Phase 1 — Fondations
 
@@ -179,3 +180,9 @@ Les 25 builds de Patrimoine, du premier MVP au simulateur de sortie Blast : un h
 - Onglet Bourse et Crypto : chaque ligne affiche le prix unitaire actuel, le prix d'achat, la quantité, la plus-value latente et le total.
 - Onglet Blast : simulateur de sortie — glissez la valorisation de Blast (500 M€ → 10 Mrd €) pour recalculer en direct la valeur de vos parts, la plus-value brute et la plus-value nette (18,2 % d'impôt).
 - Participation Blast modifiable (détention en % et capital investi), conservée d'une session à l'autre.
+
+### Build 26 — Immobilier compact + PV latente fiabilisée (9 novembre 2026)
+
+- Onglet Immobilier : chaque bien tient sur une seule ligne (loyer, charges, rendements, cashflow, crédit, valeur) au lieu d'une carte haute.
+- PV latente corrigée : elle porte uniquement sur les actions restantes (quantité × (prix actuel − PRU)) ; les frais restent affichés à part.
+- PV réalisée des reventes du marché secondaire affichée séparément : colonne « PV réalisée » dans la liste et KPI « PV secondaire réalisée » dans la synthèse.
