@@ -1,6 +1,6 @@
 # Notes de version — Patrimoine
 
-Les 26 builds de Patrimoine, du premier MVP au simulateur de sortie Blast : un historique complet des fonctionnalités livrées, build par build.
+Les 27 builds de Patrimoine, du premier MVP au simulateur de sortie Blast : un historique complet des fonctionnalités livrées, build par build.
 
 ## Table des matières
 
@@ -34,6 +34,7 @@ Les 26 builds de Patrimoine, du premier MVP au simulateur de sortie Blast : un h
   - [Build 24 — Lignes Blast intégrées aux KPIs Startup (8 novembre 2026)](#build-24--lignes-blast-intégrées-aux-kpis-startup-8-novembre-2026)
   - [Build 25 — Immobilier et Bourse détaillés + simulateur de sortie Blast (9 novembre 2026)](#build-25--immobilier-et-bourse-détaillés--simulateur-de-sortie-blast-9-novembre-2026)
   - [Build 26 — Immobilier compact + PV latente fiabilisée (9 novembre 2026)](#build-26--immobilier-compact--pv-latente-fiabilisée-9-novembre-2026)
+  - [Build 27 — PV latente frais inclus + dashboard performance (9 novembre 2026)](#build-27--pv-latente-frais-inclus--dashboard-performance-9-novembre-2026)
 
 ## Phase 1 — Fondations
 
@@ -186,3 +187,10 @@ Les 26 builds de Patrimoine, du premier MVP au simulateur de sortie Blast : un h
 - Onglet Immobilier : chaque bien tient sur une seule ligne (loyer, charges, rendements, cashflow, crédit, valeur) au lieu d'une carte haute.
 - PV latente corrigée : elle porte uniquement sur les actions restantes (quantité × (prix actuel − PRU)) ; les frais restent affichés à part.
 - PV réalisée des reventes du marché secondaire affichée séparément : colonne « PV réalisée » dans la liste et KPI « PV secondaire réalisée » dans la synthèse.
+
+### Build 27 — PV latente frais inclus + dashboard performance (9 novembre 2026)
+
+- PV latente corrigée : le coût de revient inclut désormais les frais d'entrée, répartis au prorata des actions restantes après reventes.
+- Simulateur de sortie Blast : KPI « Total perçu » (PV nette + capital investi).
+- Onglet Bourse et Crypto : chaque position tient sur une ligne compacte.
+- Tableau de bord refondu en vue de performance : KPIs (plus-value latente/réalisée, frais, taux d'endettement), répartition par classe, top contributeurs et revenus locatifs, à la place de la liste d'actifs.
