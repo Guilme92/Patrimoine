@@ -1,6 +1,6 @@
 # Notes de version — Patrimoine
 
-Les 22 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : un historique complet des fonctionnalités livrées, build par build.
+Les 25 builds de Patrimoine, du premier MVP au simulateur de sortie Blast : un historique complet des fonctionnalités livrées, build par build.
 
 ## Table des matières
 
@@ -32,6 +32,7 @@ Les 22 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : 
   - [Build 22 — Capital investi fiabilisé et onglet Startup compacté (8 novembre 2026)](#build-22--capital-investi-fiabilisé-et-onglet-startup-compacté-8-novembre-2026)
   - [Build 23 — Capital investi sans double comptage (8 novembre 2026)](#build-23--capital-investi-sans-double-comptage-8-novembre-2026)
   - [Build 24 — Lignes Blast intégrées aux KPIs Startup (8 novembre 2026)](#build-24--lignes-blast-intégrées-aux-kpis-startup-8-novembre-2026)
+  - [Build 25 — Immobilier et Bourse détaillés + simulateur de sortie Blast (9 novembre 2026)](#build-25--immobilier-et-bourse-détaillés--simulateur-de-sortie-blast-9-novembre-2026)
 
 ## Phase 1 — Fondations
 
@@ -171,3 +172,10 @@ Les 22 builds de Patrimoine, du premier MVP au suivi multi-tours des startups : 
 - Synthèse Startup : tous les KPIs (valorisation, PV latente, MOIC, TRI, frais, compteurs, top 5) intègrent désormais les lignes Blast sans catégorie.
 - Catégorie « Blast » ajoutée à la répartition et aux KPIs par catégorie (couleur ambre).
 - La synthèse devient une vue globale du portefeuille (indépendante des filtres de la liste).
+
+### Build 25 — Immobilier et Bourse détaillés + simulateur de sortie Blast (9 novembre 2026)
+
+- Onglet Immobilier : chaque bien affiche son loyer HC, les charges locataire, le rendement brut, le rendement net, le cashflow mensuel et le crédit (oui/non).
+- Onglet Bourse et Crypto : chaque ligne affiche le prix unitaire actuel, le prix d'achat, la quantité, la plus-value latente et le total.
+- Onglet Blast : simulateur de sortie — glissez la valorisation de Blast (500 M€ → 10 Mrd €) pour recalculer en direct la valeur de vos parts, la plus-value brute et la plus-value nette (18,2 % d'impôt).
+- Participation Blast modifiable (détention en % et capital investi), conservée d'une session à l'autre.
