@@ -73,15 +73,16 @@ void main() {
     });
 
     test('les frais réduisent la PV latente (ex. Fluidstack)', () {
-      // 3 750 actions à 1 € (3 750 € investis) + 525 € de frais : coût de
-      // revient 4 275 €. Valorisation 3 750 € → PV latente −525 €.
+      // 3 750 actions à 1 € + 525 € de frais : capital investi 4 275 €
+      // (frais inclus). Valorisation 3 750 € → PV latente −525 €.
       final s = _detail(
         quantite: 3750,
         prixEntree: 1,
         frais: 525,
-        montantInvesti: 3750,
+        montantInvesti: 4275,
         prixActuel: 1,
       );
+      expect(investedCapital(s), 4275);
       expect(unrealizedGain(s), -525);
     });
 

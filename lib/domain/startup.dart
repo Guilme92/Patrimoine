@@ -8,9 +8,9 @@ import '../data/database.dart';
 /// une sortie (`statut == 'sorti'`) se valorise au produit de sortie, et
 /// une radiation vaut zéro.
 
-/// Capital investi : montant total investi quand il est renseigné
-/// (indépendant du PRU corrigé des ventes), sinon quantité × prix d'entrée
-/// + frais.
+/// Capital investi total (frais d'entrée INCLUS) : `montantInvesti` quand il
+/// est renseigné (montant réellement investi, frais compris), sinon quantité
+/// × prix d'entrée + frais. Indépendant du PRU corrigé des ventes.
 double investedCapital(StartupDetail s) => s.montantInvesti > 0
     ? s.montantInvesti
     : s.quantite * s.prixEntree + s.frais;
@@ -22,22 +22,14 @@ double lineValue(StartupDetail s) {
   return s.quantite * s.prixActuel;
 }
 
-/// Coût de revient total d'une ligne, frais d'entrée INCLUS.
-///
-/// `montantInvesti` (quand renseigné) porte le montant investi en titres,
-/// hors frais ; les frais d'entrée sont un coût additionnel qui réduit la
-/// plus-value. Repli sans `montantInvesti` : quantité × prix d'entrée + frais.
-double totalCost(StartupDetail s) => s.montantInvesti > 0
-    ? s.montantInvesti + s.frais
-    : s.quantite * s.prixEntree + s.frais;
-
-/// Coût de revient des actions restantes (frais inclus), réparti au prorata
-/// des actions restantes sur les actions achetées ([totalSold] = actions
-/// revendues).
+/// Coût de revient des actions restantes (frais d'entrée inclus), réparti au
+/// prorata des actions restantes sur les actions achetées ([totalSold] =
+/// actions revendues). Le capital investi ([investedCapital]) porte déjà les
+/// frais d'entrée.
 double remainingCost(StartupDetail s, {double totalSold = 0}) {
   final bought = s.quantite + totalSold;
   if (bought <= 0) return 0;
-  return totalCost(s) * (s.quantite / bought);
+  return investedCapital(s) * (s.quantite / bought);
 }
 
 /// Plus-value latente sur les actions RESTANTES : valeur restante − coût de
