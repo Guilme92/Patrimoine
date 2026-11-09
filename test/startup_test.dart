@@ -72,18 +72,18 @@ void main() {
       expect(unrealizedGainPct(s), closeTo(138.095238, 1e-5));
     });
 
-    test('les frais réduisent la PV latente (ex. Fluidstack)', () {
-      // 3 750 actions à 1 € + 525 € de frais : capital investi 4 275 €
-      // (frais inclus). Valorisation 3 750 € → PV latente −525 €.
+    test('capital investi inclut déjà les frais (ex. Fluidstack)', () {
+      // 3 750 € investis, frais de 525 € DÉJÀ inclus dans le capital investi.
+      // Valorisation 3 750 € → PV latente 0 €.
       final s = _detail(
         quantite: 3750,
         prixEntree: 1,
         frais: 525,
-        montantInvesti: 4275,
+        montantInvesti: 3750,
         prixActuel: 1,
       );
-      expect(investedCapital(s), 4275);
-      expect(unrealizedGain(s), -525);
+      expect(investedCapital(s), 3750);
+      expect(unrealizedGain(s), 0);
     });
 
     test('PV latente sur les actions restantes après une vente partielle', () {
