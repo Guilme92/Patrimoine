@@ -380,9 +380,10 @@ class _MetricCell extends StatelessWidget {
   }
 }
 
-/// Corps d'une tuile bourse / crypto : un tableau ligne par ligne des
-/// positions, avec prix unitaire actuel, prix de revient, quantité, PV latente
-/// et total.
+/// Corps d'une tuile bourse / crypto : une rangée compacte par position,
+/// sans en-tête séparé. Chaque valeur porte son micro-libellé au-dessus,
+/// comme dans l'onglet Immobilier : plus de tableau à deux niveaux (en-tête
+/// + lignes), donc une carte nettement plus dense pour la même information.
 class _PositionsBody extends StatelessWidget {
   final List<Position> positions;
   final Map<String, double> prices;
@@ -392,67 +393,40 @@ class _PositionsBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const _PositionsHeader(),
-        const SizedBox(height: 4),
-        for (final p in positions)
+        for (var i = 0; i < positions.length; i++) ...[
+          if (i > 0) const Divider(height: 1, thickness: 0.5),
           _PositionRow(
-            position: p,
-            price: prices[p.symbol] ?? p.unitCost,
+            position: positions[i],
+            price: prices[positions[i].symbol] ?? positions[i].unitCost,
           ),
+        ],
       ],
     );
   }
 }
 
-class _PositionsHeader extends StatelessWidget {
-  const _PositionsHeader();
-
-  static const _labelStyle = TextStyle(
-    fontSize: 10,
-    fontWeight: FontWeight.w600,
-    color: AppColors.textSecondary,
-    letterSpacing: 0.3,
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Expanded(flex: 3, child: Text('Actif', style: _labelStyle)),
-        Expanded(
-          flex: 2,
-          child: Text('P.U. actuel', textAlign: TextAlign.right, style: _labelStyle),
-        ),
-        Expanded(
-          flex: 2,
-          child: Text('P.U. acheté', textAlign: TextAlign.right, style: _labelStyle),
-        ),
-        const Expanded(
-          flex: 1,
-          child: Text('Qté', textAlign: TextAlign.right, style: _labelStyle),
-        ),
-        Expanded(
-          flex: 2,
-          child: Text('PV latente', textAlign: TextAlign.right, style: _labelStyle),
-        ),
-        const Expanded(
-          flex: 2,
-          child: Text('Total', textAlign: TextAlign.right, style: _labelStyle),
-        ),
-      ],
-    );
-  }
-}
-
+/// Rangée unique d'une position : nom (et symbole) puis micro-colonnes
+/// « libellé au-dessus / valeur en dessous », chacune dans un `FittedBox`
+/// pour rétrécir au lieu de déborder.
 class _PositionRow extends StatelessWidget {
   final Position position;
   final double price;
 
   const _PositionRow({required this.position, required this.price});
 
+  /// En dessous, les libellés sont abrégés (« Cours », « Achat », « PV ») et
+  /// les montants arrondis à l'euro : de quoi tenir sur 360 dp sans réduire
+  /// la police.
+  static const double _wideBreakpoint = 700;
+
+  /// En dessous, pas d'info-bulle : elle prendrait la place d'une valeur.
+  static const double _hintBreakpoint = 1000;
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final pnl = positionPnl(position, price);
     final total = positionValue(position, price);
     final pnlColor = pnl > 0
@@ -461,71 +435,137 @@ class _PositionRow extends StatelessWidget {
         ? AppColors.negative
         : AppColors.textSecondary;
     final name = position.name.trim().isEmpty ? position.symbol : position.name;
+    final hasSymbol =
+        position.symbol.trim().isNotEmpty && position.symbol != name;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 3,
-            child: Text(
-              name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 12.5,
-                color: AppColors.textPrimary,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final wide = width >= _wideBreakpoint;
+        final withHints = width >= _hintBreakpoint;
+        final labelSize = wide ? 9.0 : 8.0;
+        final valueSize = wide ? 12.0 : 10.5;
+
+        final cells = <Widget>[
+          _Cell(
+            wide ? 'P.U. actuel' : 'Cours',
+            wide ? formatEuro(price, cents: true) : formatEuro(price),
+            labelSize: labelSize,
+            valueSize: valueSize,
+          ),
+          _Cell(
+            wide ? 'P.U. acheté' : 'Achat',
+            wide
+                ? formatEuro(position.unitCost, cents: true)
+                : formatEuro(position.unitCost),
+            labelSize: labelSize,
+            valueSize: valueSize,
+          ),
+          _Cell(
+            'Qté',
+            formatQty(position.quantity),
+            labelSize: labelSize,
+            valueSize: valueSize,
+          ),
+          _Cell(
+            wide ? 'PV latente' : 'PV',
+            wide
+                ? formatSignedEuro(pnl, cents: true)
+                : formatSignedEuro(pnl),
+            color: pnlColor,
+            labelSize: labelSize,
+            valueSize: valueSize,
+            hint: withHints
+                ? '(cours actuel − P.U. acheté) × quantité'
+                : null,
+          ),
+          _Cell(
+            'Total',
+            wide ? formatEuro(total) : formatCompactEuro(total),
+            emphasis: true,
+            labelSize: labelSize,
+            valueSize: wide ? 13 : 10.5,
+          ),
+        ];
+
+        return Padding(
+          padding: EdgeInsets.symmetric(vertical: wide ? 3 : 2),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                flex: wide ? 3 : 4,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontSize: wide ? 13.5 : 12,
+                        height: 1.15,
+                      ),
+                    ),
+                    if (hasSymbol) ...[
+                      const SizedBox(height: 1),
+                      Text(
+                        position.symbol,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: wide ? 10.5 : 8.5,
+                          height: 1.15,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
+              for (final cell in cells) ...[
+                SizedBox(width: wide ? 10 : 5),
+                Flexible(flex: 2, child: cell),
+              ],
+            ],
           ),
-          Expanded(
-            flex: 2,
-            child: _Cell(formatEuro(price, cents: true)),
-          ),
-          Expanded(
-            flex: 2,
-            child: _Cell(formatEuro(position.unitCost, cents: true)),
-          ),
-          Expanded(
-            flex: 1,
-            child: _Cell(formatQty(position.quantity)),
-          ),
-          Expanded(
-            flex: 2,
-            child: _Cell(
-              formatSignedEuro(pnl, cents: true),
-              color: pnlColor,
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: _Cell(formatEuro(total), bold: true),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
+/// Micro-colonne d'une rangée : libellé (éventuellement abrégé, avec
+/// info-bulle) au-dessus de la valeur, réduite par un `FittedBox` plutôt que
+/// tronquée. Même rendu que les colonnes de l'onglet Immobilier.
 class _Cell extends StatelessWidget {
+  final String label;
   final String text;
   final Color? color;
-  final bool bold;
+  final bool emphasis;
+  final String? hint;
+  final double labelSize;
+  final double valueSize;
 
-  const _Cell(this.text, {this.color, this.bold = false});
+  const _Cell(
+    this.label,
+    this.text, {
+    this.color,
+    this.emphasis = false,
+    this.hint,
+    this.labelSize = 8,
+    this.valueSize = 10.5,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      textAlign: TextAlign.right,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(
-        fontSize: 12.5,
-        color: color ?? AppColors.textPrimary,
-        fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
-      ),
+    return _MetricCell(
+      metric: _Metric(label, text, hint: hint, color: color, emphasis: emphasis),
+      labelSize: labelSize,
+      valueSize: valueSize,
+      alignEnd: true,
     );
   }
 }
