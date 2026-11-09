@@ -22,8 +22,25 @@ double lineValue(StartupDetail s) {
   return s.quantite * s.prixActuel;
 }
 
-/// Plus-value latente (valeur − capital investi).
-double unrealizedGain(StartupDetail s) => lineValue(s) - investedCapital(s);
+/// Coût de revient des actions encore détenues.
+///
+/// `prixEntree` est un PRU net de frais et corrigé des ventes : le multiplier
+/// par la quantité restante donne le coût des seules parts en portefeuille
+/// (à ne pas confondre avec [investedCapital], qui retrace le capital total
+/// déployé, ventes incluses).
+double remainingCost(StartupDetail s) => s.quantite * s.prixEntree;
+
+/// Plus-value latente sur les actions RESTANTES : `quantité × (prix actuel −
+/// PRU)`.
+///
+/// Le PRU étant net de frais, la PV latente l'est aussi ; les frais restent
+/// affichés séparément. Une sortie ou une radiation ne porte plus de PV
+/// latente (la PV réalisée est calculée à part, notamment via
+/// `realizedSecondaryPvNet` pour les reventes du marché secondaire).
+double unrealizedGain(StartupDetail s) {
+  if (s.statut == 'sorti' || s.statut == 'radie') return 0;
+  return s.quantite * (s.prixActuel - s.prixEntree);
+}
 
 /// Plus-value latente en pourcentage du capital investi.
 double unrealizedGainPct(StartupDetail s) {

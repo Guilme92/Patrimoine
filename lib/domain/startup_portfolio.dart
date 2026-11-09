@@ -292,6 +292,23 @@ class SecondaryMarketSummary {
   bool get pvIndisponible => ventesEvaluees == 0 && ventesNonEvaluees > 0;
 }
 
+/// Plus-value réalisée nette des reventes secondaires d'une startup.
+///
+/// S'appuie sur [SecondaryMarketSummary.of] avec le PRU de la fiche : PV brute
+/// des reventes − commissions − frais − flat tax de 30 %. Vaut 0 quand aucune
+/// vente n'est exploitable (PRU inconnu ou transactions sans détail chiffré) :
+/// la PV réalisée ne doit jamais être inventée.
+double realizedSecondaryPvNet(
+  StartupDetail detail,
+  List<SecondaryTransaction> transactions,
+) {
+  final summary = SecondaryMarketSummary.of(
+    transactions,
+    pru: detail.prixEntree,
+  );
+  return summary.pvIndisponible ? 0 : summary.pvNette;
+}
+
 /// Filtre d'affichage des transactions du marché secondaire.
 enum SecondaryTypeFilter { tous, achat, revente }
 

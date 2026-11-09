@@ -7,6 +7,7 @@ import 'package:patrimoine/data/database.dart';
 import 'package:patrimoine/models/startup.dart';
 import 'package:patrimoine/theme/app_theme.dart';
 import 'package:patrimoine/ui/screens/asset_detail_screen.dart';
+import 'package:patrimoine/ui/screens/startups_screen.dart';
 import 'package:patrimoine/utils/format.dart';
 import 'package:provider/provider.dart';
 
@@ -91,6 +92,55 @@ void main() {
 
     // La section Location ne s'affiche pas pour une startup.
     expect(find.text('Location'), findsNothing);
+  });
+
+  testWidgets('liste : PV latente et PV réalisée affichées séparément', (
+    tester,
+  ) async {
+    _useTallViewport(tester);
+    final id = await db.addAsset(
+      AssetsCompanion.insert(name: 'Ziwig', type: 'startup'),
+    );
+    await db.saveStartupDetails(
+      const StartupDraft(
+        categorie: 'Europe Multi-Stage',
+        quantite: 3000,
+        prixEntree: 2,
+        montantInvesti: 12000,
+        prixActuel: 4,
+      ).toCompanion(id),
+    );
+    // 3 000 actions revendues à 4 € sur le Blast Market.
+    await db.addSecondaryTransaction(
+      const SecondaryTransactionDraft(
+        type: 'revente',
+        actions: 3000,
+        prix: 4,
+      ).toCompanion(id),
+    );
+    await tester.runAsync(() => controller.load());
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: controller,
+        child: MaterialApp(
+          theme: buildDarkTheme(),
+          home: const Scaffold(body: StartupsScreen()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Liste'));
+    await tester.pumpAndSettle();
+
+    // Deux colonnes distinctes : la latente (parts restantes) et la réalisée
+    // (reventes secondaires nettes).
+    expect(find.text('PV latente'), findsOneWidget);
+    expect(find.text('PV réalisée'), findsOneWidget);
+    // Latente = 3 000 × (4 − 2) = 6 000 € ; réalisée nette = 4 200 €.
+    expect(find.text(formatSignedEuro(6000)), findsOneWidget);
+    expect(find.text(formatSignedEuro(4200)), findsOneWidget);
   });
 
   testWidgets('une startup sans fiche affiche les formulaires vides', (

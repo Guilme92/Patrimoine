@@ -66,8 +66,33 @@ void main() {
 
     test('plus-value latente et pourcentage', () {
       final s = _detail();
-      expect(unrealizedGain(s), 1450);
-      expect(unrealizedGainPct(s), closeTo(138.095238, 1e-5));
+      // 100 actions restantes × (25 € − 10 € de PRU) = 1 500 €.
+      expect(unrealizedGain(s), 1500);
+      // Rapportée au capital investi total (1 050 €, frais inclus).
+      expect(unrealizedGainPct(s), closeTo(142.857143, 1e-5));
+    });
+
+    test('PV latente sur les actions restantes après une vente partielle', () {
+      // Ziwig : 6 000 actions achetées à 2,00 €, 3 000 revendues sur le Blast
+      // Market ; il reste 3 000 actions valorisées 4,00 €.
+      final s = _detail(
+        quantite: 3000,
+        prixEntree: 2,
+        frais: 0,
+        montantInvesti: 12000,
+        prixActuel: 4,
+      );
+      expect(remainingCost(s), 6000);
+      expect(lineValue(s), 12000);
+      // Le capital investi reste le capital TOTAL déployé (6 000 × 2 €).
+      expect(investedCapital(s), 12000);
+      // PV latente = 3 000 × (4 − 2) = 6 000 €, et non 12 000 − 12 000 = 0.
+      expect(unrealizedGain(s), 6000);
+    });
+
+    test('plus-value latente nulle pour une sortie ou une radiation', () {
+      expect(unrealizedGain(_detail(statut: 'sorti', prixActuel: 99)), 0);
+      expect(unrealizedGain(_detail(statut: 'radie', prixActuel: 99)), 0);
     });
 
     test('multiple sur capital investi (MOIC)', () {

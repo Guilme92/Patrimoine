@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrimoine/data/database.dart';
+import 'package:patrimoine/domain/startup.dart';
 import 'package:patrimoine/domain/startup_portfolio.dart';
 
 final DateTime _today = DateTime(2025, 1, 1);
@@ -21,6 +22,7 @@ StartupDetail _detail(
   double quantite = 100,
   double prixEntree = 10,
   double frais = 0,
+  double montantInvesti = 0,
   double prixActuel = 10,
   DateTime? dateInvestissement,
   double exitProduit = 0,
@@ -33,7 +35,7 @@ StartupDetail _detail(
   quantite: quantite,
   prixEntree: prixEntree,
   frais: frais,
-  montantInvesti: 0,
+  montantInvesti: montantInvesti,
   dateInvestissement: dateInvestissement,
   stade: 'seed',
   prixActuel: prixActuel,
@@ -54,6 +56,7 @@ StartupEntry _entry(
   double quantite = 100,
   double prixEntree = 10,
   double frais = 0,
+  double montantInvesti = 0,
   double prixActuel = 10,
   DateTime? dateInvestissement,
   double exitProduit = 0,
@@ -67,11 +70,34 @@ StartupEntry _entry(
     quantite: quantite,
     prixEntree: prixEntree,
     frais: frais,
+    montantInvesti: montantInvesti,
     prixActuel: prixActuel,
     dateInvestissement: dateInvestissement,
     exitProduit: exitProduit,
     exitDate: exitDate,
   ),
+);
+
+/// Transaction secondaire de test (revente par défaut).
+SecondaryTransaction _trade({
+  int id = 1,
+  int assetId = 1,
+  String type = 'revente',
+  int actions = 3000,
+  double prix = 4,
+  double frais = 0,
+  double commissionPv = 0,
+}) => SecondaryTransaction(
+  id: id,
+  assetId: assetId,
+  type: type,
+  actions: actions,
+  prix: prix,
+  frais: frais,
+  commissionPv: commissionPv,
+  montant: type == 'revente'
+      ? actions * prix - commissionPv
+      : actions * prix + frais,
 );
 
 /// Portefeuille de référence :
@@ -301,6 +327,57 @@ void main() {
       expect(s.moic, 0);
       expect(s.writtenOffCount, 1);
       expect(s.unrealizedGainPct, 0);
+    });
+  });
+
+  group('PV réalisée du marché secondaire', () {
+    test('PV nette des reventes, flat tax déduite', () {
+      // 3 000 actions revendues 4 € avec un PRU de 2 € : PV brute 6 000 €,
+      // flat tax 30 % → 4 200 € nets.
+      final detail = _detail(1, quantite: 3000, prixEntree: 2, prixActuel: 4);
+      expect(realizedSecondaryPvNet(detail, [_trade()]), 4200);
+      // La PV latente porte sur les 3 000 actions restantes, séparément.
+      expect(unrealizedGain(detail), 6000);
+    });
+
+    test('commissions et frais déduits avant la flat tax', () {
+      final detail = _detail(1, quantite: 3000, prixEntree: 2);
+      // Base = 6 000 − 100 − 50 = 5 850 ; flat tax 1 755 → 4 095 €.
+      expect(
+        realizedSecondaryPvNet(detail, [_trade(commissionPv: 100, frais: 50)]),
+        closeTo(4095, 1e-9),
+      );
+    });
+
+    test('aucune vente exploitable : PV réalisée à zéro', () {
+      final detail = _detail(1, quantite: 3000, prixEntree: 2);
+      expect(realizedSecondaryPvNet(detail, const []), 0);
+      // PRU inconnu : la PV ne peut pas être calculée, on n'invente rien.
+      final sansPru = _detail(1, quantite: 3000, prixEntree: 0, prixActuel: 4);
+      expect(realizedSecondaryPvNet(sansPru, [_trade()]), 0);
+    });
+
+    test('la synthèse ne mélange pas PV latente et PV réalisée', () {
+      // Ziwig : 6 000 actions achetées à 2 € (12 000 € investis), 3 000
+      // revendues 4 €, 3 000 restantes valorisées 4 €.
+      final s = summarizeStartups([
+        _entry(
+          1,
+          'Ziwig',
+          categorie: 'Europe Multi-Stage',
+          quantite: 3000,
+          prixEntree: 2,
+          montantInvesti: 12000,
+          prixActuel: 4,
+        ),
+      ], today: _today);
+
+      expect(s.totalInvested, 12000);
+      expect(s.totalValue, 12000);
+      // PV latente = 3 000 × (4 − 2) ; l'ancienne formule donnait 0.
+      expect(s.unrealizedGain, 6000);
+      // La PV réalisée des reventes reste hors de la PV latente.
+      expect(s.realizedGain, 0);
     });
   });
 

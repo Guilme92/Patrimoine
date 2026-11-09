@@ -22,7 +22,18 @@ class StartupsScreen extends StatefulWidget {
 
 enum _Section { synthesis, list, exits }
 
-enum _SortKey { name, category, year, invested, value, pnl, moic, tri, status }
+enum _SortKey {
+  name,
+  category,
+  year,
+  invested,
+  value,
+  pnl,
+  realizedPnl,
+  moic,
+  tri,
+  status,
+}
 
 const Map<String, Color> _categoryColors = {
   'Licornes pre-IPO': Color(0xFFF97316),
@@ -39,8 +50,22 @@ String _moicLabel(double v) => '${v.toStringAsFixed(2)}×';
 
 double _entryInvested(StartupEntry e) => investedCapital(e.detail);
 
-/// Gain de la ligne : valeur − capital investi (négatif pour une radiation).
-double _entryPnl(StartupEntry e) => lineValue(e.detail) - _entryInvested(e);
+/// PV latente d'une ligne : elle ne porte que sur les actions RESTANTES
+/// (`quantité × (prix actuel − PRU)`) et vaut 0 pour une sortie ou une
+/// radiation. Les reventes secondaires n'y entrent jamais.
+double _entryUnrealizedPnl(StartupEntry e) => unrealizedGain(e.detail);
+
+/// PV réalisée d'une ligne : produit de sortie (moins le capital investi) ou
+/// perte définitive d'une radiation, **plus** la PV nette des reventes
+/// secondaires. Elle reste toujours distincte de la PV latente.
+double _entryRealizedPnl(StartupEntry e, double secondaryPvNet) {
+  final base = switch (e.detail.statut) {
+    'sorti' => realizedGain(e.detail),
+    'radie' => -investedCapital(e.detail),
+    _ => 0.0,
+  };
+  return base + secondaryPvNet;
+}
 
 /// Capital investi total du portefeuille : somme du capital investi de chaque
 /// startup. `montant_investi_eur` contient déjà le primaire **et** les achats
@@ -107,16 +132,23 @@ class _StartupsScreenState extends State<StartupsScreen> {
     return true;
   }
 
-  List<StartupEntry> _sorted(List<StartupEntry> entries) {
+  List<StartupEntry> _sorted(
+    List<StartupEntry> entries,
+    Map<int, double> secondaryRealized,
+  ) {
     final list = [...entries];
     list.sort((a, b) {
-      final cmp = _compare(a, b);
+      final cmp = _compare(a, b, secondaryRealized);
       return _ascending ? cmp : -cmp;
     });
     return list;
   }
 
-  int _compare(StartupEntry a, StartupEntry b) {
+  int _compare(
+    StartupEntry a,
+    StartupEntry b,
+    Map<int, double> secondaryRealized,
+  ) {
     int cmp;
     switch (_sortKey) {
       case _SortKey.name:
@@ -138,7 +170,13 @@ class _StartupsScreenState extends State<StartupsScreen> {
         cmp = lineValue(a.detail).compareTo(lineValue(b.detail));
         break;
       case _SortKey.pnl:
-        cmp = _entryPnl(a).compareTo(_entryPnl(b));
+        cmp = _entryUnrealizedPnl(a).compareTo(_entryUnrealizedPnl(b));
+        break;
+      case _SortKey.realizedPnl:
+        cmp = _entryRealizedPnl(
+          a,
+          secondaryRealized[a.asset.id] ?? 0,
+        ).compareTo(_entryRealizedPnl(b, secondaryRealized[b.asset.id] ?? 0));
         break;
       case _SortKey.moic:
         cmp = moic(a.detail).compareTo(moic(b.detail));
@@ -205,6 +243,20 @@ class _StartupsScreenState extends State<StartupsScreen> {
     final summary = summarizeStartups(everyStartup);
     final totalInvestedGlobal = _totalInvestedGlobal(controller);
 
+    // PV réalisée des reventes secondaires, par actif : affichée à part de la
+    // PV latente, qui ne porte que sur les actions restantes.
+    final secondaryRealizedByAsset = <int, double>{
+      for (final e in everyStartup)
+        e.asset.id: realizedSecondaryPvNet(
+          e.detail,
+          controller.secondaryTransactionsOf(e.asset.id),
+        ),
+    };
+    final secondaryRealizedTotal = secondaryRealizedByAsset.values.fold<double>(
+      0,
+      (sum, v) => sum + v,
+    );
+
     // Le contenu de section est toujours en bas : il reste attaché au
     // sélecteur d'onglets (il suit le choix courant) sans être réordonnable.
     final sectionContent = filtered.isEmpty
@@ -213,10 +265,12 @@ class _StartupsScreenState extends State<StartupsScreen> {
             _Section.synthesis => _SynthesisTab(
               summary: summary,
               totalInvestedGlobal: totalInvestedGlobal,
+              secondaryRealizedTotal: secondaryRealizedTotal,
               onOpen: _open,
             ),
             _Section.list => _ListTab(
-              entries: _sorted(filtered),
+              entries: _sorted(filtered, secondaryRealizedByAsset),
+              secondaryRealized: secondaryRealizedByAsset,
               sortKey: _sortKey,
               ascending: _ascending,
               onSort: _sortBy,
@@ -815,11 +869,15 @@ class _SearchField extends StatelessWidget {
 class _SynthesisTab extends StatelessWidget {
   final StartupPortfolioSummary summary;
   final double totalInvestedGlobal;
+
+  /// PV réalisée nette des reventes du marché secondaire (hors sorties).
+  final double secondaryRealizedTotal;
   final ValueChanged<StartupEntry> onOpen;
 
   const _SynthesisTab({
     required this.summary,
     required this.totalInvestedGlobal,
+    required this.secondaryRealizedTotal,
     required this.onOpen,
   });
 
@@ -857,9 +915,22 @@ class _SynthesisTab extends StatelessWidget {
         sub: '${formatPct(summary.unrealizedGainPct)} du capital investi',
         color: _signedColor(summary.unrealizedGain),
         hint:
-            'Valorisation des lignes en portefeuille − leur capital investi. '
+            'PV latente des actions restantes : quantité détenue × '
+            '(prix actuel − PRU). Hors PV déjà réalisée par des reventes. '
             'Le pourcentage rapporte cette plus-value au capital total.',
       ),
+      if (secondaryRealizedTotal != 0)
+        _KpiCard(
+          label: 'PV secondaire réalisée',
+          value: formatSignedEuro(secondaryRealizedTotal),
+          sub: 'Reventes nettes de flat tax',
+          color: _signedColor(secondaryRealizedTotal),
+          hint:
+              'Plus-value réalisée des reventes sur le marché secondaire : '
+              'PV brute − commissions − frais − flat tax de 30 %. '
+              'Distincte de la PV latente, qui ne porte que sur les actions '
+              'restantes.',
+        ),
       _KpiCard(
         label: 'Multiple MOIC',
         value: _moicLabel(summary.moic),
@@ -1501,6 +1572,9 @@ class _TopStartups extends StatelessWidget {
 
 class _ListTab extends StatelessWidget {
   final List<StartupEntry> entries;
+
+  /// PV réalisée nette des reventes secondaires, indexée par actif.
+  final Map<int, double> secondaryRealized;
   final _SortKey sortKey;
   final bool ascending;
   final void Function(_SortKey key, bool ascending) onSort;
@@ -1508,6 +1582,7 @@ class _ListTab extends StatelessWidget {
 
   const _ListTab({
     required this.entries,
+    required this.secondaryRealized,
     required this.sortKey,
     required this.ascending,
     required this.onSort,
@@ -1521,6 +1596,7 @@ class _ListTab extends StatelessWidget {
     _SortKey.invested,
     _SortKey.value,
     _SortKey.pnl,
+    _SortKey.realizedPnl,
     _SortKey.moic,
     _SortKey.tri,
     _SortKey.status,
@@ -1533,6 +1609,7 @@ class _ListTab extends StatelessWidget {
     'Capital investi',
     'Valorisation',
     'PV latente',
+    'PV réalisée',
     'MOIC',
     'TRI',
     'Statut',
@@ -1572,7 +1649,7 @@ class _ListTab extends StatelessWidget {
                       _labels[i],
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
-                    numeric: i >= 3 && i <= 7,
+                    numeric: i >= 3 && i <= 8,
                     onSort: (_, asc) => onSort(_columns[i], asc),
                   ),
               ],
@@ -1600,8 +1677,28 @@ class _ListTab extends StatelessWidget {
                       DataCell(Text(formatEuro(lineValue(e.detail)))),
                       DataCell(
                         Text(
-                          formatSignedEuro(_entryPnl(e)),
-                          style: TextStyle(color: _signedColor(_entryPnl(e))),
+                          formatSignedEuro(_entryUnrealizedPnl(e)),
+                          style: TextStyle(
+                            color: _signedColor(_entryUnrealizedPnl(e)),
+                          ),
+                        ),
+                      ),
+                      DataCell(
+                        Text(
+                          formatSignedEuro(
+                            _entryRealizedPnl(
+                              e,
+                              secondaryRealized[e.asset.id] ?? 0,
+                            ),
+                          ),
+                          style: TextStyle(
+                            color: _signedColor(
+                              _entryRealizedPnl(
+                                e,
+                                secondaryRealized[e.asset.id] ?? 0,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                       DataCell(Text(_moicLabel(moic(e.detail)))),
