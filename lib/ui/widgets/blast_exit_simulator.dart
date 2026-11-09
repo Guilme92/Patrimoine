@@ -35,6 +35,7 @@ class _BlastExitSimulatorState extends State<BlastExitSimulator> {
     final shareValue = blastShareValue(_valuation, widget.stakePct);
     final pvBrute = blastPvBrute(_valuation, widget.stakePct, widget.invested);
     final pvNette = blastPvNette(pvBrute);
+    final totalPercu = blastTotalPercu(widget.invested, pvNette);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -106,12 +107,25 @@ class _BlastExitSimulatorState extends State<BlastExitSimulator> {
                   color: _pnlColor(pvBrute),
                 ),
               ),
-              const SizedBox(width: 8),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Expanded(
                 child: _Kpi(
                   label: 'PV nette',
                   value: formatSignedEuro(pvNette),
                   color: _pnlColor(pvNette),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _Kpi(
+                  label: 'Total perçu',
+                  value: formatEuro(totalPercu),
+                  color: AppColors.primary,
                 ),
               ),
             ],

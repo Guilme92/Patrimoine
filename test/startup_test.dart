@@ -66,10 +66,23 @@ void main() {
 
     test('plus-value latente et pourcentage', () {
       final s = _detail();
-      // 100 actions restantes × (25 € − 10 € de PRU) = 1 500 €.
-      expect(unrealizedGain(s), 1500);
-      // Rapportée au capital investi total (1 050 €, frais inclus).
-      expect(unrealizedGainPct(s), closeTo(142.857143, 1e-5));
+      // Valeur (2 500 €) − coût de revient (1 050 €, frais inclus) = 1 450 €.
+      expect(unrealizedGain(s), 1450);
+      // Rapportée au capital investi total (1 050 €).
+      expect(unrealizedGainPct(s), closeTo(138.095238, 1e-5));
+    });
+
+    test('les frais réduisent la PV latente (ex. Fluidstack)', () {
+      // 3 750 actions à 1 € (3 750 € investis) + 525 € de frais : coût de
+      // revient 4 275 €. Valorisation 3 750 € → PV latente −525 €.
+      final s = _detail(
+        quantite: 3750,
+        prixEntree: 1,
+        frais: 525,
+        montantInvesti: 3750,
+        prixActuel: 1,
+      );
+      expect(unrealizedGain(s), -525);
     });
 
     test('PV latente sur les actions restantes après une vente partielle', () {
@@ -82,12 +95,12 @@ void main() {
         montantInvesti: 12000,
         prixActuel: 4,
       );
-      expect(remainingCost(s), 6000);
+      expect(remainingCost(s, totalSold: 3000), 6000);
       expect(lineValue(s), 12000);
       // Le capital investi reste le capital TOTAL déployé (6 000 × 2 €).
       expect(investedCapital(s), 12000);
-      // PV latente = 3 000 × (4 − 2) = 6 000 €, et non 12 000 − 12 000 = 0.
-      expect(unrealizedGain(s), 6000);
+      // PV latente = 3 000 restantes × 4 € − coût restant 6 000 € = 6 000 €.
+      expect(unrealizedGain(s, totalSold: 3000), 6000);
     });
 
     test('plus-value latente nulle pour une sortie ou une radiation', () {

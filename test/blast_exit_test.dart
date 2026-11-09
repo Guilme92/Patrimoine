@@ -31,6 +31,11 @@ void main() {
       expect(blastPvNette(0), 0);
     });
 
+    test('total perçu = capital investi + PV nette', () {
+      expect(blastTotalPercu(30060, 240936), 270996);
+      expect(blastTotalPercu(0, -100), -100);
+    });
+
     test('bornes du simulateur : 500 M€ → 10 Mrd €', () {
       expect(blastExitValuationMin, 500e6);
       expect(blastExitValuationMax, 10e9);

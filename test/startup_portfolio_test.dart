@@ -61,6 +61,7 @@ StartupEntry _entry(
   DateTime? dateInvestissement,
   double exitProduit = 0,
   DateTime? exitDate,
+  double totalVendu = 0,
 }) => StartupEntry(
   asset: _asset(id, name),
   detail: _detail(
@@ -76,6 +77,7 @@ StartupEntry _entry(
     exitProduit: exitProduit,
     exitDate: exitDate,
   ),
+  totalVendu: totalVendu,
 );
 
 /// Transaction secondaire de test (revente par défaut).
@@ -369,6 +371,7 @@ void main() {
           prixEntree: 2,
           montantInvesti: 12000,
           prixActuel: 4,
+          totalVendu: 3000,
         ),
       ], today: _today);
 

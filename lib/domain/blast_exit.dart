@@ -27,3 +27,6 @@ double blastPvBrute(double valuation, double stakePct, double invested) =>
 /// (une moins-value n'est pas fiscalisée).
 double blastPvNette(double pvBrute) =>
     pvBrute > 0 ? pvBrute * (1 - blastExitTaxRate) : pvBrute;
+
+/// Montant net perçu à la sortie : capital investi remboursé + PV nette.
+double blastTotalPercu(double invested, double pvNette) => invested + pvNette;

@@ -22,31 +22,39 @@ double lineValue(StartupDetail s) {
   return s.quantite * s.prixActuel;
 }
 
-/// Coût de revient des actions encore détenues.
+/// Coût de revient total d'une ligne, frais d'entrée INCLUS.
 ///
-/// `prixEntree` est un PRU net de frais et corrigé des ventes : le multiplier
-/// par la quantité restante donne le coût des seules parts en portefeuille
-/// (à ne pas confondre avec [investedCapital], qui retrace le capital total
-/// déployé, ventes incluses).
-double remainingCost(StartupDetail s) => s.quantite * s.prixEntree;
+/// `montantInvesti` (quand renseigné) porte le montant investi en titres,
+/// hors frais ; les frais d'entrée sont un coût additionnel qui réduit la
+/// plus-value. Repli sans `montantInvesti` : quantité × prix d'entrée + frais.
+double totalCost(StartupDetail s) => s.montantInvesti > 0
+    ? s.montantInvesti + s.frais
+    : s.quantite * s.prixEntree + s.frais;
 
-/// Plus-value latente sur les actions RESTANTES : `quantité × (prix actuel −
-/// PRU)`.
+/// Coût de revient des actions restantes (frais inclus), réparti au prorata
+/// des actions restantes sur les actions achetées ([totalSold] = actions
+/// revendues).
+double remainingCost(StartupDetail s, {double totalSold = 0}) {
+  final bought = s.quantite + totalSold;
+  if (bought <= 0) return 0;
+  return totalCost(s) * (s.quantite / bought);
+}
+
+/// Plus-value latente sur les actions RESTANTES : valeur restante − coût de
+/// revient restant (frais inclus).
 ///
-/// Le PRU étant net de frais, la PV latente l'est aussi ; les frais restent
-/// affichés séparément. Une sortie ou une radiation ne porte plus de PV
-/// latente (la PV réalisée est calculée à part, notamment via
-/// `realizedSecondaryPvNet` pour les reventes du marché secondaire).
-double unrealizedGain(StartupDetail s) {
+/// Les frais réduisent la plus-value (ils font partie du coût de revient).
+/// Une sortie ou une radiation ne porte plus de PV latente.
+double unrealizedGain(StartupDetail s, {double totalSold = 0}) {
   if (s.statut == 'sorti' || s.statut == 'radie') return 0;
-  return s.quantite * (s.prixActuel - s.prixEntree);
+  return s.quantite * s.prixActuel - remainingCost(s, totalSold: totalSold);
 }
 
 /// Plus-value latente en pourcentage du capital investi.
-double unrealizedGainPct(StartupDetail s) {
+double unrealizedGainPct(StartupDetail s, {double totalSold = 0}) {
   final capital = investedCapital(s);
   if (capital <= 0) return 0;
-  return unrealizedGain(s) / capital * 100;
+  return unrealizedGain(s, totalSold: totalSold) / capital * 100;
 }
 
 /// Multiple sur capital investi (1× = capital remboursé).

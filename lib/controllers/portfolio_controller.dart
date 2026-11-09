@@ -158,7 +158,13 @@ class PortfolioController extends ChangeNotifier {
     for (final asset in _assets) {
       if (assetTypeFrom(asset.type) != AssetType.startup) continue;
       final detail = _startups[asset.id] ?? _emptyStartupDetail(asset);
-      list.add(StartupEntry(asset: asset, detail: detail));
+      list.add(
+        StartupEntry(
+          asset: asset,
+          detail: detail,
+          totalVendu: _totalVenduOf(asset.id),
+        ),
+      );
     }
     list.sort((a, b) {
       final da = a.detail.dateInvestissement;
@@ -170,6 +176,15 @@ class PortfolioController extends ChangeNotifier {
       return cmp != 0 ? cmp : _compareNames(a, b);
     });
     return list;
+  }
+
+  /// Total des actions revendues (marché secondaire) d'une startup.
+  double _totalVenduOf(int assetId) {
+    var sold = 0.0;
+    for (final t in _secondaryTransactions[assetId] ?? const <SecondaryTransaction>[]) {
+      if (t.type == 'revente') sold += t.actions;
+    }
+    return sold;
   }
 
   List<FundingRound> fundingRoundsOf(int assetId) =>

@@ -53,7 +53,8 @@ double _entryInvested(StartupEntry e) => investedCapital(e.detail);
 /// PV latente d'une ligne : elle ne porte que sur les actions RESTANTES
 /// (`quantité × (prix actuel − PRU)`) et vaut 0 pour une sortie ou une
 /// radiation. Les reventes secondaires n'y entrent jamais.
-double _entryUnrealizedPnl(StartupEntry e) => unrealizedGain(e.detail);
+double _entryUnrealizedPnl(StartupEntry e) =>
+    unrealizedGain(e.detail, totalSold: e.totalVendu);
 
 /// PV réalisée d'une ligne : produit de sortie (moins le capital investi) ou
 /// perte définitive d'une radiation, **plus** la PV nette des reventes

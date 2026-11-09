@@ -13,7 +13,15 @@ class StartupEntry {
   final Asset asset;
   final StartupDetail detail;
 
-  const StartupEntry({required this.asset, required this.detail});
+  /// Nombre total d'actions revendues sur le marché secondaire. Sert à
+  /// répartir le coût de revient au prorata des actions restantes.
+  final double totalVendu;
+
+  const StartupEntry({
+    required this.asset,
+    required this.detail,
+    this.totalVendu = 0,
+  });
 }
 
 /// Agrégats d'une catégorie de startups.
@@ -413,7 +421,7 @@ StartupPortfolioSummary summarizeStartups(
         break;
       default:
         activeCount += 1;
-        final gain = unrealizedGain(detail);
+        final gain = unrealizedGain(detail, totalSold: entry.totalVendu);
         unrealized += gain;
         kpi.unrealized += gain;
         break;

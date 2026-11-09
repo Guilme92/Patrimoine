@@ -126,7 +126,12 @@ class AssetDetailScreen extends StatelessWidget {
                 label: Text(startup == null ? 'Renseigner' : 'Modifier'),
               ),
             ),
-            _StartupCard(startup: startup),
+            _StartupCard(
+              startup: startup,
+              totalVendu: controller.secondaryTransactionsOf(current.id)
+                  .where((t) => t.type == 'revente')
+                  .fold(0.0, (sum, t) => sum + t.actions),
+            ),
             const SizedBox(height: 20),
             SectionHeader(
               title: 'Levées de fonds',
@@ -1097,7 +1102,8 @@ class _PositionTile extends StatelessWidget {
 /// Fiche startup + indicateurs (KPIs) calculés.
 class _StartupCard extends StatelessWidget {
   final StartupDetail? startup;
-  const _StartupCard({required this.startup});
+  final double totalVendu;
+  const _StartupCard({required this.startup, this.totalVendu = 0});
 
   @override
   Widget build(BuildContext context) {
@@ -1117,8 +1123,8 @@ class _StartupCard extends StatelessWidget {
 
     final invested = investedCapital(s);
     final value = lineValue(s);
-    final gain = unrealizedGain(s);
-    final gainPct = unrealizedGainPct(s);
+    final gain = unrealizedGain(s, totalSold: totalVendu);
+    final gainPct = unrealizedGainPct(s, totalSold: totalVendu);
     final exited = s.statut == 'sorti';
     final gainColor = gain >= 0 ? AppColors.positive : AppColors.negative;
     final statusColor = switch (s.statut) {
