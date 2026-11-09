@@ -47,6 +47,22 @@ final NumberFormat _compact = NumberFormat('0.#', 'fr_FR');
 
 String _compactNumber(double v) => _compact.format(v);
 
+/// Valorisation d'entreprise (« 500 M€ », « 1,2 Mrd € », « 10 Mrd € »).
+String formatValuationEuro(double v) {
+  if (v.abs() >= 1000000000) return '${_compactNumber(v / 1000000000)} Mrd €';
+  if (v.abs() >= 1000000) return '${_compactNumber(v / 1000000)} M€';
+  return '${_compactNumber(v)} €';
+}
+
+final NumberFormat _quantity = NumberFormat('#,##0.######', 'fr_FR');
+
+/// Quantité de titres ou de jetons, sans décimales superflues.
+String formatQty(double v) => _quantity.format(v);
+
+/// Pourcentage non signé à [digits] décimales, avec virgule française.
+String formatPctFixed(double v, [int digits = 2]) =>
+    '${v.toStringAsFixed(digits).replaceAll('.', ',')} %';
+
 /// Heure/date courte pour l'affichage (« 05/11 20:15 »).
 String formatTime(DateTime d) =>
     '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')} '

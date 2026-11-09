@@ -376,6 +376,7 @@ class _AssetsScreenState extends State<AssetsScreen> {
               positions: controller.positionsOf(a.id),
               prices: controller.prices,
               startup: controller.startupOf(a.id),
+              rental: controller.rentalOf(a.id),
             ),
           ),
         ],

@@ -28,6 +28,14 @@ const List<String> startupBlockIds = ['tabs', 'filters'];
 /// Clé de préférence persistée pour l'ordre des blocs startups.
 const String startupBlockOrderKey = 'startups.blockOrder';
 
+/// Paramètres par défaut du simulateur de sortie Blast (détention en %,
+/// capital investi en €). Estimés depuis les deux rounds d'investissement
+/// communiqués par l'utilisateur ; éditables depuis le simulateur.
+const double blastDefaultStakePct = 0.03246032;
+const double blastDefaultInvested = 30060;
+const String blastStakePctKey = 'blast.stakePct';
+const String blastInvestedKey = 'blast.invested';
+
 /// Décode un ordre persisté (« tabs,filters ») en liste fiable : identifiants
 /// inconnus ou doublons ignorés, blocs manquants ajoutés à la fin.
 List<String> parseStartupBlockOrder(String? raw) {
@@ -66,6 +74,8 @@ class PortfolioController extends ChangeNotifier {
   DateTime? _lastPriceUpdate;
   List<NetWorthSnapshot> _snapshots = [];
   List<String> _startupBlockOrder = List.unmodifiable(startupBlockIds);
+  double _blastStakePct = blastDefaultStakePct;
+  double _blastInvested = blastDefaultInvested;
   bool _loading = true;
   String? _error;
 
@@ -92,6 +102,26 @@ class PortfolioController extends ChangeNotifier {
   );
 
   List<Position> positionsOf(int assetId) => _positions[assetId] ?? const [];
+
+  /// Détention dans Blast (en %) pour le simulateur de sortie.
+  double get blastStakePct => _blastStakePct;
+
+  /// Capital investi dans Blast (€) pour le simulateur de sortie.
+  double get blastInvested => _blastInvested;
+
+  /// Met à jour les paramètres du simulateur de sortie Blast et les persiste.
+  Future<void> setBlastExitParams({
+    required double stakePct,
+    required double invested,
+  }) async {
+    if (stakePct < 0 || invested < 0) return;
+    if (stakePct == _blastStakePct && invested == _blastInvested) return;
+    _blastStakePct = stakePct;
+    _blastInvested = invested;
+    notifyListeners();
+    await db.setPreference(blastStakePctKey, stakePct.toString());
+    await db.setPreference(blastInvestedKey, invested.toString());
+  }
 
   /// Ordre d'affichage des blocs du dashboard startups (persisté en base).
   List<String> get startupBlockOrder => _startupBlockOrder;
@@ -241,6 +271,14 @@ class PortfolioController extends ChangeNotifier {
     _snapshots = await db.allSnapshots();
     _startupBlockOrder = parseStartupBlockOrder(
       await db.preferenceValue(startupBlockOrderKey),
+    );
+    _blastStakePct = _parsePrefDouble(
+      await db.preferenceValue(blastStakePctKey),
+      blastDefaultStakePct,
+    );
+    _blastInvested = _parsePrefDouble(
+      await db.preferenceValue(blastInvestedKey),
+      blastDefaultInvested,
     );
   }
 
@@ -628,6 +666,13 @@ class PortfolioController extends ChangeNotifier {
 String? _trimOrNull(String? v) {
   final t = v?.trim();
   return (t == null || t.isEmpty) ? null : t;
+}
+
+/// Parse une préférence numérique persistée ; retombe sur [fallback] si la
+/// valeur est absente, illisible ou négative.
+double _parsePrefDouble(String? raw, double fallback) {
+  final value = double.tryParse(raw?.trim() ?? '');
+  return (value == null || value < 0) ? fallback : value;
 }
 
 /// Fiche neutre pour une startup créée mais pas encore renseignée.
