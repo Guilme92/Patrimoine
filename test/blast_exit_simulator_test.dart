@@ -12,7 +12,7 @@ void main() {
         child: BlastExitSimulator(
           stakePct: 0.03246032,
           invested: 30060,
-          onSaveParams: (_, __) async {},
+          onSaveParams: (_, _) async {},
         ),
       ),
     ),
