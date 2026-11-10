@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../controllers/portfolio_controller.dart';
 import '../../data/database.dart';
 import '../../domain/portfolio.dart';
 import '../../domain/rental.dart';
@@ -52,8 +54,15 @@ class AssetTile extends StatelessWidget {
     // haute que les autres.
     final rented = type == AssetType.realEstate && rental != null;
 
+    // Échelle de police choisie dans les réglages. Les cellules compactes
+    // utilisent des tailles codées en dur dans un `FittedBox`, qui annule le
+    // `textScaler` ambiant : l'échelle est donc appliquée explicitement aux
+    // tailles ci-dessous (`textScaler: TextScaler.noScaling`), pour ne pas la
+    // compter deux fois.
+    final fontScale = context.watch<PortfolioController?>()?.fontScale ?? 1.0;
+
     final Widget? body = !rented && positions.isNotEmpty
-        ? _PositionsBody(positions: positions, prices: prices)
+        ? _PositionsBody(positions: positions, prices: prices, scale: fontScale)
         : null;
 
     return InkWell(
@@ -75,6 +84,7 @@ class AssetTile extends StatelessWidget {
                 rental: rental!,
                 assetValue: value,
                 accent: color,
+                scale: fontScale,
               )
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,11 +164,15 @@ class _RentalRow extends StatelessWidget {
   final double assetValue;
   final Color accent;
 
+  /// Échelle de police réglée dans l'interface (1.0 = taille normale).
+  final double scale;
+
   const _RentalRow({
     required this.asset,
     required this.rental,
     required this.assetValue,
     required this.accent,
+    this.scale = 1.0,
   });
 
   /// En dessous, les libellés sont abrégés et les valeurs monétaires
@@ -262,8 +276,9 @@ class _RentalRow extends StatelessWidget {
                     asset.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    textScaler: TextScaler.noScaling,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      fontSize: wide ? 15 : 12,
+                      fontSize: (wide ? 15 : 12) * scale,
                       height: 1.15,
                     ),
                   ),
@@ -272,8 +287,9 @@ class _RentalRow extends StatelessWidget {
                     rentalStatusLabel(rental.statut),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    textScaler: TextScaler.noScaling,
                     style: TextStyle(
-                      fontSize: wide ? 10.5 : 8.5,
+                      fontSize: (wide ? 10.5 : 8.5) * scale,
                       height: 1.15,
                       color: AppColors.textSecondary,
                     ),
@@ -287,8 +303,8 @@ class _RentalRow extends StatelessWidget {
                 flex: 2,
                 child: _MetricCell(
                   metric: metric,
-                  labelSize: wide ? 9 : 8,
-                  valueSize: wide ? 13 : 10.5,
+                  labelSize: (wide ? 9 : 8) * scale,
+                  valueSize: (wide ? 13 : 10.5) * scale,
                   alignEnd: metric.emphasis,
                 ),
               ),
@@ -353,6 +369,7 @@ class _MetricCell extends StatelessWidget {
               Text(
                 metric.label,
                 maxLines: 1,
+                textScaler: TextScaler.noScaling,
                 style: TextStyle(
                   fontSize: labelSize,
                   height: 1.1,
@@ -367,6 +384,7 @@ class _MetricCell extends StatelessWidget {
           Text(
             metric.value,
             maxLines: 1,
+            textScaler: TextScaler.noScaling,
             style: TextStyle(
               fontSize: valueSize,
               height: 1.15,
@@ -388,7 +406,14 @@ class _PositionsBody extends StatelessWidget {
   final List<Position> positions;
   final Map<String, double> prices;
 
-  const _PositionsBody({required this.positions, required this.prices});
+  /// Échelle de police réglée dans l'interface (1.0 = taille normale).
+  final double scale;
+
+  const _PositionsBody({
+    required this.positions,
+    required this.prices,
+    this.scale = 1.0,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -400,6 +425,7 @@ class _PositionsBody extends StatelessWidget {
           _PositionRow(
             position: positions[i],
             price: prices[positions[i].symbol] ?? positions[i].unitCost,
+            scale: scale,
           ),
         ],
       ],
@@ -414,7 +440,14 @@ class _PositionRow extends StatelessWidget {
   final Position position;
   final double price;
 
-  const _PositionRow({required this.position, required this.price});
+  /// Échelle de police réglée dans l'interface (1.0 = taille normale).
+  final double scale;
+
+  const _PositionRow({
+    required this.position,
+    required this.price,
+    this.scale = 1.0,
+  });
 
   /// En dessous, les libellés sont abrégés (« Cours », « Achat », « PV ») et
   /// les montants arrondis à l'euro : de quoi tenir sur 360 dp sans réduire
@@ -443,8 +476,8 @@ class _PositionRow extends StatelessWidget {
         final width = constraints.maxWidth;
         final wide = width >= _wideBreakpoint;
         final withHints = width >= _hintBreakpoint;
-        final labelSize = wide ? 9.0 : 8.0;
-        final valueSize = wide ? 12.0 : 10.5;
+        final labelSize = (wide ? 9.0 : 8.0) * scale;
+        final valueSize = (wide ? 12.0 : 10.5) * scale;
 
         final cells = <Widget>[
           _Cell(
@@ -484,7 +517,7 @@ class _PositionRow extends StatelessWidget {
             wide ? formatEuro(total) : formatCompactEuro(total),
             emphasis: true,
             labelSize: labelSize,
-            valueSize: wide ? 13 : 10.5,
+            valueSize: (wide ? 13 : 10.5) * scale,
           ),
         ];
 
@@ -504,8 +537,9 @@ class _PositionRow extends StatelessWidget {
                       name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                      textScaler: TextScaler.noScaling,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        fontSize: wide ? 13.5 : 12,
+                        fontSize: (wide ? 13.5 : 12) * scale,
                         height: 1.15,
                       ),
                     ),
@@ -515,8 +549,9 @@ class _PositionRow extends StatelessWidget {
                         position.symbol,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
+                        textScaler: TextScaler.noScaling,
                         style: TextStyle(
-                          fontSize: wide ? 10.5 : 8.5,
+                          fontSize: (wide ? 10.5 : 8.5) * scale,
                           height: 1.15,
                           color: AppColors.textSecondary,
                         ),

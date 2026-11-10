@@ -36,6 +36,13 @@ const double blastDefaultInvested = 30060;
 const String blastStakePctKey = 'blast.stakePct';
 const String blastInvestedKey = 'blast.invested';
 
+/// Clé de préférence persistée pour l'échelle de police de l'interface.
+const String fontScaleKey = 'fontScale';
+
+/// Bornes de l'échelle de police réglable depuis l'interface.
+const double fontScaleMin = 0.85;
+const double fontScaleMax = 1.5;
+
 /// Décode un ordre persisté (« tabs,filters ») en liste fiable : identifiants
 /// inconnus ou doublons ignorés, blocs manquants ajoutés à la fin.
 List<String> parseStartupBlockOrder(String? raw) {
@@ -76,6 +83,7 @@ class PortfolioController extends ChangeNotifier {
   List<String> _startupBlockOrder = List.unmodifiable(startupBlockIds);
   double _blastStakePct = blastDefaultStakePct;
   double _blastInvested = blastDefaultInvested;
+  double _fontScale = 1.0;
   bool _loading = true;
   String? _error;
 
@@ -121,6 +129,19 @@ class PortfolioController extends ChangeNotifier {
     notifyListeners();
     await db.setPreference(blastStakePctKey, stakePct.toString());
     await db.setPreference(blastInvestedKey, invested.toString());
+  }
+
+  /// Échelle de police de l'interface (1.0 = taille normale).
+  double get fontScale => _fontScale;
+
+  /// Applique une nouvelle échelle de police, bornée à
+  /// [fontScaleMin]–[fontScaleMax], et la persiste en base.
+  Future<void> setFontScale(double v) async {
+    final clamped = v.clamp(fontScaleMin, fontScaleMax).toDouble();
+    if (clamped == _fontScale) return;
+    _fontScale = clamped;
+    notifyListeners();
+    await db.setPreference(fontScaleKey, clamped.toString());
   }
 
   /// Ordre d'affichage des blocs du dashboard startups (persisté en base).
@@ -295,6 +316,10 @@ class PortfolioController extends ChangeNotifier {
       await db.preferenceValue(blastInvestedKey),
       blastDefaultInvested,
     );
+    _fontScale = _parsePrefDouble(
+      await db.preferenceValue(fontScaleKey),
+      1.0,
+    ).clamp(fontScaleMin, fontScaleMax).toDouble();
   }
 
   /// Enregistre un point du jour si l'historique n'en a pas encore :

@@ -12,6 +12,7 @@ import 'blast_screen.dart';
 import 'dashboard_screen.dart';
 import 'startups_screen.dart';
 import '../csv_actions.dart';
+import '../widgets/settings_sheet.dart';
 
 /// Structure d'un onglet principal : libellé + écran conservé dans
 /// l'IndexedStack (l'état de chaque onglet survit au changement d'onglet).
@@ -100,6 +101,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.refresh),
+          ),
+          IconButton(
+            onPressed: () => showSettingsSheet(context),
+            tooltip: 'Réglages',
+            icon: const Icon(Icons.settings_outlined),
           ),
         ],
         bottom: PreferredSize(
