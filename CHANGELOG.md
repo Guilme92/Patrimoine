@@ -35,6 +35,7 @@ Les 27 builds de Patrimoine, du premier MVP au simulateur de sortie Blast : un h
   - [Build 25 — Immobilier et Bourse détaillés + simulateur de sortie Blast (9 novembre 2026)](#build-25--immobilier-et-bourse-détaillés--simulateur-de-sortie-blast-9-novembre-2026)
   - [Build 26 — Immobilier compact + PV latente fiabilisée (9 novembre 2026)](#build-26--immobilier-compact--pv-latente-fiabilisée-9-novembre-2026)
   - [Build 27 — PV latente frais inclus + dashboard performance (9 novembre 2026)](#build-27--pv-latente-frais-inclus--dashboard-performance-9-novembre-2026)
+  - [Build 28 — Taille de police réglable (10 novembre 2026)](#build-28--taille-de-police-réglable-10-novembre-2026)
 
 ## Phase 1 — Fondations
 
@@ -194,3 +195,9 @@ Les 27 builds de Patrimoine, du premier MVP au simulateur de sortie Blast : un h
 - Simulateur de sortie Blast : KPI « Total perçu » (PV nette + capital investi).
 - Onglet Bourse et Crypto : chaque position tient sur une ligne compacte.
 - Tableau de bord refondu en vue de performance : KPIs (plus-value latente/réalisée, frais, taux d'endettement), répartition par classe, top contributeurs et revenus locatifs, à la place de la liste d'actifs.
+
+### Build 28 — Taille de police réglable (10 novembre 2026)
+
+- Nouveau réglage « Taille de police » (bouton engrenage dans la barre supérieure) : curseur de 85 % à 150 %, appliqué en direct à tout le texte de l'app.
+- Les cellules compactes des onglets Immobilier et Bourse et Crypto suivent le réglage (les tailles des colonnes sont mises à l'échelle).
+- Choix conservé d'une session à l'autre ; bouton « Taille par défaut » pour revenir à 100 %.
