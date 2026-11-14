@@ -36,6 +36,7 @@ Les 27 builds de Patrimoine, du premier MVP au simulateur de sortie Blast : un h
   - [Build 26 — Immobilier compact + PV latente fiabilisée (9 novembre 2026)](#build-26--immobilier-compact--pv-latente-fiabilisée-9-novembre-2026)
   - [Build 27 — PV latente frais inclus + dashboard performance (9 novembre 2026)](#build-27--pv-latente-frais-inclus--dashboard-performance-9-novembre-2026)
   - [Build 28 — Taille de police réglable (10 novembre 2026)](#build-28--taille-de-police-réglable-10-novembre-2026)
+  - [Build 29 — Levées de fonds : pre-money, dilution et valorisation des actions (14 novembre 2026)](#build-29--levées-de-fonds--pre-money-dilution-et-valorisation-des-actions-14-novembre-2026)
 
 ## Phase 1 — Fondations
 
@@ -201,3 +202,10 @@ Les 27 builds de Patrimoine, du premier MVP au simulateur de sortie Blast : un h
 - Nouveau réglage « Taille de police » (bouton engrenage dans la barre supérieure) : curseur de 85 % à 150 %, appliqué en direct à tout le texte de l'app.
 - Les cellules compactes des onglets Immobilier et Bourse et Crypto suivent le réglage (les tailles des colonnes sont mises à l'échelle).
 - Choix conservé d'une session à l'autre ; bouton « Taille par défaut » pour revenir à 100 %.
+
+### Build 29 — Levées de fonds : pre-money, dilution et valorisation des actions (14 novembre 2026)
+
+- Chaque levée de fonds affiche désormais la valorisation pre-money et la dilution (en %), saisies et modifiables.
+- Bouton « Modifier » (crayon) sur chaque levée : corrigez n'importe quelle valeur (montant investi, pre-money, post-money, dilution, prix par action) sans tout ressaisir.
+- Valorisation de vos actions calculée automatiquement : les actions valent 1 € au 1er tour, puis sont revalorisées à chaque tour (pre-money ÷ post-money du tour précédent), montants investis suivants ajoutés.
+- Prix unitaire post-levée affiché (ex. 1 € × 33/27 = 1,22 €).

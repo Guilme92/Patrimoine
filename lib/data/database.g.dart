@@ -4751,6 +4751,18 @@ class $FundingRoundsTable extends FundingRounds
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _valorisationPreMoneyMeta =
+      const VerificationMeta('valorisationPreMoney');
+  @override
+  late final GeneratedColumn<double> valorisationPreMoney =
+      GeneratedColumn<double>(
+        'valorisation_pre_money',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
   static const VerificationMeta _valorisationPostMoneyMeta =
       const VerificationMeta('valorisationPostMoney');
   @override
@@ -4763,6 +4775,18 @@ class $FundingRoundsTable extends FundingRounds
         requiredDuringInsert: false,
         defaultValue: const Constant(0),
       );
+  static const VerificationMeta _dilutionMeta = const VerificationMeta(
+    'dilution',
+  );
+  @override
+  late final GeneratedColumn<double> dilution = GeneratedColumn<double>(
+    'dilution',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _prixParActionMeta = const VerificationMeta(
     'prixParAction',
   );
@@ -4790,7 +4814,9 @@ class $FundingRoundsTable extends FundingRounds
     assetId,
     date,
     montantLeve,
+    valorisationPreMoney,
     valorisationPostMoney,
+    dilution,
     prixParAction,
     note,
   ];
@@ -4832,6 +4858,15 @@ class $FundingRoundsTable extends FundingRounds
         ),
       );
     }
+    if (data.containsKey('valorisation_pre_money')) {
+      context.handle(
+        _valorisationPreMoneyMeta,
+        valorisationPreMoney.isAcceptableOrUnknown(
+          data['valorisation_pre_money']!,
+          _valorisationPreMoneyMeta,
+        ),
+      );
+    }
     if (data.containsKey('valorisation_post_money')) {
       context.handle(
         _valorisationPostMoneyMeta,
@@ -4839,6 +4874,12 @@ class $FundingRoundsTable extends FundingRounds
           data['valorisation_post_money']!,
           _valorisationPostMoneyMeta,
         ),
+      );
+    }
+    if (data.containsKey('dilution')) {
+      context.handle(
+        _dilutionMeta,
+        dilution.isAcceptableOrUnknown(data['dilution']!, _dilutionMeta),
       );
     }
     if (data.containsKey('prix_par_action')) {
@@ -4881,9 +4922,17 @@ class $FundingRoundsTable extends FundingRounds
         DriftSqlType.double,
         data['${effectivePrefix}montant_leve'],
       )!,
+      valorisationPreMoney: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}valorisation_pre_money'],
+      )!,
       valorisationPostMoney: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}valorisation_post_money'],
+      )!,
+      dilution: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}dilution'],
       )!,
       prixParAction: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
@@ -4907,7 +4956,15 @@ class FundingRound extends DataClass implements Insertable<FundingRound> {
   final int assetId;
   final DateTime? date;
   final double montantLeve;
+
+  /// Valorisation de l'entreprise AVANT la levée (pre-money).
+  final double valorisationPreMoney;
+
+  /// Valorisation APRÈS la levée (post-money = pre-money + montant levé).
   final double valorisationPostMoney;
+
+  /// Dilution des actionnaires existants, en pourcentage (0–100).
+  final double dilution;
   final double prixParAction;
   final String? note;
   const FundingRound({
@@ -4915,7 +4972,9 @@ class FundingRound extends DataClass implements Insertable<FundingRound> {
     required this.assetId,
     this.date,
     required this.montantLeve,
+    required this.valorisationPreMoney,
     required this.valorisationPostMoney,
+    required this.dilution,
     required this.prixParAction,
     this.note,
   });
@@ -4928,7 +4987,9 @@ class FundingRound extends DataClass implements Insertable<FundingRound> {
       map['date'] = Variable<DateTime>(date);
     }
     map['montant_leve'] = Variable<double>(montantLeve);
+    map['valorisation_pre_money'] = Variable<double>(valorisationPreMoney);
     map['valorisation_post_money'] = Variable<double>(valorisationPostMoney);
+    map['dilution'] = Variable<double>(dilution);
     map['prix_par_action'] = Variable<double>(prixParAction);
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
@@ -4942,7 +5003,9 @@ class FundingRound extends DataClass implements Insertable<FundingRound> {
       assetId: Value(assetId),
       date: date == null && nullToAbsent ? const Value.absent() : Value(date),
       montantLeve: Value(montantLeve),
+      valorisationPreMoney: Value(valorisationPreMoney),
       valorisationPostMoney: Value(valorisationPostMoney),
+      dilution: Value(dilution),
       prixParAction: Value(prixParAction),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
     );
@@ -4958,9 +5021,13 @@ class FundingRound extends DataClass implements Insertable<FundingRound> {
       assetId: serializer.fromJson<int>(json['assetId']),
       date: serializer.fromJson<DateTime?>(json['date']),
       montantLeve: serializer.fromJson<double>(json['montantLeve']),
+      valorisationPreMoney: serializer.fromJson<double>(
+        json['valorisationPreMoney'],
+      ),
       valorisationPostMoney: serializer.fromJson<double>(
         json['valorisationPostMoney'],
       ),
+      dilution: serializer.fromJson<double>(json['dilution']),
       prixParAction: serializer.fromJson<double>(json['prixParAction']),
       note: serializer.fromJson<String?>(json['note']),
     );
@@ -4973,7 +5040,9 @@ class FundingRound extends DataClass implements Insertable<FundingRound> {
       'assetId': serializer.toJson<int>(assetId),
       'date': serializer.toJson<DateTime?>(date),
       'montantLeve': serializer.toJson<double>(montantLeve),
+      'valorisationPreMoney': serializer.toJson<double>(valorisationPreMoney),
       'valorisationPostMoney': serializer.toJson<double>(valorisationPostMoney),
+      'dilution': serializer.toJson<double>(dilution),
       'prixParAction': serializer.toJson<double>(prixParAction),
       'note': serializer.toJson<String?>(note),
     };
@@ -4984,7 +5053,9 @@ class FundingRound extends DataClass implements Insertable<FundingRound> {
     int? assetId,
     Value<DateTime?> date = const Value.absent(),
     double? montantLeve,
+    double? valorisationPreMoney,
     double? valorisationPostMoney,
+    double? dilution,
     double? prixParAction,
     Value<String?> note = const Value.absent(),
   }) => FundingRound(
@@ -4992,7 +5063,9 @@ class FundingRound extends DataClass implements Insertable<FundingRound> {
     assetId: assetId ?? this.assetId,
     date: date.present ? date.value : this.date,
     montantLeve: montantLeve ?? this.montantLeve,
+    valorisationPreMoney: valorisationPreMoney ?? this.valorisationPreMoney,
     valorisationPostMoney: valorisationPostMoney ?? this.valorisationPostMoney,
+    dilution: dilution ?? this.dilution,
     prixParAction: prixParAction ?? this.prixParAction,
     note: note.present ? note.value : this.note,
   );
@@ -5004,9 +5077,13 @@ class FundingRound extends DataClass implements Insertable<FundingRound> {
       montantLeve: data.montantLeve.present
           ? data.montantLeve.value
           : this.montantLeve,
+      valorisationPreMoney: data.valorisationPreMoney.present
+          ? data.valorisationPreMoney.value
+          : this.valorisationPreMoney,
       valorisationPostMoney: data.valorisationPostMoney.present
           ? data.valorisationPostMoney.value
           : this.valorisationPostMoney,
+      dilution: data.dilution.present ? data.dilution.value : this.dilution,
       prixParAction: data.prixParAction.present
           ? data.prixParAction.value
           : this.prixParAction,
@@ -5021,7 +5098,9 @@ class FundingRound extends DataClass implements Insertable<FundingRound> {
           ..write('assetId: $assetId, ')
           ..write('date: $date, ')
           ..write('montantLeve: $montantLeve, ')
+          ..write('valorisationPreMoney: $valorisationPreMoney, ')
           ..write('valorisationPostMoney: $valorisationPostMoney, ')
+          ..write('dilution: $dilution, ')
           ..write('prixParAction: $prixParAction, ')
           ..write('note: $note')
           ..write(')'))
@@ -5034,7 +5113,9 @@ class FundingRound extends DataClass implements Insertable<FundingRound> {
     assetId,
     date,
     montantLeve,
+    valorisationPreMoney,
     valorisationPostMoney,
+    dilution,
     prixParAction,
     note,
   );
@@ -5046,7 +5127,9 @@ class FundingRound extends DataClass implements Insertable<FundingRound> {
           other.assetId == this.assetId &&
           other.date == this.date &&
           other.montantLeve == this.montantLeve &&
+          other.valorisationPreMoney == this.valorisationPreMoney &&
           other.valorisationPostMoney == this.valorisationPostMoney &&
+          other.dilution == this.dilution &&
           other.prixParAction == this.prixParAction &&
           other.note == this.note);
 }
@@ -5056,7 +5139,9 @@ class FundingRoundsCompanion extends UpdateCompanion<FundingRound> {
   final Value<int> assetId;
   final Value<DateTime?> date;
   final Value<double> montantLeve;
+  final Value<double> valorisationPreMoney;
   final Value<double> valorisationPostMoney;
+  final Value<double> dilution;
   final Value<double> prixParAction;
   final Value<String?> note;
   const FundingRoundsCompanion({
@@ -5064,7 +5149,9 @@ class FundingRoundsCompanion extends UpdateCompanion<FundingRound> {
     this.assetId = const Value.absent(),
     this.date = const Value.absent(),
     this.montantLeve = const Value.absent(),
+    this.valorisationPreMoney = const Value.absent(),
     this.valorisationPostMoney = const Value.absent(),
+    this.dilution = const Value.absent(),
     this.prixParAction = const Value.absent(),
     this.note = const Value.absent(),
   });
@@ -5073,7 +5160,9 @@ class FundingRoundsCompanion extends UpdateCompanion<FundingRound> {
     required int assetId,
     this.date = const Value.absent(),
     this.montantLeve = const Value.absent(),
+    this.valorisationPreMoney = const Value.absent(),
     this.valorisationPostMoney = const Value.absent(),
+    this.dilution = const Value.absent(),
     this.prixParAction = const Value.absent(),
     this.note = const Value.absent(),
   }) : assetId = Value(assetId);
@@ -5082,7 +5171,9 @@ class FundingRoundsCompanion extends UpdateCompanion<FundingRound> {
     Expression<int>? assetId,
     Expression<DateTime>? date,
     Expression<double>? montantLeve,
+    Expression<double>? valorisationPreMoney,
     Expression<double>? valorisationPostMoney,
+    Expression<double>? dilution,
     Expression<double>? prixParAction,
     Expression<String>? note,
   }) {
@@ -5091,8 +5182,11 @@ class FundingRoundsCompanion extends UpdateCompanion<FundingRound> {
       if (assetId != null) 'asset_id': assetId,
       if (date != null) 'date': date,
       if (montantLeve != null) 'montant_leve': montantLeve,
+      if (valorisationPreMoney != null)
+        'valorisation_pre_money': valorisationPreMoney,
       if (valorisationPostMoney != null)
         'valorisation_post_money': valorisationPostMoney,
+      if (dilution != null) 'dilution': dilution,
       if (prixParAction != null) 'prix_par_action': prixParAction,
       if (note != null) 'note': note,
     });
@@ -5103,7 +5197,9 @@ class FundingRoundsCompanion extends UpdateCompanion<FundingRound> {
     Value<int>? assetId,
     Value<DateTime?>? date,
     Value<double>? montantLeve,
+    Value<double>? valorisationPreMoney,
     Value<double>? valorisationPostMoney,
+    Value<double>? dilution,
     Value<double>? prixParAction,
     Value<String?>? note,
   }) {
@@ -5112,8 +5208,10 @@ class FundingRoundsCompanion extends UpdateCompanion<FundingRound> {
       assetId: assetId ?? this.assetId,
       date: date ?? this.date,
       montantLeve: montantLeve ?? this.montantLeve,
+      valorisationPreMoney: valorisationPreMoney ?? this.valorisationPreMoney,
       valorisationPostMoney:
           valorisationPostMoney ?? this.valorisationPostMoney,
+      dilution: dilution ?? this.dilution,
       prixParAction: prixParAction ?? this.prixParAction,
       note: note ?? this.note,
     );
@@ -5134,10 +5232,18 @@ class FundingRoundsCompanion extends UpdateCompanion<FundingRound> {
     if (montantLeve.present) {
       map['montant_leve'] = Variable<double>(montantLeve.value);
     }
+    if (valorisationPreMoney.present) {
+      map['valorisation_pre_money'] = Variable<double>(
+        valorisationPreMoney.value,
+      );
+    }
     if (valorisationPostMoney.present) {
       map['valorisation_post_money'] = Variable<double>(
         valorisationPostMoney.value,
       );
+    }
+    if (dilution.present) {
+      map['dilution'] = Variable<double>(dilution.value);
     }
     if (prixParAction.present) {
       map['prix_par_action'] = Variable<double>(prixParAction.value);
@@ -5155,7 +5261,9 @@ class FundingRoundsCompanion extends UpdateCompanion<FundingRound> {
           ..write('assetId: $assetId, ')
           ..write('date: $date, ')
           ..write('montantLeve: $montantLeve, ')
+          ..write('valorisationPreMoney: $valorisationPreMoney, ')
           ..write('valorisationPostMoney: $valorisationPostMoney, ')
+          ..write('dilution: $dilution, ')
           ..write('prixParAction: $prixParAction, ')
           ..write('note: $note')
           ..write(')'))
@@ -9312,7 +9420,9 @@ typedef $$FundingRoundsTableCreateCompanionBuilder =
       required int assetId,
       Value<DateTime?> date,
       Value<double> montantLeve,
+      Value<double> valorisationPreMoney,
       Value<double> valorisationPostMoney,
+      Value<double> dilution,
       Value<double> prixParAction,
       Value<String?> note,
     });
@@ -9322,7 +9432,9 @@ typedef $$FundingRoundsTableUpdateCompanionBuilder =
       Value<int> assetId,
       Value<DateTime?> date,
       Value<double> montantLeve,
+      Value<double> valorisationPreMoney,
       Value<double> valorisationPostMoney,
+      Value<double> dilution,
       Value<double> prixParAction,
       Value<String?> note,
     });
@@ -9377,8 +9489,18 @@ class $$FundingRoundsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<double> get valorisationPreMoney => $composableBuilder(
+    column: $table.valorisationPreMoney,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<double> get valorisationPostMoney => $composableBuilder(
     column: $table.valorisationPostMoney,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get dilution => $composableBuilder(
+    column: $table.dilution,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9440,8 +9562,18 @@ class $$FundingRoundsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get valorisationPreMoney => $composableBuilder(
+    column: $table.valorisationPreMoney,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get valorisationPostMoney => $composableBuilder(
     column: $table.valorisationPostMoney,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get dilution => $composableBuilder(
+    column: $table.dilution,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -9499,10 +9631,18 @@ class $$FundingRoundsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<double> get valorisationPreMoney => $composableBuilder(
+    column: $table.valorisationPreMoney,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<double> get valorisationPostMoney => $composableBuilder(
     column: $table.valorisationPostMoney,
     builder: (column) => column,
   );
+
+  GeneratedColumn<double> get dilution =>
+      $composableBuilder(column: $table.dilution, builder: (column) => column);
 
   GeneratedColumn<double> get prixParAction => $composableBuilder(
     column: $table.prixParAction,
@@ -9568,7 +9708,9 @@ class $$FundingRoundsTableTableManager
                 Value<int> assetId = const Value.absent(),
                 Value<DateTime?> date = const Value.absent(),
                 Value<double> montantLeve = const Value.absent(),
+                Value<double> valorisationPreMoney = const Value.absent(),
                 Value<double> valorisationPostMoney = const Value.absent(),
+                Value<double> dilution = const Value.absent(),
                 Value<double> prixParAction = const Value.absent(),
                 Value<String?> note = const Value.absent(),
               }) => FundingRoundsCompanion(
@@ -9576,7 +9718,9 @@ class $$FundingRoundsTableTableManager
                 assetId: assetId,
                 date: date,
                 montantLeve: montantLeve,
+                valorisationPreMoney: valorisationPreMoney,
                 valorisationPostMoney: valorisationPostMoney,
+                dilution: dilution,
                 prixParAction: prixParAction,
                 note: note,
               ),
@@ -9586,7 +9730,9 @@ class $$FundingRoundsTableTableManager
                 required int assetId,
                 Value<DateTime?> date = const Value.absent(),
                 Value<double> montantLeve = const Value.absent(),
+                Value<double> valorisationPreMoney = const Value.absent(),
                 Value<double> valorisationPostMoney = const Value.absent(),
+                Value<double> dilution = const Value.absent(),
                 Value<double> prixParAction = const Value.absent(),
                 Value<String?> note = const Value.absent(),
               }) => FundingRoundsCompanion.insert(
@@ -9594,7 +9740,9 @@ class $$FundingRoundsTableTableManager
                 assetId: assetId,
                 date: date,
                 montantLeve: montantLeve,
+                valorisationPreMoney: valorisationPreMoney,
                 valorisationPostMoney: valorisationPostMoney,
+                dilution: dilution,
                 prixParAction: prixParAction,
                 note: note,
               ),

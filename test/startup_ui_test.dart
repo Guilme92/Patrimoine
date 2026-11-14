@@ -86,7 +86,7 @@ void main() {
     expect(find.text(formatEuro(2500)), findsNWidgets(2));
     expect(find.text('Levées de fonds'), findsOneWidget);
     expect(find.text('Levée du 01/06/2024'), findsOneWidget);
-    expect(find.text('Montant levé'), findsOneWidget);
+    expect(find.text('Montant investi'), findsOneWidget);
     // Les KPI portent des info-bulles explicatives.
     expect(find.byIcon(Icons.info_outline), findsWidgets);
 

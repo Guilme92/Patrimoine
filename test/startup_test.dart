@@ -536,6 +536,17 @@ void main() {
           created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
         );
       ''');
+      raw.execute('''
+        CREATE TABLE funding_rounds (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          asset_id INTEGER NOT NULL REFERENCES assets(id) ON DELETE CASCADE,
+          date INTEGER,
+          montant_leve REAL NOT NULL DEFAULT 0,
+          valorisation_post_money REAL NOT NULL DEFAULT 0,
+          prix_par_action REAL NOT NULL DEFAULT 0,
+          note TEXT
+        );
+      ''');
       raw.execute(
         "INSERT INTO assets (name, type, value) "
         "VALUES ('Qonto', 'startup', 12000)",

@@ -281,7 +281,9 @@ String? _blastInstrument(String? raw) {
 }
 
 /// Décode la colonne `levees` : rounds séparés par « ; », chaque round au
-/// format `date|montant_leve|valorisation_post_money|prix_par_action`.
+/// format `date|montant_leve|valorisation_post_money|prix_par_action|valorisation_pre_money|dilution`.
+/// Les deux derniers champs (pre-money et dilution) sont optionnels : absents,
+/// ils valent 0 (ancien format à 4 champs toujours accepté).
 List<FundingRoundDraft> parseFundingRounds(String? raw) {
   if (raw == null || raw.trim().isEmpty) return const [];
   final rounds = <FundingRoundDraft>[];
@@ -295,6 +297,9 @@ List<FundingRoundDraft> parseFundingRounds(String? raw) {
         valorisationPostMoney:
             parseCsvNumber(parts.length > 2 ? parts[2] : null) ?? 0,
         prixParAction: parseCsvNumber(parts.length > 3 ? parts[3] : null) ?? 0,
+        valorisationPreMoney:
+            parseCsvNumber(parts.length > 4 ? parts[4] : null) ?? 0,
+        dilution: parseCsvNumber(parts.length > 5 ? parts[5] : null) ?? 0,
       ),
     );
   }

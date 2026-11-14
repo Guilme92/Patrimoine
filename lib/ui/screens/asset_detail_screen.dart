@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../../controllers/portfolio_controller.dart';
 import '../../data/database.dart';
 import '../../domain/portfolio.dart';
+import '../../domain/funding_rounds.dart';
 import '../../domain/rental.dart';
 import '../../domain/startup.dart';
 import '../../models/asset_type.dart';
@@ -162,13 +163,19 @@ class AssetDetailScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               )
-            else
+            else ...[
+              if (rounds.length >= 2) ...[
+                _FundingRoundSummary(rounds: rounds),
+                const SizedBox(height: 12),
+              ],
               ...rounds.map(
                 (r) => _FundingRoundTile(
                   round: r,
+                  onEdit: () => _editFundingRound(context, current, r),
                   onDelete: () => _confirmDeleteRound(context, r),
                 ),
               ),
+            ],
           ],
           if (supportsPositions(type)) ...[
             const SizedBox(height: 24),
@@ -414,6 +421,25 @@ class AssetDetailScreen extends StatelessWidget {
     if (draft == null || !context.mounted) return;
     await controller.addFundingRound(assetId: asset.id, draft: draft);
     if (context.mounted) _snack(context, 'Levée de fonds ajoutée.');
+  }
+
+  Future<void> _editFundingRound(
+    BuildContext context,
+    Asset asset,
+    FundingRound round,
+  ) async {
+    final controller = context.read<PortfolioController>();
+    final draft = await showDialog<FundingRoundDraft>(
+      context: context,
+      builder: (_) => FundingRoundDialog(round: round),
+    );
+    if (draft == null || !context.mounted) return;
+    await controller.updateFundingRound(
+      assetId: asset.id,
+      roundId: round.id,
+      draft: draft,
+    );
+    if (context.mounted) _snack(context, 'Levée de fonds mise à jour.');
   }
 
   Future<void> _confirmDeleteRound(
@@ -1294,8 +1320,13 @@ class _StartupCard extends StatelessWidget {
 /// Une levée de fonds de la startup.
 class _FundingRoundTile extends StatelessWidget {
   final FundingRound round;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
-  const _FundingRoundTile({required this.round, required this.onDelete});
+  const _FundingRoundTile({
+    required this.round,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1317,6 +1348,11 @@ class _FundingRoundTile extends StatelessWidget {
                 ),
               ),
               IconButton(
+                tooltip: 'Modifier',
+                icon: const Icon(Icons.edit_outlined, size: 20),
+                onPressed: onEdit,
+              ),
+              IconButton(
                 tooltip: 'Supprimer',
                 icon: const Icon(Icons.delete_outline, size: 20),
                 onPressed: onDelete,
@@ -1328,13 +1364,25 @@ class _FundingRoundTile extends StatelessWidget {
             child: Column(
               children: [
                 InfoRow(
-                  label: 'Montant levé',
+                  label: 'Montant investi',
                   value: formatEuro(round.montantLeve),
+                ),
+                InfoRow(
+                  label: 'Valorisation pre-money',
+                  value: round.valorisationPreMoney > 0
+                      ? formatEuro(round.valorisationPreMoney)
+                      : '—',
                 ),
                 InfoRow(
                   label: 'Valorisation post-money',
                   value: round.valorisationPostMoney > 0
                       ? formatEuro(round.valorisationPostMoney)
+                      : '—',
+                ),
+                InfoRow(
+                  label: 'Dilution',
+                  value: round.dilution > 0
+                      ? formatPctFixed(round.dilution, 1)
                       : '—',
                 ),
                 InfoRow(
@@ -1353,6 +1401,53 @@ class _FundingRoundTile extends StatelessWidget {
                   ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Synthèse de la valorisation des actions de l'utilisateur, calculée depuis
+/// les tours (base 1 € au premier tour).
+class _FundingRoundSummary extends StatelessWidget {
+  final List<FundingRound> rounds;
+  const _FundingRoundSummary({required this.rounds});
+
+  @override
+  Widget build(BuildContext context) {
+    final pu = shareUnitPrice(rounds);
+    final value = fundingRoundsValue(rounds);
+    return Container(
+      decoration: cardDecoration(),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Valorisation de vos actions',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _Metric(
+                  label: 'Valeur estimée',
+                  hint: 'Investi 1er tour × (pre-money ÷ post-money) '
+                      '+ investis suivants',
+                  value: value == null ? '—' : formatEuro(value),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _Metric(
+                  label: 'Prix unitaire',
+                  hint: 'Base 1 € au 1er tour, revalorisé à chaque tour',
+                  value: pu == null ? '—' : formatEuro(pu, cents: true),
+                ),
+              ),
+            ],
           ),
         ],
       ),

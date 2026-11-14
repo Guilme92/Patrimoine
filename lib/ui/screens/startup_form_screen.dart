@@ -370,25 +370,56 @@ class _StartupDetailsFormScreenState extends State<StartupDetailsFormScreen> {
   }
 }
 
-/// Dialogue d'ajout d'une levée de fonds.
+/// Dialogue d'ajout ou de modification d'une levée de fonds.
 class FundingRoundDialog extends StatefulWidget {
-  const FundingRoundDialog({super.key});
+  /// Levée à modifier (null = nouvelle levée).
+  final FundingRound? round;
+  const FundingRoundDialog({super.key, this.round});
+
+  bool get isEditing => round != null;
 
   @override
   State<FundingRoundDialog> createState() => _FundingRoundDialogState();
 }
 
 class _FundingRoundDialogState extends State<FundingRoundDialog> {
-  final _montant = TextEditingController();
-  final _postMoney = TextEditingController();
-  final _prix = TextEditingController();
-  final _note = TextEditingController();
-  DateTime? _date;
+  late final TextEditingController _montant;
+  late final TextEditingController _preMoney;
+  late final TextEditingController _postMoney;
+  late final TextEditingController _dilution;
+  late final TextEditingController _prix;
+  late final TextEditingController _note;
+  late DateTime? _date;
+
+  @override
+  void initState() {
+    super.initState();
+    final r = widget.round;
+    _montant = TextEditingController(
+      text: r == null ? '' : amountText(r.montantLeve),
+    );
+    _preMoney = TextEditingController(
+      text: r == null ? '' : amountText(r.valorisationPreMoney),
+    );
+    _postMoney = TextEditingController(
+      text: r == null ? '' : amountText(r.valorisationPostMoney),
+    );
+    _dilution = TextEditingController(
+      text: r == null ? '' : amountText(r.dilution),
+    );
+    _prix = TextEditingController(
+      text: r == null ? '' : amountText(r.prixParAction),
+    );
+    _note = TextEditingController(text: r?.note ?? '');
+    _date = r?.date;
+  }
 
   @override
   void dispose() {
     _montant.dispose();
+    _preMoney.dispose();
     _postMoney.dispose();
+    _dilution.dispose();
     _prix.dispose();
     _note.dispose();
     super.dispose();
@@ -397,7 +428,9 @@ class _FundingRoundDialogState extends State<FundingRoundDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Nouvelle levée de fonds'),
+      title: Text(
+        widget.isEditing ? 'Modifier la levée de fonds' : 'Nouvelle levée de fonds',
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -421,7 +454,14 @@ class _FundingRoundDialogState extends State<FundingRoundDialog> {
             const SizedBox(height: 12),
             AmountField(
               controller: _montant,
-              label: 'Montant levé',
+              label: 'Montant investi',
+              suffix: '€',
+              hint: 'Votre part investie dans ce tour',
+            ),
+            const SizedBox(height: 12),
+            AmountField(
+              controller: _preMoney,
+              label: 'Valorisation pre-money',
               suffix: '€',
             ),
             const SizedBox(height: 12),
@@ -429,6 +469,12 @@ class _FundingRoundDialogState extends State<FundingRoundDialog> {
               controller: _postMoney,
               label: 'Valorisation post-money',
               suffix: '€',
+            ),
+            const SizedBox(height: 12),
+            AmountField(
+              controller: _dilution,
+              label: 'Dilution',
+              suffix: '%',
             ),
             const SizedBox(height: 12),
             AmountField(
@@ -455,12 +501,14 @@ class _FundingRoundDialogState extends State<FundingRoundDialog> {
             FundingRoundDraft(
               date: _date,
               montantLeve: parseAmount(_montant.text),
+              valorisationPreMoney: parseAmount(_preMoney.text),
               valorisationPostMoney: parseAmount(_postMoney.text),
+              dilution: parseAmount(_dilution.text),
               prixParAction: parseAmount(_prix.text),
               note: _note.text,
             ),
           ),
-          child: const Text('Ajouter'),
+          child: Text(widget.isEditing ? 'Enregistrer' : 'Ajouter'),
         ),
       ],
     );

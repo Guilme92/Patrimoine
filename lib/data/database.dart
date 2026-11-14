@@ -175,8 +175,18 @@ class FundingRounds extends Table {
 
   DateTimeColumn get date => dateTime().nullable()();
   RealColumn get montantLeve => real().withDefault(const Constant(0))();
+
+  /// Valorisation de l'entreprise AVANT la levée (pre-money).
+  RealColumn get valorisationPreMoney =>
+      real().withDefault(const Constant(0))();
+
+  /// Valorisation APRÈS la levée (post-money = pre-money + montant levé).
   RealColumn get valorisationPostMoney =>
       real().withDefault(const Constant(0))();
+
+  /// Dilution des actionnaires existants, en pourcentage (0–100).
+  RealColumn get dilution => real().withDefault(const Constant(0))();
+
   RealColumn get prixParAction => real().withDefault(const Constant(0))();
   TextColumn get note => text().nullable()();
 }
@@ -245,7 +255,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -289,6 +299,13 @@ class AppDatabase extends _$AppDatabase {
         // `from < 3` crée la table via createTable (colonne déjà présente) ;
         // à partir de v3 la table existe sans cette colonne → addColumn.
         await m.addColumn(startupDetails, startupDetails.montantInvesti);
+      }
+      if (from >= 3 && from < 9) {
+        // Valorisation pre-money et dilution de chaque levée de fonds.
+        // `from < 3` crée la table via createTable (colonnes déjà présentes) ;
+        // à partir de v3 la table existe sans ces colonnes → addColumn.
+        await m.addColumn(fundingRounds, fundingRounds.valorisationPreMoney);
+        await m.addColumn(fundingRounds, fundingRounds.dilution);
       }
     },
     beforeOpen: (details) async {
@@ -507,6 +524,11 @@ class AppDatabase extends _$AppDatabase {
 
   Future<int> addFundingRound(FundingRoundsCompanion entry) =>
       into(fundingRounds).insert(entry);
+
+  /// Met à jour une levée de fonds existante (tous les champs modifiables).
+  Future<void> updateFundingRound(int id, FundingRoundsCompanion entry) =>
+      (update(fundingRounds)..where((t) => t.id.equals(id)))
+          .write(entry.copyWith(id: Value(id)));
 
   Future<void> deleteFundingRound(int id) =>
       (delete(fundingRounds)..where((t) => t.id.equals(id))).go();

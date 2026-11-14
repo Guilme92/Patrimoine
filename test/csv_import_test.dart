@@ -248,6 +248,23 @@ void main() {
           hasLength(1));
     });
 
+    test('colonne levees enrichie : pre-money et dilution', () {
+      // Ancien format à 4 champs : pre-money et dilution valent 0.
+      final legacy = parseFundingRounds('2023-01-15|500000|5000000|10').single;
+      expect(legacy.valorisationPreMoney, 0);
+      expect(legacy.dilution, 0);
+
+      // Nouveau format à 6 champs : pre-money et dilution sont lus.
+      final enriched = parseFundingRounds(
+        '2024-11-07|2718,45|15000000|1,0052|27000000|18,2',
+      ).single;
+      expect(enriched.montantLeve, closeTo(2718.45, 1e-9));
+      expect(enriched.valorisationPostMoney, 15000000);
+      expect(enriched.prixParAction, closeTo(1.0052, 1e-9));
+      expect(enriched.valorisationPreMoney, 27000000);
+      expect(enriched.dilution, closeTo(18.2, 1e-9));
+    });
+
     test('colonne levees citée (séparateur « ; », décimales à virgule)',
         () {
       // Le champ cité contient des « ; » : il ne doit pas être découpé en

@@ -503,6 +503,16 @@ class PortfolioController extends ChangeNotifier {
     await load();
   }
 
+  /// Met à jour une levée de fonds existante.
+  Future<void> updateFundingRound({
+    required int assetId,
+    required int roundId,
+    required FundingRoundDraft draft,
+  }) async {
+    await db.updateFundingRound(roundId, draft.toCompanion(assetId));
+    await load();
+  }
+
   Future<void> deleteFundingRound(int id) async {
     await db.deleteFundingRound(id);
     await load();

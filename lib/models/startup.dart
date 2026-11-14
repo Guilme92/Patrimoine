@@ -236,14 +236,18 @@ class StartupDraft {
 class FundingRoundDraft {
   final DateTime? date;
   final double montantLeve;
+  final double valorisationPreMoney;
   final double valorisationPostMoney;
+  final double dilution;
   final double prixParAction;
   final String? note;
 
   const FundingRoundDraft({
     this.date,
     this.montantLeve = 0,
+    this.valorisationPreMoney = 0,
     this.valorisationPostMoney = 0,
+    this.dilution = 0,
     this.prixParAction = 0,
     this.note,
   });
@@ -253,7 +257,9 @@ class FundingRoundDraft {
         assetId: assetId,
         date: Value(date),
         montantLeve: Value(montantLeve),
+        valorisationPreMoney: Value(valorisationPreMoney),
         valorisationPostMoney: Value(valorisationPostMoney),
+        dilution: Value(dilution),
         prixParAction: Value(prixParAction),
         note: Value(_blankToNull(note)),
       );
