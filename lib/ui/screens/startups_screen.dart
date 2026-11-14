@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../controllers/portfolio_controller.dart';
 import '../../domain/startup.dart';
 import '../../domain/startup_portfolio.dart';
+import '../../domain/synthesis_layout.dart';
 import '../../models/startup.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/format.dart';
@@ -169,9 +170,10 @@ class _StartupsScreenState extends State<StartupsScreen> {
         cmp = _entryInvested(a).compareTo(_entryInvested(b));
         break;
       case _SortKey.value:
-        cmp = startupValue(a.detail, a.rounds).compareTo(
-          startupValue(b.detail, b.rounds),
-        );
+        cmp = startupValue(
+          a.detail,
+          a.rounds,
+        ).compareTo(startupValue(b.detail, b.rounds));
         break;
       case _SortKey.pnl:
         cmp = _entryUnrealizedPnl(a).compareTo(_entryUnrealizedPnl(b));
@@ -183,14 +185,16 @@ class _StartupsScreenState extends State<StartupsScreen> {
         ).compareTo(_entryRealizedPnl(b, secondaryRealized[b.asset.id] ?? 0));
         break;
       case _SortKey.moic:
-        cmp = moic(a.detail, rounds: a.rounds).compareTo(
-          moic(b.detail, rounds: b.rounds),
-        );
+        cmp = moic(
+          a.detail,
+          rounds: a.rounds,
+        ).compareTo(moic(b.detail, rounds: b.rounds));
         break;
       case _SortKey.tri:
-        cmp = triAnnualizedPct(a.detail, rounds: a.rounds).compareTo(
-          triAnnualizedPct(b.detail, rounds: b.rounds),
-        );
+        cmp = triAnnualizedPct(
+          a.detail,
+          rounds: a.rounds,
+        ).compareTo(triAnnualizedPct(b.detail, rounds: b.rounds));
         break;
       case _SortKey.status:
         cmp = startupStatusLabel(a.detail.statut)
@@ -339,17 +343,14 @@ class _StartupsScreenState extends State<StartupsScreen> {
                   ],
                   selected: {_section},
                   showSelectedIcon: false,
-                  onSelectionChanged: (s) =>
-                      setState(() => _section = s.first),
+                  onSelectionChanged: (s) => setState(() => _section = s.first),
                   style: const ButtonStyle(
                     visualDensity: VisualDensity.compact,
                     textStyle: WidgetStatePropertyAll(TextStyle(fontSize: 13)),
                     foregroundColor: WidgetStatePropertyAll(
                       AppColors.textSecondary,
                     ),
-                    backgroundColor: WidgetStatePropertyAll(
-                      AppColors.surface,
-                    ),
+                    backgroundColor: WidgetStatePropertyAll(AppColors.surface),
                     side: WidgetStatePropertyAll(
                       BorderSide(color: AppColors.divider),
                     ),
@@ -874,7 +875,7 @@ class _SearchField extends StatelessWidget {
 // Synthèse
 // ---------------------------------------------------------------------------
 
-class _SynthesisTab extends StatelessWidget {
+class _SynthesisTab extends StatefulWidget {
   final StartupPortfolioSummary summary;
   final double totalInvestedGlobal;
 
@@ -890,13 +891,29 @@ class _SynthesisTab extends StatelessWidget {
   });
 
   @override
+  State<_SynthesisTab> createState() => _SynthesisTabState();
+}
+
+class _SynthesisTabState extends State<_SynthesisTab> {
+  /// Mode « Réorganiser » : chaque bloc expose ses contrôles de déplacement
+  /// et de largeur.
+  bool _editing = false;
+
+  StartupPortfolioSummary get summary => widget.summary;
+  double get totalInvestedGlobal => widget.totalInvestedGlobal;
+  double get secondaryRealizedTotal => widget.secondaryRealizedTotal;
+  ValueChanged<StartupEntry> get onOpen => widget.onOpen;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final layout = context.watch<PortfolioController>().synthesisLayout;
     final kpis = <Widget>[
       _KpiCard(
         label: 'Capital investi',
         value: formatEuro(totalInvestedGlobal),
-        hint: 'Capital investi total du portefeuille : startups de toutes '
+        hint:
+            'Capital investi total du portefeuille : startups de toutes '
             'catégories, y compris Blast.',
       ),
       _KpiCard(
@@ -966,46 +983,23 @@ class _SynthesisTab extends StatelessWidget {
         ),
     ];
 
+    // Un widget par bloc de la Synthèse, dans l'ordre du layout.
+    final blocks = <String, Widget>{
+      'kpis': _KpiGrid(cards: kpis),
+      'counters': _CountersCard(summary: summary),
+      'category_donut': _CategoryDonut(values: summary.valueByCategory),
+      'year_bars': _YearBars(values: summary.valueByYear, summary: summary),
+      'category_table': _CategoryTable(summary: summary),
+      'top_startups': _TopStartups(entries: summary.entries, onOpen: onOpen),
+    };
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _KpiGrid(cards: kpis),
+        _header(context),
         const SizedBox(height: 12),
-        _CountersCard(summary: summary),
-        const SizedBox(height: 16),
-        // Répartition par catégorie et valorisation par année : côte à côte
-        // (deux colonnes égales) sur écran large, empilées sur écran étroit.
-        LayoutBuilder(
-          builder: (context, constraints) {
-            const gap = 16.0;
-            final sideBySide = constraints.maxWidth >= 620;
-            final columnWidth = sideBySide
-                ? (constraints.maxWidth - gap) / 2
-                : constraints.maxWidth;
-            return Wrap(
-              spacing: gap,
-              runSpacing: gap,
-              children: [
-                SizedBox(
-                  width: columnWidth,
-                  child: _CategoryDonut(values: summary.valueByCategory),
-                ),
-                SizedBox(
-                  width: columnWidth,
-                  child: _YearBars(
-                    values: summary.valueByYear,
-                    summary: summary,
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-        _CategoryTable(summary: summary),
-        const SizedBox(height: 16),
-        _TopStartups(entries: summary.entries, onOpen: onOpen),
-        const SizedBox(height: 4),
+        _layoutGrid(layout, blocks),
+        const SizedBox(height: 12),
         Text(
           'KPIs calculés sur ${summary.totalCount} startup'
           '${summary.totalCount > 1 ? 's' : ''} au total (startups + Blast).',
@@ -1013,6 +1007,246 @@ class _SynthesisTab extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  /// En-tête de la Synthèse : libellé explicatif + bascule du mode
+  /// « Réorganiser » / « Terminer ».
+  Widget _header(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: LabelWithHint(
+            _editing ? 'Déplacez et redimensionnez les blocs' : 'Disposition',
+            message: _editing
+                ? 'Flèches : déplacer le bloc dans le flux. Pleine, Moitié '
+                      'ou Tiers : largeur du bloc. Chaque modification est '
+                      'enregistrée automatiquement.'
+                : 'Réorganisez et redimensionnez les blocs de la synthèse : '
+                      'le choix est enregistré automatiquement.',
+            style: theme.textTheme.bodySmall,
+          ),
+        ),
+        const SizedBox(width: 8),
+        OutlinedButton.icon(
+          onPressed: () => setState(() => _editing = !_editing),
+          icon: Icon(_editing ? Icons.check : Icons.tune, size: 16),
+          label: Text(_editing ? 'Terminer' : 'Réorganiser'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: _editing
+                ? AppColors.primary
+                : AppColors.textSecondary,
+            side: BorderSide(
+              color: _editing ? AppColors.primary : AppColors.divider,
+            ),
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            textStyle: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Flux en grille de [synthesisGridColumns] colonnes : les blocs suivent
+  /// l'ordre du layout et passent à la ligne quand la largeur restante est
+  /// insuffisante.
+  Widget _layoutGrid(
+    List<SynthesisBlockLayout> layout,
+    Map<String, Widget> blocks,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 12.0;
+        final width = constraints.maxWidth;
+
+        // Écran étroit : une seule colonne pleine largeur (les largeurs
+        // choisies ne s'appliquent qu'à partir de 620 px, comme avant).
+        if (width < 620) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < layout.length; i++) ...[
+                if (i > 0) const SizedBox(height: gap),
+                _layoutBlock(layout[i], i, layout.length, blocks),
+              ],
+            ],
+          );
+        }
+
+        // Largeur d'une colonne : la grille et ses 5 gouttières occupent
+        // toute la largeur disponible.
+        final unit =
+            (width - (synthesisGridColumns - 1) * gap) / synthesisGridColumns;
+        final rows = packSynthesisRows(layout);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var r = 0; r < rows.length; r++) ...[
+              if (r > 0) const SizedBox(height: gap),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var c = 0; c < rows[r].blocks.length; c++) ...[
+                    if (c > 0) const SizedBox(width: gap),
+                    SizedBox(
+                      width:
+                          rows[r].blocks[c].span * unit +
+                          (rows[r].blocks[c].span - 1) * gap,
+                      child: _layoutBlock(
+                        rows[r].blocks[c],
+                        layout.indexOf(rows[r].blocks[c]),
+                        layout.length,
+                        blocks,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  /// Un bloc de la Synthèse, précédé de ses contrôles en mode édition.
+  Widget _layoutBlock(
+    SynthesisBlockLayout block,
+    int index,
+    int count,
+    Map<String, Widget> blocks,
+  ) {
+    final content = blocks[block.id] ?? const SizedBox.shrink();
+    if (!_editing) return content;
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          key: ValueKey<String>('layout-controls-${block.id}'),
+          padding: const EdgeInsets.fromLTRB(10, 4, 4, 6),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceAlt,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.divider),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      synthesisBlockLabel(block.id),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  _moveButton(
+                    Icons.arrow_upward,
+                    'Monter',
+                    index > 0,
+                    () => _move(index, -1),
+                  ),
+                  _moveButton(
+                    Icons.arrow_downward,
+                    'Descendre',
+                    index < count - 1,
+                    () => _move(index, 1),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  for (final entry in synthesisSpanLabels.entries)
+                    _spanChip(block, entry.key, entry.value),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        content,
+      ],
+    );
+  }
+
+  Widget _moveButton(
+    IconData icon,
+    String tooltip,
+    bool enabled,
+    VoidCallback onPressed,
+  ) {
+    return IconButton(
+      icon: Icon(icon, size: 16),
+      tooltip: tooltip,
+      onPressed: enabled ? onPressed : null,
+      color: AppColors.textSecondary,
+      disabledColor: AppColors.divider,
+      visualDensity: VisualDensity.compact,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints.tightFor(width: 28, height: 28),
+    );
+  }
+
+  Widget _spanChip(SynthesisBlockLayout block, int span, String label) {
+    final selected = block.span == span;
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      showCheckmark: false,
+      onSelected: (_) => _setSpan(block.id, span),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      labelStyle: TextStyle(
+        fontSize: 11,
+        color: selected ? AppColors.background : AppColors.textSecondary,
+      ),
+      backgroundColor: AppColors.surface,
+      selectedColor: AppColors.primary,
+      side: BorderSide(color: selected ? AppColors.primary : AppColors.divider),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    );
+  }
+
+  /// Déplace un bloc d'un cran dans le layout (persistance immédiate).
+  void _move(int index, int delta) {
+    final layout = [...context.read<PortfolioController>().synthesisLayout];
+    final target = index + delta;
+    if (index < 0 || index >= layout.length) return;
+    if (target < 0 || target >= layout.length) return;
+    layout.insert(target, layout.removeAt(index));
+    _applyLayout(layout);
+  }
+
+  /// Change la largeur d'un bloc (6, 3 ou 2 colonnes) et la persiste.
+  void _setSpan(String id, int span) {
+    final layout = [
+      for (final block in context.read<PortfolioController>().synthesisLayout)
+        block.id == id ? block.copyWith(span: span) : block,
+    ];
+    _applyLayout(layout);
+  }
+
+  /// Le contrôleur normalise, notifie et écrit la préférence en base.
+  void _applyLayout(List<SynthesisBlockLayout> layout) {
+    context.read<PortfolioController>().setSynthesisLayout(layout);
   }
 }
 
@@ -1494,14 +1728,14 @@ class _TopStartups extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final top = entries
-        .where((e) => startupValue(e.detail, e.rounds) > 0)
-        .toList()
-      ..sort(
-        (a, b) => startupValue(b.detail, b.rounds).compareTo(
-          startupValue(a.detail, a.rounds),
-        ),
-      );
+    final top =
+        entries.where((e) => startupValue(e.detail, e.rounds) > 0).toList()
+          ..sort(
+            (a, b) => startupValue(
+              b.detail,
+              b.rounds,
+            ).compareTo(startupValue(a.detail, a.rounds)),
+          );
     final visible = top.take(5).toList();
 
     return _Card(
@@ -1558,7 +1792,10 @@ class _TopStartups extends StatelessWidget {
                         children: [
                           Text(
                             formatEuro(
-                              startupValue(visible[i].detail, visible[i].rounds),
+                              startupValue(
+                                visible[i].detail,
+                                visible[i].rounds,
+                              ),
                             ),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
@@ -1691,7 +1928,9 @@ class _ListTab extends StatelessWidget {
                         ),
                       ),
                       DataCell(Text(formatEuro(_entryInvested(e)))),
-                      DataCell(Text(formatEuro(startupValue(e.detail, e.rounds)))),
+                      DataCell(
+                        Text(formatEuro(startupValue(e.detail, e.rounds))),
+                      ),
                       DataCell(
                         Text(
                           formatSignedEuro(_entryUnrealizedPnl(e)),
@@ -1718,10 +1957,14 @@ class _ListTab extends StatelessWidget {
                           ),
                         ),
                       ),
-                      DataCell(Text(_moicLabel(moic(e.detail, rounds: e.rounds)))),
+                      DataCell(
+                        Text(_moicLabel(moic(e.detail, rounds: e.rounds))),
+                      ),
                       DataCell(
                         Text(
-                          formatPct(triAnnualizedPct(e.detail, rounds: e.rounds)),
+                          formatPct(
+                            triAnnualizedPct(e.detail, rounds: e.rounds),
+                          ),
                           style: TextStyle(
                             color: _signedColor(
                               triAnnualizedPct(e.detail, rounds: e.rounds),

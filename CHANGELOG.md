@@ -37,6 +37,7 @@ Les 27 builds de Patrimoine, du premier MVP au simulateur de sortie Blast : un h
   - [Build 27 — PV latente frais inclus + dashboard performance (9 novembre 2026)](#build-27--pv-latente-frais-inclus--dashboard-performance-9-novembre-2026)
   - [Build 28 — Taille de police réglable (10 novembre 2026)](#build-28--taille-de-police-réglable-10-novembre-2026)
   - [Build 29 — Levées de fonds : pre-money, dilution et valorisation des actions (14 novembre 2026)](#build-29--levées-de-fonds--pre-money-dilution-et-valorisation-des-actions-14-novembre-2026)
+  - [Build 30 — Synthèse startups réorganisable (14 novembre 2026)](#build-30--synthèse-startups-réorganisable-14-novembre-2026)
 
 ## Phase 1 — Fondations
 
@@ -212,3 +213,9 @@ Les 27 builds de Patrimoine, du premier MVP au simulateur de sortie Blast : un h
 - Import Blast corrigé : la « valorisation » d'un tour est désormais rangée en pre-money (elle était à tort stockée en post-money).
 - Valorisation harmonisée : partout dans l'app (fiche startup, liste, tableau de bord, MOIC/TRI), la valeur d'une startup suit le calcul des levées dès qu'au moins 2 tours sont renseignés ; sinon, repli sur quantité × prix actuel.
 - PV latente harmonisée : elle vaut désormais valorisation − capital investi (cohérente avec le MOIC et le TRI), au lieu de quantité × prix actuel.
+
+### Build 30 — Synthèse startups réorganisable (14 novembre 2026)
+
+- Onglet Synthèse : les 6 blocs (KPIs, compteurs, donut catégories, barres par année, tableau catégories, top 5) se déplacent (monter/descendre) et se redimensionnent (pleine largeur, moitié, tiers).
+- Bouton « Réorganiser » : affiche sur chaque bloc ses contrôles de déplacement et de largeur.
+- Disposition sauvegardée automatiquement et conservée au redémarrage.

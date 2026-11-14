@@ -10,6 +10,7 @@ import '../data/document_store.dart';
 import '../data/market_data.dart';
 import '../domain/portfolio.dart';
 import '../domain/startup_portfolio.dart';
+import '../domain/synthesis_layout.dart';
 import '../models/asset_type.dart';
 import '../models/rental.dart';
 import '../models/startup.dart';
@@ -27,6 +28,10 @@ const List<String> startupBlockIds = ['tabs', 'filters'];
 
 /// Clé de préférence persistée pour l'ordre des blocs startups.
 const String startupBlockOrderKey = 'startups.blockOrder';
+
+/// Clé de préférence persistée pour la disposition (ordre + largeurs) des
+/// blocs de l'onglet Synthèse, encodée en JSON.
+const String synthesisLayoutKey = 'startups.synthesisLayout';
 
 /// Paramètres par défaut du simulateur de sortie Blast (détention en %,
 /// capital investi en €). Estimés depuis les deux rounds d'investissement
@@ -81,6 +86,9 @@ class PortfolioController extends ChangeNotifier {
   DateTime? _lastPriceUpdate;
   List<NetWorthSnapshot> _snapshots = [];
   List<String> _startupBlockOrder = List.unmodifiable(startupBlockIds);
+  List<SynthesisBlockLayout> _synthesisLayout = List.unmodifiable(
+    defaultSynthesisLayout(),
+  );
   double _blastStakePct = blastDefaultStakePct;
   double _blastInvested = blastDefaultInvested;
   double _fontScale = 1.0;
@@ -157,6 +165,24 @@ class PortfolioController extends ChangeNotifier {
     await db.setPreference(startupBlockOrderKey, normalized.join(','));
   }
 
+  /// Disposition de l'onglet Synthèse : ordre des blocs et largeurs (en
+  /// colonnes d'une grille de 6), persistée en base.
+  List<SynthesisBlockLayout> get synthesisLayout => _synthesisLayout;
+
+  /// Applique une nouvelle disposition de la Synthèse, la normalise
+  /// (identifiants inconnus, doublons, largeurs invalides, blocs manquants)
+  /// et la persiste.
+  Future<void> setSynthesisLayout(List<SynthesisBlockLayout> layout) async {
+    final normalized = normalizeSynthesisLayout(layout);
+    if (listEquals(normalized, _synthesisLayout)) return;
+    _synthesisLayout = List.unmodifiable(normalized);
+    notifyListeners();
+    await db.setPreference(
+      synthesisLayoutKey,
+      encodeSynthesisLayout(normalized),
+    );
+  }
+
   /// Actif courant (rafraîchi après mutation), ou null s'il a été supprimé.
   Asset? assetById(int id) {
     for (final a in _assets) {
@@ -204,7 +230,8 @@ class PortfolioController extends ChangeNotifier {
   /// Total des actions revendues (marché secondaire) d'une startup.
   double _totalVenduOf(int assetId) {
     var sold = 0.0;
-    for (final t in _secondaryTransactions[assetId] ?? const <SecondaryTransaction>[]) {
+    for (final t
+        in _secondaryTransactions[assetId] ?? const <SecondaryTransaction>[]) {
       if (t.type == 'revente') sold += t.actions;
     }
     return sold;
@@ -310,6 +337,9 @@ class PortfolioController extends ChangeNotifier {
     _snapshots = await db.allSnapshots();
     _startupBlockOrder = parseStartupBlockOrder(
       await db.preferenceValue(startupBlockOrderKey),
+    );
+    _synthesisLayout = List.unmodifiable(
+      parseSynthesisLayout(await db.preferenceValue(synthesisLayoutKey)),
     );
     _blastStakePct = _parsePrefDouble(
       await db.preferenceValue(blastStakePctKey),
