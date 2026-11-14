@@ -182,10 +182,14 @@ class _StartupsScreenState extends State<StartupsScreen> {
         ).compareTo(_entryRealizedPnl(b, secondaryRealized[b.asset.id] ?? 0));
         break;
       case _SortKey.moic:
-        cmp = moic(a.detail).compareTo(moic(b.detail));
+        cmp = moic(a.detail, rounds: a.rounds).compareTo(
+          moic(b.detail, rounds: b.rounds),
+        );
         break;
       case _SortKey.tri:
-        cmp = triAnnualizedPct(a.detail).compareTo(triAnnualizedPct(b.detail));
+        cmp = triAnnualizedPct(a.detail, rounds: a.rounds).compareTo(
+          triAnnualizedPct(b.detail, rounds: b.rounds),
+        );
         break;
       case _SortKey.status:
         cmp = startupStatusLabel(a.detail.statut)
@@ -1559,7 +1563,7 @@ class _TopStartups extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'MOIC ${_moicLabel(moic(visible[i].detail))}',
+                            'MOIC ${_moicLabel(moic(visible[i].detail, rounds: visible[i].rounds))}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontSize: 11,
                             ),
@@ -1712,12 +1716,14 @@ class _ListTab extends StatelessWidget {
                           ),
                         ),
                       ),
-                      DataCell(Text(_moicLabel(moic(e.detail)))),
+                      DataCell(Text(_moicLabel(moic(e.detail, rounds: e.rounds)))),
                       DataCell(
                         Text(
-                          formatPct(triAnnualizedPct(e.detail)),
+                          formatPct(triAnnualizedPct(e.detail, rounds: e.rounds)),
                           style: TextStyle(
-                            color: _signedColor(triAnnualizedPct(e.detail)),
+                            color: _signedColor(
+                              triAnnualizedPct(e.detail, rounds: e.rounds),
+                            ),
                           ),
                         ),
                       ),
@@ -1854,8 +1860,8 @@ class _ExitsTab extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'MOIC ${_moicLabel(moic(sorted[i].detail))} · '
-                            'TRI ${formatPct(triAnnualizedPct(sorted[i].detail))}',
+                            'MOIC ${_moicLabel(moic(sorted[i].detail, rounds: sorted[i].rounds))} · '
+                            'TRI ${formatPct(triAnnualizedPct(sorted[i].detail, rounds: sorted[i].rounds))}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontSize: 11,
                             ),
