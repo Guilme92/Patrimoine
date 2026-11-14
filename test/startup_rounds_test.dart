@@ -130,13 +130,13 @@ void main() {
       final first = merged.rounds.first;
       expect(first.date, DateTime(2024, 3, 1));
       expect(first.montantLeve, closeTo(290.16, 1e-9));
-      expect(first.valorisationPostMoney, 10000000);
+      expect(first.valorisationPreMoney, 10000000);
       expect(first.prixParAction, closeTo(1, 1e-9));
 
       final second = merged.rounds.last;
       expect(second.date, DateTime(2026, 4, 30));
       expect(second.montantLeve, closeTo(520, 1e-9));
-      expect(second.valorisationPostMoney, 26000000);
+      expect(second.valorisationPreMoney, 26000000);
       expect(second.prixParAction, closeTo(1, 1e-9));
       expect(second.note, 'KEEWE ROUND 2');
     });
@@ -321,7 +321,7 @@ void main() {
       expect(keewe.rounds, hasLength(2));
       expect(keewe.rounds.first.date, DateTime(2024, 3, 1));
       expect(keewe.rounds.last.date, DateTime(2026, 4, 30));
-      expect(keewe.rounds.last.valorisationPostMoney, 26000000);
+      expect(keewe.rounds.last.valorisationPreMoney, 26000000);
 
       final autre = parsed.rows.last;
       expect(autre.startup!.quantite, 10);
@@ -365,7 +365,7 @@ void main() {
       // Tri décroissant côté base : le tour le plus récent d'abord.
       final rounds = await db.fundingRoundsFor(assets.first.id);
       expect(rounds, hasLength(3));
-      expect(rounds.first.valorisationPostMoney, 30000000);
+      expect(rounds.first.valorisationPreMoney, 30000000);
       expect(rounds.last.date, DateTime(2023, 1, 1));
 
       await db.close();

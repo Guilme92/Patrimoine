@@ -209,3 +209,4 @@ Les 27 builds de Patrimoine, du premier MVP au simulateur de sortie Blast : un h
 - Bouton « Modifier » (crayon) sur chaque levée : corrigez n'importe quelle valeur (montant investi, pre-money, post-money, dilution, prix par action) sans tout ressaisir.
 - Valorisation de vos actions calculée automatiquement : les actions valent 1 € au 1er tour, puis sont revalorisées à chaque tour (pre-money ÷ post-money du tour précédent), montants investis suivants ajoutés.
 - Prix unitaire post-levée affiché (ex. 1 € × 33/27 = 1,22 €).
+- Import Blast corrigé : la « valorisation » d'un tour est désormais rangée en pre-money (elle était à tort stockée en post-money).

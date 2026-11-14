@@ -218,7 +218,7 @@ List<FundingRoundDraft> _roundsOf(CsvImportRow row) {
     FundingRoundDraft(
       date: draft.dateInvestissement,
       montantLeve: brut,
-      valorisationPostMoney: draft.valorisationEntreprise,
+      valorisationPreMoney: draft.valorisationEntreprise,
       prixParAction: draft.prixEntree,
       note: ref.hasSuffix ? row.name : null,
     ),
@@ -244,7 +244,7 @@ double? _latestValuation(List<CsvImportRow> ordered) {
     if (draft == null) continue;
     if (draft.valorisationEntreprise > 0) return draft.valorisationEntreprise;
     for (final round in row.rounds.reversed) {
-      if (round.valorisationPostMoney > 0) return round.valorisationPostMoney;
+      if (round.valorisationPreMoney > 0) return round.valorisationPreMoney;
     }
   }
   return null;

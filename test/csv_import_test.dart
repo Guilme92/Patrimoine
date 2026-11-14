@@ -227,7 +227,7 @@ void main() {
       expect(qonto.rounds, hasLength(2));
       expect(qonto.rounds.first.date, DateTime(2023, 1, 15));
       expect(qonto.rounds.first.montantLeve, 500000);
-      expect(qonto.rounds.first.valorisationPostMoney, 5000000);
+      expect(qonto.rounds.first.valorisationPreMoney, 5000000);
       expect(qonto.rounds.first.prixParAction, 10);
       expect(qonto.rounds.last.date, DateTime(2024, 6, 1));
       expect(qonto.rounds.last.montantLeve, 2000000);
@@ -249,19 +249,20 @@ void main() {
     });
 
     test('colonne levees enrichie : pre-money et dilution', () {
-      // Ancien format à 4 champs : pre-money et dilution valent 0.
+      // Format historique à 4 champs : le 3e est la pre-money, post-money = 0.
       final legacy = parseFundingRounds('2023-01-15|500000|5000000|10').single;
-      expect(legacy.valorisationPreMoney, 0);
+      expect(legacy.valorisationPreMoney, 5000000);
+      expect(legacy.valorisationPostMoney, 0);
       expect(legacy.dilution, 0);
 
-      // Nouveau format à 6 champs : pre-money et dilution sont lus.
+      // Format enrichi à 6 champs : post-money et dilution sont lus.
       final enriched = parseFundingRounds(
         '2024-11-07|2718,45|15000000|1,0052|27000000|18,2',
       ).single;
       expect(enriched.montantLeve, closeTo(2718.45, 1e-9));
-      expect(enriched.valorisationPostMoney, 15000000);
+      expect(enriched.valorisationPreMoney, 15000000);
       expect(enriched.prixParAction, closeTo(1.0052, 1e-9));
-      expect(enriched.valorisationPreMoney, 27000000);
+      expect(enriched.valorisationPostMoney, 27000000);
       expect(enriched.dilution, closeTo(18.2, 1e-9));
     });
 
@@ -282,11 +283,11 @@ void main() {
       expect(row.rounds, hasLength(2));
       expect(row.rounds.first.date, DateTime(2024, 3, 1));
       expect(row.rounds.first.montantLeve, closeTo(290.16, 1e-9));
-      expect(row.rounds.first.valorisationPostMoney, 10000000);
+      expect(row.rounds.first.valorisationPreMoney, 10000000);
       expect(row.rounds.first.prixParAction, 1);
       expect(row.rounds.last.date, DateTime(2026, 4, 30));
       expect(row.rounds.last.montantLeve, closeTo(520, 1e-9));
-      expect(row.rounds.last.valorisationPostMoney, 26000000);
+      expect(row.rounds.last.valorisationPreMoney, 26000000);
       expect(row.rounds.last.prixParAction, 1);
     });
 
@@ -485,9 +486,9 @@ void main() {
         DateTime(2024, 3, 1),
       ]);
       expect(rounds[0].montantLeve, closeTo(520, 1e-9));
-      expect(rounds[0].valorisationPostMoney, closeTo(26000000, 1e-9));
+      expect(rounds[0].valorisationPreMoney, closeTo(26000000, 1e-9));
       expect(rounds[1].montantLeve, closeTo(400, 1e-9));
-      expect(rounds[1].valorisationPostMoney, closeTo(18000000, 1e-9));
+      expect(rounds[1].valorisationPreMoney, closeTo(18000000, 1e-9));
       expect(rounds[1].prixParAction, closeTo(1.5, 1e-9));
       expect(rounds[2].montantLeve, closeTo(290.16, 1e-9));
 
