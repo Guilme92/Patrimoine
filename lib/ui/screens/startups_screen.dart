@@ -50,9 +50,10 @@ String _moicLabel(double v) => '${v.toStringAsFixed(2)}×';
 
 double _entryInvested(StartupEntry e) => investedCapital(e.detail);
 
-/// PV latente d'une ligne : elle ne porte que sur les actions RESTANTES
-/// (`quantité × (prix actuel − PRU)`) et vaut 0 pour une sortie ou une
-/// radiation. Les reventes secondaires n'y entrent jamais.
+/// PV latente d'une ligne : valorisation − coût de revient des actions
+/// restantes (calcul des levées dès 2 tours, sinon quantité × prix actuel).
+/// Vaut 0 pour une sortie ou une radiation. Les reventes secondaires n'y
+/// entrent jamais.
 double _entryUnrealizedPnl(StartupEntry e) =>
     unrealizedGain(e.detail, rounds: e.rounds, totalSold: e.totalVendu);
 
@@ -913,8 +914,9 @@ class _SynthesisTab extends StatelessWidget {
         label: 'Valorisation totale',
         value: formatEuro(summary.totalValue),
         hint:
-            'Valeur des lignes : prix actuel manuel, produit de sortie, '
-            'ou 0 pour une startup radiée.',
+            'Valeur des lignes : calcul des levées de fonds (dès 2 tours), '
+            'sinon quantité × prix actuel ; produit de sortie ou 0 pour une '
+            'ligne sortie/radiée.',
       ),
       _KpiCard(
         label: 'Plus-value latente',
@@ -922,9 +924,9 @@ class _SynthesisTab extends StatelessWidget {
         sub: '${formatPct(summary.unrealizedGainPct)} du capital investi',
         color: _signedColor(summary.unrealizedGain),
         hint:
-            'PV latente des actions restantes : quantité détenue × '
-            '(prix actuel − PRU). Hors PV déjà réalisée par des reventes. '
-            'Le pourcentage rapporte cette plus-value au capital total.',
+            'Valorisation − capital investi. Hors PV déjà réalisée par des '
+            'reventes. Le pourcentage rapporte cette plus-value au capital '
+            'total.',
       ),
       if (secondaryRealizedTotal != 0)
         _KpiCard(
