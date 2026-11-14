@@ -108,6 +108,7 @@ PerformanceSummary computePerformance({
   Map<int, StartupDetail> startupsByAsset = const {},
   Map<int, Rental> rentalsByAsset = const {},
   Map<int, List<SecondaryTransaction>> secondaryByAsset = const {},
+  Map<int, List<FundingRound>> roundsByAsset = const {},
 }) {
   var invested = 0.0;
   var unrealized = 0.0;
@@ -132,6 +133,7 @@ PerformanceSummary computePerformance({
       positions: positions,
       prices: prices,
       startup: startup,
+      rounds: roundsByAsset[asset.id] ?? const [],
     );
     final accumulator = accumulators.putIfAbsent(type, _TypeAccumulator.new);
     accumulator.value += value;
@@ -182,7 +184,7 @@ PerformanceSummary computePerformance({
           PerformanceContributor(
             name: asset.name,
             type: type,
-            value: lineValue(startup),
+            value: startupValue(startup, roundsByAsset[asset.id] ?? const []),
             gain: gain,
             gainPct: capital > 0 ? gain / capital * 100 : 0,
           ),

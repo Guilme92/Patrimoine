@@ -53,6 +53,11 @@ class DashboardScreen extends StatelessWidget {
           if (controller.startupOf(asset.id) != null)
             asset.id: controller.startupOf(asset.id)!,
       },
+      roundsByAsset: {
+        for (final asset in controller.assets)
+          if (controller.fundingRoundsOf(asset.id).isNotEmpty)
+            asset.id: controller.fundingRoundsOf(asset.id),
+      },
       rentalsByAsset: rentals,
       secondaryByAsset: secondary,
     );

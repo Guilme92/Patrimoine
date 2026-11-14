@@ -49,6 +49,7 @@ class AssetDetailScreen extends StatelessWidget {
       positions: positions,
       prices: controller.prices,
       startup: startup,
+      rounds: rounds,
     );
     final rental = controller.rentalOf(current.id);
     final documents = controller.documentsOf(current.id);
@@ -129,6 +130,7 @@ class AssetDetailScreen extends StatelessWidget {
             ),
             _StartupCard(
               startup: startup,
+              rounds: rounds,
               totalVendu: controller.secondaryTransactionsOf(current.id)
                   .where((t) => t.type == 'revente')
                   .fold(0.0, (sum, t) => sum + t.actions),
@@ -1128,8 +1130,13 @@ class _PositionTile extends StatelessWidget {
 /// Fiche startup + indicateurs (KPIs) calculés.
 class _StartupCard extends StatelessWidget {
   final StartupDetail? startup;
+  final List<FundingRound> rounds;
   final double totalVendu;
-  const _StartupCard({required this.startup, this.totalVendu = 0});
+  const _StartupCard({
+    required this.startup,
+    this.rounds = const [],
+    this.totalVendu = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1148,7 +1155,7 @@ class _StartupCard extends StatelessWidget {
     }
 
     final invested = investedCapital(s);
-    final value = lineValue(s);
+    final value = startupValue(s, rounds);
     final gain = unrealizedGain(s, totalSold: totalVendu);
     final gainPct = unrealizedGainPct(s, totalSold: totalVendu);
     final exited = s.statut == 'sorti';
@@ -1206,8 +1213,8 @@ class _StartupCard extends StatelessWidget {
               Expanded(
                 child: _Metric(
                   label: 'Valorisation',
-                  hint: 'Quantité × prix actuel (ou produit de sortie '
-                      'si sortie)',
+                  hint: 'Valorisation des actions (levées de fonds) ou '
+                      'quantité × prix actuel',
                   value: formatEuro(value),
                 ),
               ),
@@ -1234,7 +1241,7 @@ class _StartupCard extends StatelessWidget {
                   label: 'Multiple (MOIC)',
                   hint: 'Valorisation ÷ capital investi '
                       '(1× = capital remboursé)',
-                  value: '${moic(s).toStringAsFixed(2)}×',
+                  value: '${moic(s, rounds: rounds).toStringAsFixed(2)}×',
                 ),
               ),
             ],
@@ -1247,7 +1254,7 @@ class _StartupCard extends StatelessWidget {
                   label: 'TRI annualisé',
                   hint: 'Rendement annualisé : '
                       '(Valorisation ÷ capital investi)^(1/années) − 1',
-                  value: formatPct(triAnnualizedPct(s)),
+                  value: formatPct(triAnnualizedPct(s, rounds: rounds)),
                 ),
               ),
               const SizedBox(width: 12),

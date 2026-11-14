@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrimoine/data/database.dart';
 import 'package:patrimoine/domain/funding_rounds.dart';
+import 'package:patrimoine/domain/startup.dart';
 
 FundingRound _round({
   required int id,
@@ -17,6 +18,24 @@ FundingRound _round({
   valorisationPostMoney: postMoney,
   dilution: 0,
   prixParAction: 0,
+);
+
+StartupDetail _detail({
+  double quantite = 0,
+  double prixActuel = 0,
+  double montantInvesti = 0,
+}) => StartupDetail(
+  id: 1,
+  assetId: 1,
+  quantite: quantite,
+  prixEntree: 1,
+  frais: 0,
+  montantInvesti: montantInvesti,
+  prixActuel: prixActuel,
+  valorisationEntreprise: 0,
+  statut: 'en_portefeuille',
+  exitProduit: 0,
+  createdAt: DateTime(2024),
 );
 
 void main() {
@@ -101,6 +120,36 @@ void main() {
 
     test('liste vide → null', () {
       expect(fundingRoundsValue(const []), isNull);
+    });
+  });
+
+  group('startupValue (harmonisation avec les levées)', () {
+    test('dès 2 tours exploitables, suit le calcul des levées', () {
+      final detail = _detail(
+        quantite: 5689,
+        prixActuel: 1.22,
+        montantInvesti: 5942.45,
+      );
+      final rounds = [
+        _round(id: 1, montantLeve: 2718.45, postMoney: 27000000),
+        _round(id: 2, montantLeve: 3224, preMoney: 33000000),
+      ];
+      // 2 718,45 × (33/27) + 3 224 = 6 546,55.
+      expect(startupValue(detail, rounds), closeTo(6546.55, 1e-9));
+    });
+
+    test('sans tours, repli sur quantité × prix actuel', () {
+      final detail = _detail(quantite: 100, prixActuel: 1.22);
+      expect(startupValue(detail, const []), closeTo(122, 1e-9));
+    });
+
+    test('tours sans valorisations exploitables → repli', () {
+      final detail = _detail(quantite: 100, prixActuel: 1.22);
+      final rounds = [
+        _round(id: 1, montantLeve: 100, postMoney: 0),
+        _round(id: 2, montantLeve: 100, preMoney: 0),
+      ];
+      expect(startupValue(detail, rounds), closeTo(122, 1e-9));
     });
   });
 }

@@ -11,8 +11,9 @@ double assetValue({
   required List<Position> positions,
   required Map<String, double> prices,
   StartupDetail? startup,
+  List<FundingRound> rounds = const [],
 }) {
-  if (startup != null) return lineValue(startup);
+  if (startup != null) return startupValue(startup, rounds);
   if (positions.isEmpty) return asset.value;
   var total = 0.0;
   for (final pos in positions) {
@@ -56,6 +57,7 @@ PortfolioSummary summarize({
   required Map<int, List<Position>> positionsByAsset,
   required Map<String, double> prices,
   Map<int, StartupDetail> startupsByAsset = const {},
+  Map<int, List<FundingRound>> roundsByAsset = const {},
 }) {
   var assetsTotal = 0.0;
   var liabilitiesTotal = 0.0;
@@ -71,6 +73,7 @@ PortfolioSummary summarize({
       positions: positions,
       prices: prices,
       startup: startupsByAsset[a.id],
+      rounds: roundsByAsset[a.id] ?? const [],
     );
 
     if (isLiabilityType(type)) {

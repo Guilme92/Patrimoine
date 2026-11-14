@@ -55,6 +55,7 @@ class _BlastScreenState extends State<BlastScreen> {
                 positions: controller.positionsOf(e.asset.id),
                 prices: controller.prices,
                 startup: e.detail,
+                rounds: e.rounds,
               ),
           ],
         ],
@@ -73,7 +74,7 @@ class _BlastHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final totalValue = entries.fold<double>(
       0,
-      (sum, e) => sum + lineValue(e.detail),
+      (sum, e) => sum + startupValue(e.detail, e.rounds),
     );
     final totalInvested = entries.fold<double>(
       0,

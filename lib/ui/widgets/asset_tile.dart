@@ -28,6 +28,7 @@ class AssetTile extends StatelessWidget {
   final Map<String, double> prices;
   final StartupDetail? startup;
   final Rental? rental;
+  final List<FundingRound> rounds;
 
   const AssetTile({
     super.key,
@@ -36,6 +37,7 @@ class AssetTile extends StatelessWidget {
     required this.prices,
     this.startup,
     this.rental,
+    this.rounds = const [],
   });
 
   @override
@@ -46,6 +48,7 @@ class AssetTile extends StatelessWidget {
       positions: positions,
       prices: prices,
       startup: startup,
+      rounds: rounds,
     );
     final color = assetTypeColors[type] ?? AppColors.primary;
 

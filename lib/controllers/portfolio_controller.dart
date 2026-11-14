@@ -107,6 +107,7 @@ class PortfolioController extends ChangeNotifier {
     positionsByAsset: _positions,
     prices: _prices,
     startupsByAsset: _startups,
+    roundsByAsset: _fundingRounds,
   );
 
   List<Position> positionsOf(int assetId) => _positions[assetId] ?? const [];
@@ -183,6 +184,7 @@ class PortfolioController extends ChangeNotifier {
         StartupEntry(
           asset: asset,
           detail: detail,
+          rounds: _fundingRounds[asset.id] ?? const [],
           totalVendu: _totalVenduOf(asset.id),
         ),
       );
@@ -222,6 +224,7 @@ class PortfolioController extends ChangeNotifier {
     positions: positionsOf(asset.id),
     prices: _prices,
     startup: _startups[asset.id],
+    rounds: _fundingRounds[asset.id] ?? const [],
   );
 
   List<AssetDocument> documentsOf(int assetId) =>

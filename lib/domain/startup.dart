@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import '../data/database.dart';
+import 'funding_rounds.dart';
 
 /// Indicateurs de performance d'une startup non cotée.
 ///
@@ -20,6 +21,19 @@ double lineValue(StartupDetail s) {
   if (s.statut == 'sorti') return s.exitProduit;
   if (s.statut == 'radie') return 0;
   return s.quantite * s.prixActuel;
+}
+
+/// Valeur de la ligne startup, harmonisée avec les levées de fonds.
+///
+/// Dès qu'au moins 2 tours exploitables existent, la valeur suit le calcul de
+/// valorisation des actions (base 1 € au 1er tour, revalorisée à chaque tour) ;
+/// sinon, repli sur `quantité × prix actuel`. Sortie et radiation inchangées.
+double startupValue(StartupDetail s, List<FundingRound> rounds) {
+  if (s.statut == 'en_portefeuille' && rounds.length >= 2) {
+    final value = fundingRoundsValue(rounds);
+    if (value != null) return value;
+  }
+  return lineValue(s);
 }
 
 /// Coût de revient des actions restantes (frais d'entrée inclus), réparti au
@@ -50,10 +64,10 @@ double unrealizedGainPct(StartupDetail s, {double totalSold = 0}) {
 }
 
 /// Multiple sur capital investi (1× = capital remboursé).
-double moic(StartupDetail s) {
+double moic(StartupDetail s, {List<FundingRound> rounds = const []}) {
   final capital = investedCapital(s);
   if (capital <= 0) return 0;
-  return lineValue(s) / capital;
+  return startupValue(s, rounds) / capital;
 }
 
 /// Plus-value réalisée : uniquement pour une ligne sortie.
@@ -64,7 +78,11 @@ double realizedGain(StartupDetail s) =>
 ///
 /// [today] permet de figer la date de valorisation dans les tests. La période
 /// court de la date d'investissement à la date de sortie, ou à aujourd'hui.
-double triAnnualizedPct(StartupDetail s, {DateTime? today}) {
+double triAnnualizedPct(
+  StartupDetail s, {
+  List<FundingRound> rounds = const [],
+  DateTime? today,
+}) {
   final capital = investedCapital(s);
   final start = s.dateInvestissement;
   if (capital <= 0 || start == null) return 0;
@@ -74,5 +92,5 @@ double triAnnualizedPct(StartupDetail s, {DateTime? today}) {
   if (!end.isAfter(start)) return 0;
   final years = end.difference(start).inDays / 365.25;
   if (years <= 0) return 0;
-  return (pow(lineValue(s) / capital, 1 / years) - 1) * 100;
+  return (pow(startupValue(s, rounds) / capital, 1 / years) - 1) * 100;
 }

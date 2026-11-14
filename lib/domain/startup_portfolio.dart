@@ -13,6 +13,9 @@ class StartupEntry {
   final Asset asset;
   final StartupDetail detail;
 
+  /// Levées de fonds de la startup (servent à valoriser la ligne).
+  final List<FundingRound> rounds;
+
   /// Nombre total d'actions revendues sur le marché secondaire. Sert à
   /// répartir le coût de revient au prorata des actions restantes.
   final double totalVendu;
@@ -20,6 +23,7 @@ class StartupEntry {
   const StartupEntry({
     required this.asset,
     required this.detail,
+    this.rounds = const [],
     this.totalVendu = 0,
   });
 }
@@ -389,7 +393,7 @@ StartupPortfolioSummary summarizeStartups(
   for (final entry in entries) {
     final detail = entry.detail;
     final invested = investedCapital(detail);
-    final value = lineValue(detail);
+    final value = startupValue(detail, entry.rounds);
 
     totalInvested += invested;
     totalFrais += detail.frais;
@@ -428,7 +432,11 @@ StartupPortfolioSummary summarizeStartups(
     }
 
     if (invested > 0 && detail.dateInvestissement != null) {
-      final tri = triAnnualizedPct(detail, today: today);
+      final tri = triAnnualizedPct(
+        detail,
+        rounds: entry.rounds,
+        today: today,
+      );
       triSum += tri;
       triCount += 1;
       kpi.triSum += tri;

@@ -168,7 +168,9 @@ class _StartupsScreenState extends State<StartupsScreen> {
         cmp = _entryInvested(a).compareTo(_entryInvested(b));
         break;
       case _SortKey.value:
-        cmp = lineValue(a.detail).compareTo(lineValue(b.detail));
+        cmp = startupValue(a.detail, a.rounds).compareTo(
+          startupValue(b.detail, b.rounds),
+        );
         break;
       case _SortKey.pnl:
         cmp = _entryUnrealizedPnl(a).compareTo(_entryUnrealizedPnl(b));
@@ -1486,8 +1488,14 @@ class _TopStartups extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final top = entries.where((e) => lineValue(e.detail) > 0).toList()
-      ..sort((a, b) => lineValue(b.detail).compareTo(lineValue(a.detail)));
+    final top = entries
+        .where((e) => startupValue(e.detail, e.rounds) > 0)
+        .toList()
+      ..sort(
+        (a, b) => startupValue(b.detail, b.rounds).compareTo(
+          startupValue(a.detail, a.rounds),
+        ),
+      );
     final visible = top.take(5).toList();
 
     return _Card(
@@ -1543,7 +1551,9 @@ class _TopStartups extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            formatEuro(lineValue(visible[i].detail)),
+                            formatEuro(
+                              startupValue(visible[i].detail, visible[i].rounds),
+                            ),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
@@ -1675,7 +1685,7 @@ class _ListTab extends StatelessWidget {
                         ),
                       ),
                       DataCell(Text(formatEuro(_entryInvested(e)))),
-                      DataCell(Text(formatEuro(lineValue(e.detail)))),
+                      DataCell(Text(formatEuro(startupValue(e.detail, e.rounds)))),
                       DataCell(
                         Text(
                           formatSignedEuro(_entryUnrealizedPnl(e)),
