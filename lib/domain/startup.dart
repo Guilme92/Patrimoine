@@ -46,21 +46,31 @@ double remainingCost(StartupDetail s, {double totalSold = 0}) {
   return investedCapital(s) * (s.quantite / bought);
 }
 
-/// Plus-value latente sur les actions RESTANTES : valeur restante − coût de
-/// revient restant (frais inclus).
+/// Plus-value latente : valeur de la ligne − coût de revient des actions
+/// restantes (frais inclus).
 ///
-/// Les frais réduisent la plus-value (ils font partie du coût de revient).
-/// Une sortie ou une radiation ne porte plus de PV latente.
-double unrealizedGain(StartupDetail s, {double totalSold = 0}) {
+/// La valeur suit [startupValue] (calcul des levées dès 2 tours, sinon
+/// quantité × prix actuel) ; le coût est réparti au prorata des actions
+/// restantes ([totalSold] = actions revendues). Une sortie ou une radiation
+/// ne porte plus de PV latente.
+double unrealizedGain(
+  StartupDetail s, {
+  List<FundingRound> rounds = const [],
+  double totalSold = 0,
+}) {
   if (s.statut == 'sorti' || s.statut == 'radie') return 0;
-  return s.quantite * s.prixActuel - remainingCost(s, totalSold: totalSold);
+  return startupValue(s, rounds) - remainingCost(s, totalSold: totalSold);
 }
 
 /// Plus-value latente en pourcentage du capital investi.
-double unrealizedGainPct(StartupDetail s, {double totalSold = 0}) {
+double unrealizedGainPct(
+  StartupDetail s, {
+  List<FundingRound> rounds = const [],
+  double totalSold = 0,
+}) {
   final capital = investedCapital(s);
   if (capital <= 0) return 0;
-  return unrealizedGain(s, totalSold: totalSold) / capital * 100;
+  return unrealizedGain(s, rounds: rounds, totalSold: totalSold) / capital * 100;
 }
 
 /// Multiple sur capital investi (1× = capital remboursé).

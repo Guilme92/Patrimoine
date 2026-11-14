@@ -151,5 +151,24 @@ void main() {
       ];
       expect(startupValue(detail, rounds), closeTo(122, 1e-9));
     });
+
+    test('PV latente cohérente avec la valorisation des levées', () {
+      final detail = _detail(
+        quantite: 5689,
+        prixActuel: 1.22,
+        montantInvesti: 5942.45,
+      );
+      final rounds = [
+        _round(id: 1, montantLeve: 2718.45, postMoney: 27000000),
+        _round(id: 2, montantLeve: 3224, preMoney: 33000000),
+      ];
+      // Valorisation 6 546,55 − capital 5 942,45 = 604,10 de PV latente.
+      expect(unrealizedGain(detail, rounds: rounds), closeTo(604.10, 1e-9));
+      // Cohérence interne : MOIC − 1 == PV latente en part du capital.
+      expect(
+        moic(detail, rounds: rounds) - 1,
+        closeTo(unrealizedGain(detail, rounds: rounds) / investedCapital(detail), 1e-9),
+      );
+    });
   });
 }

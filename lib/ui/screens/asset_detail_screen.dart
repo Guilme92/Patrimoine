@@ -1156,8 +1156,8 @@ class _StartupCard extends StatelessWidget {
 
     final invested = investedCapital(s);
     final value = startupValue(s, rounds);
-    final gain = unrealizedGain(s, totalSold: totalVendu);
-    final gainPct = unrealizedGainPct(s, totalSold: totalVendu);
+    final gain = unrealizedGain(s, rounds: rounds, totalSold: totalVendu);
+    final gainPct = unrealizedGainPct(s, rounds: rounds, totalSold: totalVendu);
     final exited = s.statut == 'sorti';
     final gainColor = gain >= 0 ? AppColors.positive : AppColors.negative;
     final statusColor = switch (s.statut) {

@@ -172,7 +172,11 @@ PerformanceSummary computePerformance({
       }
       // PV latente sur les titres restants, coût de revient au prorata des
       // actions revendues (frais d'entrée inclus dans le coût).
-      final gain = unrealizedGain(startup, totalSold: totalSold);
+      final gain = unrealizedGain(
+        startup,
+        rounds: roundsByAsset[asset.id] ?? const [],
+        totalSold: totalSold,
+      );
       invested += capital;
       unrealized += gain;
       fees += startup.frais;

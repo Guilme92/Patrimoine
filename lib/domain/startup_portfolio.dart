@@ -425,7 +425,11 @@ StartupPortfolioSummary summarizeStartups(
         break;
       default:
         activeCount += 1;
-        final gain = unrealizedGain(detail, totalSold: entry.totalVendu);
+        final gain = unrealizedGain(
+          detail,
+          rounds: entry.rounds,
+          totalSold: entry.totalVendu,
+        );
         unrealized += gain;
         kpi.unrealized += gain;
         break;
